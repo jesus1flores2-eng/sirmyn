@@ -1,0 +1,38 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand d-flex align-items-center" href="{{ url_for('teams.cuadrilla_dashboard') }}">
+      <i class="fas fa-hard-hat me-2"></i> Cuadrilla
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCuadrilla" aria-controls="navbarCuadrilla" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarCuadrilla">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('teams.cuadrilla_dashboard') }}">Dashboard</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('teams.cuadrilla_en_revision') }}">
+            En revisión
+            {% if en_revision_count|default(0) > 0 %}
+              <span class="badge bg-warning text-dark">{{ en_revision_count|default(0) }}</span>
+            {% endif %}
+          </a>
+        </li>
+      </ul>
+
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            {{ current_user.username }}
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Salir</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

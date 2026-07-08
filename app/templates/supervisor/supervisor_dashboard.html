@@ -1,0 +1,172 @@
+{% extends 'base_supervisor.html' %}
+{% block title %}Dashboard Supervisor{% endblock %}
+
+{% block content %}
+
+<!-- Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <!-- Tipo -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Tipo</label>
+                <select name="tipo" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for t in tipos_disponibles %}
+                        <option value="{{ t }}" {% if t == tipo_seleccionado %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Subtipo -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Subtipo</label>
+                <select name="subtipo" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for s in subtipos_disponibles %}
+                        <option value="{{ s }}" {% if s == subtipo_seleccionado %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Localidad -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Localidad</label>
+                <select name="localidad" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todas</option>
+                    {% for l in localidades_disponibles %}
+                        <option value="{{ l }}" {% if l == localidad_seleccionada %}selected{% endif %}>{{ l }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Estado -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Estado</label>
+                <select name="status_id" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for id, desc in estados_disponibles %}
+                        <option value="{{ id }}" {% if id == status_id_seleccionado %}selected{% endif %}>{{ desc }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Botón Filtrar -->
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-dark btn-sm">
+                    <i class="fas fa-filter me-1"></i> Filtrar
+                </button>
+            </div>
+
+            <!-- Botón Exportar -->
+            <div class="col-md-1 d-grid">
+                <a href="{{ url_for('supervisor.exportar_excel_supervisor',
+                                    tipo=tipo_seleccionado,
+                                    subtipo=subtipo_seleccionado,
+                                    localidad=localidad_seleccionada,
+                                    status_id=status_id_seleccionado) }}"
+                   class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel me-1"></i> Exportar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de reportes -->
+<div class="card border-0 shadow">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless mb-0" id="reportsTable">
+                <thead class="text-white" style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Reportante</th>
+                        <th>Tipo/Subtipo</th>
+                        <th>Ubicación</th>
+                        <th>Descripción</th>
+                        <th>Evidencias</th>
+                        <th>Cuadrilla</th>
+                        <th>Estado</th>
+                        <th>Observaciones</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in reportes %}
+                    <tr {% if r.estado_color %} style="background-color: {{ r.estado_color }};" {% endif %}>
+                        <td>{{ r.id }}</td>
+                        <td>{{ r.timestamp|localtime if r.timestamp else '—' }}</td>
+                        <td>{{ r.reportante }}<br><small>{{ r.telefono }}</small></td>
+                        <td>{{ r.tipo }} / {{ r.subtipo }}</td>
+                        <td>{{ r.calle }} {{ r.numero }}<br><small>{{ r.localidad }}</small></td>
+                        <td>{{ r.descripcion_problema or '—' }}</td>
+                        <td>
+                            {% if r.evidencia %}
+                                {% set ev_user = r.evidencia.split('/')[-1] %}
+                                <a href="{{ url_for('supervisor.uploaded_file', filename=ev_user) }}" target="_blank" class="evidence-link d-block mb-1">
+                                    <i class="fas fa-paperclip"></i> Evidencia usuario
+                                </a>
+                            {% endif %}
+
+                            {% if r.evidencia_cuadrilla %}
+                                {% set ev_cuad = r.evidencia_cuadrilla.split('/')[-1] %}
+                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ ev_cuad) }}" target="_blank" class="evidence-link d-block mb-1">
+                                    <i class="fas fa-hard-hat"></i> Evidencia cuadrilla
+                                </a>
+                            {% endif %}
+
+                            {% if r.materiales_utilizados %}
+                                {% set ev_mat = r.materiales_utilizados.split('/')[-1] %}
+                                <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ ev_mat) }}" target="_blank" class="evidence-link d-block">
+                                    <i class="fas fa-boxes"></i> Materiales utilizados
+                                </a>
+                            {% endif %}
+
+                            {% if not r.evidencia and not r.evidencia_cuadrilla and not r.materiales_utilizados %}
+                                —
+                            {% endif %}
+                        </td>
+                        <td>{{ r.cuadrilla }}</td>
+                        <td>{{ r.estado }}</td>
+                        <td>{{ r.observaciones or '—' }}</td>
+                        <td>
+                            <!-- Ver historial -->
+                            <a href="{{ url_for('supervisor.historial_reporte_supervisor', report_id=r.id) }}" class="btn btn-outline-primary btn-sm mb-1">
+                                <i class="fas fa-history"></i> Ver
+                            </a>
+
+                            <!-- Botón Aprobado -->
+                            {% if r.estado.lower() != 'finalizado' %}
+                            <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', assignment_id=r.asignaciones[-1].id) }}" class="d-inline">
+                                <button type="submit" class="btn btn-success btn-sm mb-1">
+                                    <i class="fas fa-check"></i> Aprobado
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    if (!$.fn.DataTable.isDataTable('#reportsTable')) {
+        $('#reportsTable').DataTable({
+            order: [[1, 'desc']],
+            pageLength: 25
+        });
+    }
+});
+</script>
+{% endblock %}

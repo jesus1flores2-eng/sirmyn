@@ -1,0 +1,35 @@
+# Core
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-WTF==1.2.1
+Flask-CORS==4.0.0
+python-dotenv==1.0.0
+SQLAlchemy==2.0.31
+alembic==1.17.2
+psycopg2-binary==2.9.11
+
+# Telegram (versión estable para webhooks)
+python-telegram-bot==20.7
+
+# Herramientas
+twilio==9.2.0
+tenacity==8.2.3
+requests==2.31.0
+Faker==24.8.0
+numpy==2.2.6
+pandas==2.2.3
+openpyxl==3.1.5
+XlsxWriter==3.2.0
+python-dateutil==2.9.0.post0
+pytz==2024.1
+tzdata==2024.1
+Werkzeug==3.1.4
+MarkupSafe==3.0.3
+cryptography==42.0.5
+WTForms==3.1.2
+itsdangerous==2.2.0
+Jinja2==3.1.6
+click==8.3.1
+blinker==1.9.0

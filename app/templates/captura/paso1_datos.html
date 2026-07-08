@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Captura de Reporte - Paso 1 de 3</h2>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="reportante" class="form-label">Nombre del reportante</label>
+        <input type="text" class="form-control" id="reportante" name="reportante" required value="{{ session.get('reporte_datos', {}).get('reportante', '') }}">
+      </div>
+      <div class="col-md-6">
+        <label for="telefono" class="form-label">Teléfono</label>
+        <input type="text" class="form-control" id="telefono" name="telefono" required value="{{ session.get('reporte_datos', {}).get('telefono', '') }}">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="localidad" class="form-label">Localidad</label>
+        <input type="text" class="form-control" id="localidad" name="localidad_nombre" list="listaLocalidades" autocomplete="off" required>
+        <datalist id="listaLocalidades"></datalist>
+        <input type="hidden" name="localidad_id" id="localidad_id">
+      </div>
+
+      <div class="col-md-6">
+        <label for="calle" class="form-label">Calle</label>
+        <input type="text" class="form-control" id="calle" name="calle_nombre" list="listaCalles" autocomplete="off" required>
+        <datalist id="listaCalles"></datalist>
+        <input type="hidden" name="calle_id" id="calle_id">
+      </div>
+    </div>
+
+    <div class="row mb-3">
+      <div class="col-md-2">
+        <label for="numero" class="form-label">Número</label>
+        <input type="text" class="form-control" id="numero" name="numero" value="{{ session.get('reporte_datos', {}).get('numero', '') }}">
+      </div>
+      <div class="col-md-10">
+        <label for="entre_calles" class="form-label">Entre calles</label>
+        <input type="text" class="form-control" id="entre_calles" name="entre_calles" value="{{ session.get('reporte_datos', {}).get('entre_calles', '') }}">
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-end">
+      <button type="submit" class="btn btn-primary">Siguiente ➡️</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Localidades
+  const localidadInput = document.getElementById('localidad');
+  const localidadIdInput = document.getElementById('localidad_id');
+  const listaLocalidades = document.getElementById('listaLocalidades');
+
+  localidadInput.addEventListener('input', async function() {
+    const query = localidadInput.value;
+    if (query.length < 1) return;
+    const res = await fetch(`/captura/autocomplete/localidades?q=${query}`);
+    const data = await res.json();
+    listaLocalidades.innerHTML = '';
+    data.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.nombre;
+      option.dataset.id = item.id;
+      listaLocalidades.appendChild(option);
+    });
+  });
+
+  localidadInput.addEventListener('change', function() {
+    const opcion = Array.from(listaLocalidades.options).find(o => o.value === localidadInput.value);
+    if (opcion) {
+      localidadIdInput.value = opcion.dataset.id;
+      // Limpiar calle
+      document.getElementById('calle').value = '';
+      document.getElementById('calle_id').value = '';
+    }
+  });
+
+  // Calles
+  const calleInput = document.getElementById('calle');
+  const calleIdInput = document.getElementById('calle_id');
+  const listaCalles = document.getElementById('listaCalles');
+
+  calleInput.addEventListener('input', async function() {
+    const localidadId = localidadIdInput.value;
+    if (!localidadId) return;
+    const query = calleInput.value;
+    if (query.length < 1) return;
+    const res = await fetch(`/captura/autocomplete/calles/${localidadId}?q=${query}`);
+    const data = await res.json();
+    listaCalles.innerHTML = '';
+    data.forEach(item => {
+      const option = document.createElement('option');
+      option.value = item.nombre;
+      option.dataset.id = item.id;
+      listaCalles.appendChild(option);
+    });
+  });
+
+  calleInput.addEventListener('change', function() {
+    const opcion = Array.from(listaCalles.options).find(o => o.value === calleInput.value);
+    if (opcion) {
+      calleIdInput.value = opcion.dataset.id;
+    }
+  });
+</script>
+{% endblock %}

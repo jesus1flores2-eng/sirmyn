@@ -1,0 +1,340 @@
+{% extends 'base.html' %}
+
+{% block title %}🏙️ Centro de Inteligencia Municipal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-brain text-primary me-2"></i>
+                Centro de Inteligencia Municipal
+            </h1>
+            <p class="text-muted mb-0">Análisis estratégico para toma de decisiones</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('inteligencia.mapa_calor') }}" class="btn btn-outline-danger">
+                <i class="fas fa-map-marked-alt me-2"></i>Mapa de Calor
+            </a>
+            <a href="{{ url_for('inteligencia.reporte_detallado') }}" class="btn btn-outline-info">
+                <i class="fas fa-list me-2"></i>Reportes Detallados
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h5 class="card-title mb-3">
+                <i class="fas fa-filter text-primary me-2"></i>Filtros de Análisis
+            </h5>
+            <form id="filtrosForm" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label">Período (días)</label>
+                    <input type="number" class="form-control" name="dias" value="{{ dias }}" min="1" max="365">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Departamento/Tipo</label>
+                    <select class="form-select" name="tipo">
+                        <option value="">Todos los departamentos</option>
+                        {% for tipo in tipos %}
+                            <option value="{{ tipo }}" {% if tipo == tipo_seleccionado %}selected{% endif %}>
+                                {{ tipo }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Localidad</label>
+                    <select class="form-select" name="localidad_id">
+                        <option value="">Todas las localidades</option>
+                        {% for localidad in localidades %}
+                            <option value="{{ localidad.id }}" {% if localidad.id|string == localidad_seleccionada %}selected{% endif %}>
+                                {{ localidad.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-grid">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-chart-line me-2"></i>Actualizar Análisis
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Métricas Rápidas -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Reportes Totales
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalReportes">
+                                {{ metricas.total_reportes|default(0) }}
+                            </div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="fas fa-arrow-up"></i> Últimos {{ dias }} días
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Atendidos
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="atendidos">
+                                {{ metricas.atendidos|default(0) }}
+                            </div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="fas fa-check-circle"></i> {{ metricas.eficiencia_general|default(0) }}% eficiencia
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pendientes
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendientes">
+                                {{ metricas.no_atendidos|default(0) }}
+                            </div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-warning mr-2">
+                                    <i class="fas fa-exclamation-triangle"></i> Requieren atención
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Eficiencia General
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="eficienciaGeneral">
+                                {{ metricas.eficiencia_general|default(0) }}%
+                            </div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-info mr-2">
+                                    <i class="fas fa-chart-line"></i> Rendimiento del sistema
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas Principales -->
+    <div class="row mb-4">
+        <!-- Gráfica de Eficiencia por Departamento -->
+        <div class="col-xl-8 col-lg-7 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Eficiencia por Departamento
+                    </h6>
+                    <div class="dropdown no-arrow">
+                        <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink"
+                            data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in"
+                            aria-labelledby="dropdownMenuLink">
+                            <a class="dropdown-item" href="#" id="exportChart">
+                                <i class="fas fa-download fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Exportar Gráfica
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" id="toggleDataLabels">
+                                <i class="fas fa-eye fa-sm fa-fw mr-2 text-gray-400"></i>
+                                Mostrar/Ocultar Valores
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-bar">
+                        <canvas id="eficienciaChart"></canvas>
+                    </div>
+                    <div class="mt-3 small text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Eficiencia = (Atendidos / Total) × 100. Solo "Finalizado" se considera atendido.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfica de Tendencias -->
+        <div class="col-xl-4 col-lg-5 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>Tendencia Mensual
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie">
+                        <canvas id="tendenciasChart"></canvas>
+                    </div>
+                    <div class="mt-3 text-center small">
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-primary"></i> Total
+                        </span>
+                        <span class="mr-2">
+                            <i class="fas fa-circle text-success"></i> Atendidos
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Focos Rojos -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Focos Rojos Prioritarios
+                    </h6>
+                    <div class="small text-muted" id="focosContador">Cargando...</div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="focosRojosTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Ubicación</th>
+                                    <th>Problema</th>
+                                    <th>Reportes Pendientes</th>
+                                    <th>Gravedad</th>
+                                    <th>Acción Sugerida</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                            <tbody id="focosRojosBody">
+                                <!-- Datos cargados por JavaScript -->
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                            <span class="visually-hidden">Cargando...</span>
+                                        </div>
+                                        Cargando focos rojos...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-outline-danger" id="cargarMasFocos">
+                            <i class="fas fa-plus me-1"></i>Cargar Más Focos Rojos
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Departamentos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-building me-2"></i>Desempeño por Departamento
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="departamentosTable">
+                            <thead>
+                                <tr>
+                                    <th>Departamento</th>
+                                    <th>Total Reportes</th>
+                                    <th>Atendidos</th>
+                                    <th>Pendientes</th>
+                                    <th>Eficiencia</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="departamentosBody">
+                                <!-- Datos cargados por JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Custom Intelligence JavaScript -->
+<script src="{{ url_for('static', filename='js/inteligencia/dashboard.js') }}"></script>
+
+<script>
+// Pasar variables de Flask a JavaScript
+const FLASK_VARS = {
+    urls: {
+        eficiencia: "{{ url_for('inteligencia.api_eficiencia_departamentos') }}",
+        focos_rojos: "{{ url_for('inteligencia.api_focos_rojos') }}",
+        tendencias: "{{ url_for('inteligencia.api_tendencias_mensuales') }}",
+        detalle_departamento: "{{ url_for('inteligencia.api_detalle_departamento', tipo='__TIPO__') }}",
+        reporte_detallado: "{{ url_for('inteligencia.reporte_detallado') }}"
+    },
+    filtros: {
+        dias: {{ dias }},
+        tipo: "{{ tipo_seleccionado }}",
+        localidad_id: "{{ localidad_seleccionada }}"
+    }
+};
+</script>
+{% endblock %}

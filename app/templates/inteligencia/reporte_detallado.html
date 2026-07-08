@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}📋 Reportes Detallados - Inteligencia Municipal{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-list text-info me-2"></i>
+                Reportes Detallados
+            </h1>
+            <p class="text-muted mb-0">Análisis exhaustivo de todos los reportes</p>
+        </div>
+        <a href="{{ url_for('inteligencia.dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-2">
+                    <label class="form-label">Período (días)</label>
+                    <input type="number" class="form-control" name="dias" value="{{ dias }}" min="1" max="365">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Departamento/Tipo</label>
+                    <select class="form-select" name="tipo">
+                        <option value="">Todos los tipos</option>
+                        {% for tipo in tipos_disponibles %}
+                            <option value="{{ tipo }}" {% if tipo == tipo_seleccionado %}selected{% endif %}>
+                                {{ tipo }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Estado</label>
+                    <select class="form-select" name="estado">
+                        <option value="">Todos</option>
+                        <option value="atendido" {% if filtro_estado == 'atendido' %}selected{% endif %}>Atendidos</option>
+                        <option value="pendiente" {% if filtro_estado == 'pendiente' %}selected{% endif %}>Pendientes</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Localidad</label>
+                    <select class="form-select" name="localidad_id">
+                        <option value="">Todas las localidades</option>
+                        {% for localidad in localidades %}
+                            <option value="{{ localidad.id }}" {% if localidad.id|string == localidad_seleccionada %}selected{% endif %}>
+                                {{ localidad.nombre }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-filter me-2"></i>Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="alert alert-info d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-info-circle me-2"></i>
+                    Mostrando <strong>{{ reportes|length }}</strong> reportes
+                    {% if tipo_seleccionado %}de tipo <strong>{{ tipo_seleccionado }}</strong>{% endif %}
+                    {% if dias != 30 %}en los últimos <strong>{{ dias }} días</strong>{% endif %}
+                </div>
+                <button class="btn btn-sm btn-outline-info" id="btnExportar">
+                    <i class="fas fa-download me-1"></i>Exportar CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de reportes -->
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="tablaReportes">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Tipo / Subtipo</th>
+                            <th>Reportante</th>
+                            <th>Ubicación</th>
+                            <th>Descripción</th>
+                            <th>Estado</th>
+                            <th>Cuadrilla</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if reportes %}
+                            {% for reporte in reportes %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-secondary">#{{ reporte.id }}</span>
+                                </td>
+                                <td>
+                                    <small>{{ reporte.fecha }}</small>
+                                </td>
+                                <td>
+                                    <div>
+                                        <span class="badge bg-primary">{{ reporte.tipo }}</span>
+                                        {% if reporte.subtipo %}
+                                        <br>
+                                        <small class="text-muted">{{ reporte.subtipo }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ reporte.reportante or 'Anónimo' }}</strong>
+                                        {% if reporte.telefono %}
+                                        <br>
+                                        <small class="text-muted">{{ reporte.telefono }}</small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small>{{ reporte.ubicacion }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ reporte.descripcion }}</small>
+                                </td>
+                                <td>
+                                    {% if reporte.estado == 'Atendido' %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i>Atendido
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-warning">
+                                            <i class="fas fa-clock me-1"></i>Pendiente
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <small>{{ reporte.cuadrilla or 'Sin asignar' }}</small>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="verDetalleReporte({{ reporte.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-search fa-2x mb-3"></i>
+                                    <p>No se encontraron reportes con los filtros actuales</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Click en el botón de ojo para ver detalles completos
+                </small>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-secondary" id="btnAnterior" disabled>
+                        <i class="fas fa-chevron-left"></i> Anterior
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary" id="btnSiguiente">
+                        Siguiente <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para detalles -->
+<div class="modal fade" id="modalDetalleReporte" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Detalles Completos del Reporte</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="cuerpoDetalleReporte">
+                Cargando...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <a href="#" class="btn btn-primary" id="btnIrAReporte">
+                    <i class="fas fa-external-link-alt me-1"></i>Ir al Reporte
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Variables globales
+let currentPage = 1;
+const itemsPerPage = 10;
+
+function verDetalleReporte(id) {
+    // Aquí puedes implementar la carga de detalles del reporte
+    fetch(`/api/reportes/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('cuerpoDetalleReporte').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Información General</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>ID:</strong></td><td>#${data.id}</td></tr>
+                            <tr><td><strong>Fecha:</strong></td><td>${data.fecha}</td></tr>
+                            <tr><td><strong>Tipo:</strong></td><td>${data.tipo}</td></tr>
+                            <tr><td><strong>Subtipo:</strong></td><td>${data.subtipo || 'N/A'}</td></tr>
+                            <tr><td><strong>Estado:</strong></td><td>${data.estado}</td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Ubicación</h6>
+                        <p>${data.ubicacion}</p>
+                        <h6 class="mt-3">Reportante</h6>
+                        <p>${data.reportante || 'Anónimo'}<br>
+                        ${data.telefono || ''}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Descripción</h6>
+                        <p class="border p-3 rounded">${data.descripcion || 'Sin descripción'}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Configurar enlace
+            document.getElementById('btnIrAReporte').href = `/admin/historial?reporte_id=${id}`;
+            
+            // Mostrar modal
+            const modal = new bootstrap.Modal(document.getElementById('modalDetalleReporte'));
+            modal.show();
+        })
+        .catch(error => {
+            document.getElementById('cuerpoDetalleReporte').innerHTML = `
+                <div class="alert alert-danger">
+                    Error al cargar detalles: ${error.message}
+                </div>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('modalDetalleReporte'));
+            modal.show();
+        });
+}
+
+// Exportar CSV
+document.getElementById('btnExportar')?.addEventListener('click', function() {
+    // Implementar exportación CSV
+    alert('Funcionalidad de exportación CSV en desarrollo');
+});
+
+// Paginación (básica)
+document.getElementById('btnSiguiente')?.addEventListener('click', function() {
+    currentPage++;
+    actualizarPaginacion();
+});
+
+document.getElementById('btnAnterior')?.addEventListener('click', function() {
+    if (currentPage > 1) {
+        currentPage--;
+        actualizarPaginacion();
+    }
+});
+
+function actualizarPaginacion() {
+    const rows = document.querySelectorAll('#tablaReportes tbody tr');
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    
+    rows.forEach((row, index) => {
+        row.style.display = (index >= startIndex && index < endIndex) ? '' : 'none';
+    });
+    
+    document.getElementById('btnAnterior').disabled = currentPage === 1;
+    document.getElementById('btnSiguiente').disabled = endIndex >= rows.length;
+    
+    // Mostrar información de página
+    const infoElement = document.querySelector('.alert-info strong');
+    if (infoElement) {
+        infoElement.textContent = `${startIndex + 1}-${Math.min(endIndex, rows.length)} de ${rows.length}`;
+    }
+}
+
+// Inicializar paginación cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
+    actualizarPaginacion();
+});
+</script>
+{% endblock %}

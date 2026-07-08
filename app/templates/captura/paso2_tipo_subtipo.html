@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Captura de Reporte - Paso 2 de 3</h2>
+  <form method="post">
+    <div class="row mb-3">
+      <div class="col-md-6">
+        <label for="tipo" class="form-label">Tipo de reporte</label>
+        <select class="form-select" id="tipo" name="tipo" required>
+          <option value="">Seleccione un tipo</option>
+          {% for tipo in tipos %}
+            <option value="{{ tipo }}" {% if tipo == tipo_seleccionado %}selected{% endif %}>{{ tipo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-6">
+        <label for="subtipo" class="form-label">Subtipo</label>
+        <select class="form-select" id="subtipo" name="subtipo" required>
+          <option value="">Seleccione un subtipo</option>
+          {% for subtipo in subtipos %}
+            <option value="{{ subtipo }}" {% if subtipo == subtipo_seleccionado %}selected{% endif %}>{{ subtipo }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="mb-3">
+      <label for="descripcion" class="form-label">Descripción del problema</label>
+      <textarea class="form-control" id="descripcion" name="descripcion_problema" rows="3" required>{{ session.get('reporte_datos', {}).get('descripcion_problema', '') }}</textarea>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <a href="{{ url_for('captura.captura_inicio') }}" class="btn btn-secondary">⬅️ Anterior</a>
+      <button type="submit" class="btn btn-primary">Siguiente ➡️</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Diccionario TIPOS_SUBTIPOS proveniente directamente del bot
+  const TIPOS_SUBTIPOS = {{ TIPOS_SUBTIPOS | tojson | safe }};
+
+  const tipoSelect = document.getElementById('tipo');
+  const subtipoSelect = document.getElementById('subtipo');
+
+  function actualizarSubtipos(tipoSeleccionado) {
+    subtipoSelect.innerHTML = '<option value="">Seleccione un subtipo</option>';
+
+    if (TIPOS_SUBTIPOS[tipoSeleccionado]) {
+      TIPOS_SUBTIPOS[tipoSeleccionado].forEach(subtipo => {
+        const opcion = document.createElement('option');
+        opcion.value = subtipo;
+        opcion.text = subtipo;
+        subtipoSelect.appendChild(opcion);
+      });
+    }
+    
+    // Mantener selección previa si existe
+    const subtipoGuardado = "{{ subtipo_seleccionado }}";
+    if (subtipoGuardado) subtipoSelect.value = subtipoGuardado;
+  }
+
+  // Inicializar subtipos al cargar la página
+  if (tipoSelect.value) {
+    actualizarSubtipos(tipoSelect.value);
+  }
+
+  // Actualizar subtipos al cambiar tipo
+  tipoSelect.addEventListener('change', function () {
+    actualizarSubtipos(this.value);
+  });
+</script>
+{% endblock %}

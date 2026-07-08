@@ -1,0 +1,57 @@
+{% extends "base_cuadrillas.html" %}
+
+{% block title %}Reasignar Reporte{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+
+    <h2 class="mb-4">Reasignar Reporte #{{ assignment.report_id }}</h2>
+
+    <div class="card">
+        <div class="card-header bg-warning text-dark">
+            <strong>Reasignación de Reporte</strong>
+        </div>
+        <div class="card-body">
+
+            <p><strong>Cuadrilla Actual:</strong> {{ assignment.team.nombre }}</p>
+            <p><strong>Status Actual:</strong> {{ assignment.status.descripcion }}</p>
+
+            <form action="{{ url_for('teams.reasignar_reporte', assignment_id=assignment.id) }}" method="POST">
+
+                <!-- Selección de nueva cuadrilla -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nueva Cuadrilla</strong></label>
+                    <select name="new_team_id" class="form-select" required>
+                        <option value="">Seleccione una cuadrilla</option>
+                        {% for team in all_teams %}
+                            {% if team.id != assignment.team_id %}
+                                <option value="{{ team.id }}">{{ team.nombre }}</option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Motivo de la reasignación -->
+                <div class="mb-3">
+                    <label class="form-label"><strong>Motivo de Reasignación</strong></label>
+                    <textarea class="form-control" name="motivo_reasignacion" rows="3"
+                        placeholder="Explique brevemente por qué se está reasignando el reporte"></textarea>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-warning">
+                        🔄 Reasignar Reporte
+                    </button>
+                    <a href="{{ url_for('teams.report_detail', assignment_id=assignment.id) }}"
+                       class="btn btn-secondary">
+                        ⬅ Volver
+                    </a>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

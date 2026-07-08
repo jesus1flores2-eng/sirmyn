@@ -1,0 +1,108 @@
+<!-- templates/supervisor/historial_supervisor.html -->
+{% extends 'base.html' %}
+
+{% block title %}Historial de Asignaciones - Supervisor{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Historial de Asignaciones - Reporte #{{ reporte.id }}</h2>
+    <p><strong>Tipo:</strong> {{ reporte.tipo }} | <strong>Subtipo:</strong> {{ reporte.subtipo }}</p>
+    <p><strong>Localidad:</strong> {{ reporte.localidad }}</p>
+    <p><strong>Calle:</strong> {{ reporte.calle }} entre {{ reporte.entre_calles }}</p>
+    <p><strong>Descripción:</strong><br>{{ reporte.descripcion_problema }}</p>
+
+    {% if asignaciones %}
+    <table class="table table-striped mt-4">
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Cuadrilla</th>
+                <th>Estado</th>
+                <th>Materiales</th>
+                <th>Observaciones</th>
+                <th>Evidencia</th>
+                <th>Motivo Reasignación</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in asignaciones %}
+            <tr>
+                <td>{{ a.timestamp|localtime if a.timestamp else '—' }}</td>
+                <td>{{ a.team.nombre if a.team else '—' }}</td>
+                <td>
+                    {% if a.status %}
+                        <span class="badge" style="background-color: {{ a.status.color }}">{{ a.status.descripcion }}</span>
+                    {% else %}
+                        — 
+                    {% endif %}
+                </td>
+                <td>
+                    {% if a.materiales_utilizados %}
+                        <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
+                    {% else %}
+                        — 
+                    {% endif %}
+                </td>
+                <td>{{ a.observaciones or '—' }}</td>
+                <td>
+                    {% if a.evidencia_cuadrilla %}
+                        <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ a.evidencia_cuadrilla) }}" target="_blank">Ver Foto</a>
+                    {% else %}
+                        — 
+                    {% endif %}
+                </td>
+                <td>{{ a.motivo_reasignacion or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No hay asignaciones registradas.</p>
+    {% endif %}
+
+    <!-- 🔹 Botones de acción para el Supervisor -->
+    {% if reporte.estado_id == 3 %}
+    <div class="mt-4">
+        <!-- Aprobar y Finalizar -->
+        <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', reporte_id=reporte.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-success">
+                ✅ Aprobar y Finalizar Reporte
+            </button>
+        </form>
+
+        <!-- Rechazar / Reasignar con motivo -->
+        <form method="POST" action="{{ url_for('supervisor.rechazar_reporte', reporte_id=reporte.id) }}" style="display:inline; margin-left:10px;">
+            <div class="input-group">
+                <input type="text" name="motivo" class="form-control" placeholder="Motivo de rechazo" required>
+                <button type="submit" class="btn btn-danger">
+                    ❌ Rechazar / Reasignar
+                </button>
+            </div>
+        </form>
+    </div>
+    {% elif reporte.estado_id == 4 %}
+        <p class="text-success mt-3"><strong>✅ Este reporte ya fue finalizado.</strong></p>
+    {% endif %}
+
+    <a href="{{ url_for('supervisor.dashboard_supervisor') }}" class="btn btn-secondary mt-3">⬅ Volver al Dashboard</a>
+</div>
+{% endblock %}
+
+{% if asignaciones and asignaciones[-1].status_id == 3 %}
+<div class="mt-4 text-center">
+    <!-- Botón Aprobar -->
+    <form action="{{ url_for('supervisor.aprobar_reporte', report_id=report.id) }}" method="post" style="display:inline;">
+        <button type="submit" class="btn btn-success">
+            ✅ Aprobar y Finalizar
+        </button>
+    </form>
+
+    <!-- Botón Rechazar -->
+    <form action="{{ url_for('supervisor.rechazar_reporte', report_id=report.id) }}" method="post" style="display:inline; margin-left:10px;">
+        <input type="text" name="motivo" placeholder="Motivo del rechazo" required class="form-control d-inline-block" style="width:250px;">
+        <button type="submit" class="btn btn-danger">
+            ❌ Rechazar
+        </button>
+    </form>
+</div>
+{% endif %}

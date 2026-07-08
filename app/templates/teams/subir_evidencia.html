@@ -1,0 +1,122 @@
+{% extends "base_cuadrillas.html" %}
+{% block title %}Subir Evidencia - Reporte {{ assignment.report.id }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Subir Evidencia - Reporte #{{ assignment.report.id }}</h2>
+
+    <!-- Datos del reporte -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <p><strong>Tipo:</strong> {{ assignment.report.tipo }}</p>
+            <p><strong>Subtipo:</strong> {{ assignment.report.subtipo }}</p>
+            <p><strong>Localidad:</strong> {{ assignment.report.localidad }}</p>
+            <p><strong>Estado actual:</strong> {{ assignment.status.descripcion }}</p>
+
+            <!-- Evidencia del Usuario -->
+            {% if assignment.report.evidencia %}
+                <p><strong>Evidencia del usuario:</strong></p>
+                {% set ext_user = assignment.report.evidencia.rsplit('.', 1)[-1].lower() %}
+                {% if ext_user in ['mp4', 'webm', 'ogg'] %}
+                <video controls class="mb-2" style="max-width: 400px;">
+                    <source src="{{ url_for('admin.archivo_publico', filename=assignment.report.evidencia) }}" type="video/{{ ext_user }}">
+                    Tu navegador no soporta la reproducción de video.
+                </video>
+                {% elif ext_user in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                <img src="{{ url_for('admin.archivo_publico', filename=assignment.report.evidencia) }}"  
+                     class="img-fluid rounded shadow-sm mb-3" style="max-width: 400px;">
+                {% else %}
+                <p>Tipo de archivo no soportado para previsualización.</p>
+                {% endif %}
+            {% endif %}
+
+            <!-- Evidencia de la Cuadrilla -->
+            {% if assignment.evidencia_cuadrilla %}
+                <p><strong>Evidencia de reparación de la cuadrilla:</strong></p>
+                {% set ext_team = assignment.evidencia_cuadrilla.rsplit('.', 1)[-1].lower() %}
+                {% if ext_team in ['mp4', 'webm', 'ogg'] %}
+                <video controls class="mb-2" style="max-width: 400px;">
+                    <source src="{{ url_for('static', filename='evidencias/cuadrilla/' ~ assignment.evidencia_cuadrilla) }}" type="video/{{ ext_team }}">
+                    Tu navegador no soporta la reproducción de video.
+                </video>
+                {% elif ext_team in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                <img src="{{ url_for('static', filename='evidencias/cuadrilla/' ~ assignment.evidencia_cuadrilla) }}" 
+                     class="img-fluid rounded shadow-sm mb-3" style="max-width: 400px;">
+                {% else %}
+                <p>Tipo de archivo no soportado para previsualización.</p>
+                {% endif %}
+            {% endif %}
+
+            <!-- Materiales utilizados -->
+            {% if assignment.materiales_utilizados %}
+                <p><strong>Materiales utilizados:</strong></p>
+                {% set ext_mat = assignment.materiales_utilizados.rsplit('.', 1)[-1].lower() %}
+                {% if ext_mat in ['mp4', 'webm', 'ogg'] %}
+                <video controls class="mb-2" style="max-width: 400px;">
+                    <source src="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ assignment.materiales_utilizados) }}" type="video/{{ ext_mat }}">
+                    Tu navegador no soporta la reproducción de video.
+                </video>
+                {% elif ext_mat in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                <img src="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ assignment.materiales_utilizados) }}" 
+                     class="img-fluid rounded shadow-sm mb-3" style="max-width: 400px;">
+                {% else %}
+                <p>Tipo de archivo no soportado para previsualización.</p>
+                {% endif %}
+            {% endif %}
+
+        </div>
+    </div>
+
+    <!-- Formulario -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            Subir Evidencia de Atención
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+
+                <!-- Evidencia de reparación -->
+                <div class="mb-3">
+                    <label for="evidencia_cuadrilla" class="form-label">Foto o video de reparación</label>
+                    <input type="file" class="form-control" name="evidencia_cuadrilla" id="evidencia_cuadrilla" accept="image/*,video/*">
+                </div>
+
+                <!-- Materiales utilizados -->
+                <div class="mb-3">
+                    <label for="foto_materiales_utilizados" class="form-label">Foto o video de materiales utilizados</label>
+                    <input type="file" class="form-control" name="foto_materiales_utilizados" id="foto_materiales_utilizados" accept="image/*,video/*">
+                </div>
+
+                <!-- Observaciones -->
+                <div class="mb-3">
+                    <label for="observaciones" class="form-label">Observaciones</label>
+                    <textarea name="observaciones" id="observaciones" rows="3" class="form-control">{{ assignment.observaciones or '' }}</textarea>
+                </div>
+
+                <!-- Estado -->
+                <div class="mb-3">
+                    <label for="status_id" class="form-label">Actualizar estado</label>
+                    <select class="form-select" name="status_id" id="status_id" required>
+                        {% for status in statuses %}
+                            {% if status.descripcion.lower() in ['en proceso', 'en revisión'] %}
+                                <option value="{{ status.id }}" {% if assignment.status_id == status.id %}selected{% endif %}>
+                                    {{ status.descripcion }}
+                                </option>
+                            {% endif %}
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Botones -->
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('teams.report_detail', assignment_id=assignment.id) }}" class="btn btn-secondary">
+                        Volver al detalle
+                    </a>
+                    <button type="submit" class="btn btn-success">Guardar Evidencia</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

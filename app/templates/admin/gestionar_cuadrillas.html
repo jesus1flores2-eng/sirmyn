@@ -1,0 +1,803 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                <i class="fas fa-users-cog me-2"></i>Gestión de Usuarios y Cuadrillas
+            </h1>
+            <p class="mb-0">Administra los usuarios, roles, áreas y cuadrillas del sistema</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Sección para crear nueva cuadrilla -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-success text-white py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-users me-2"></i>Crear Nueva Cuadrilla
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.crear_cuadrilla') }}" id="formNuevaCuadrilla">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nombre_cuadrilla" class="form-label">Nombre de la Cuadrilla *</label>
+                        <input type="text" name="nombre" class="form-control" required 
+                               placeholder="Ej: Bomberos Central">
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="area_cuadrilla" class="form-label">Área/Departamento *</label>
+                        <select name="area" class="form-select" required>
+                            <option value="">-- Selecciona un área --</option>
+                            <option value="agua">💧 Agua Potable y Drenaje</option>
+                            <option value="aseo">🗑️ Aseo Público</option>
+                            <option value="alumbrado">💡 Alumbrado Público</option>
+                            <option value="parques">🌳 Parques y Jardines</option>
+                            <option value="ecologia">🌍 Ecología</option>
+                            <option value="seguridad">👮 Seguridad Pública</option>
+                            <option value="obras">🏗️ Obras Públicas</option>
+                            <option value="bomberos">🚒 Bomberos</option>
+                            <option value="general">🔧 General/Mantenimiento</option>
+                            <option value="supervision">👁️ Supervisión</option>
+                        </select>
+                        <small class="form-text text-muted">Define a qué departamento pertenece esta cuadrilla</small>
+                    </div>
+                    
+                    <div class="col-md-12 mb-3">
+                        <label for="descripcion_cuadrilla" class="form-label">Descripción</label>
+                        <textarea name="descripcion" class="form-control" rows="2" 
+                                  placeholder="Breve descripción de las funciones de la cuadrilla"></textarea>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-users me-2"></i>Crear Cuadrilla
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tarjeta para crear nuevo usuario -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-user-plus me-2"></i>Crear Nuevo Usuario
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.gestionar_cuadrillas') }}" id="formNuevoUsuario">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="nombre" class="form-label">Nombre Completo *</label>
+                        <input type="text" name="nombre" class="form-control" required 
+                               placeholder="Ej: Juan Pérez López">
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="username" class="form-label">Nombre de Usuario *</label>
+                        <input type="text" name="username" class="form-control" required 
+                               placeholder="Ej: juan.perez">
+                        <small class="form-text text-muted">Sin espacios, minúsculas preferentemente</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="password" class="form-label">Contraseña *</label>
+                        <div class="input-group">
+                            <input type="password" name="password" id="password" class="form-control" required
+                                   placeholder="Mínimo 6 caracteres">
+                            <button type="button" class="btn btn-outline-secondary" onclick="togglePassword('password')">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="role" class="form-label">Rol *</label>
+                        <select name="role" id="role" class="form-select" required>
+                            <option value="">-- Selecciona un rol --</option>
+                            <option value="cuadrilla">👷 Cuadrilla (Operador)</option>
+                            <option value="jefe_area">👨‍💼 Jefe de Área</option>
+                            <option value="director">👔 Director de Área</option>
+                            <option value="supervisor">👁️ Supervisor</option>
+                            <option value="admin">🔧 Administrador</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Campo Área para TODOS los usuarios -->
+                    <div class="col-md-6 mb-3" id="area-field">
+                        <label for="area" class="form-label">Área/Departamento</label>
+                        <select name="area" class="form-select" id="area-select">
+                            <option value="">-- Selecciona un área --</option>
+                            <option value="agua">💧 Agua Potable y Drenaje</option>
+                            <option value="aseo">🗑️ Aseo Público</option>
+                            <option value="alumbrado">💡 Alumbrado Público</option>
+                            <option value="parques">🌳 Parques y Jardines</option>
+                            <option value="ecologia">🌍 Ecología</option>
+                            <option value="seguridad">👮 Seguridad Pública</option>
+                            <option value="obras">🏗️ Obras Públicas</option>
+                            <option value="bomberos">🚒 Bomberos</option>
+                            <option value="general">🔧 General/Mantenimiento</option>
+                            <option value="supervision">👁️ Supervisión</option>
+                        </select>
+                        <small class="form-text text-muted">Asigna el departamento correspondiente</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="team_id" class="form-label">Cuadrilla Asignada</label>
+                        <select name="team_id" class="form-select">
+                            <option value="">-- Sin cuadrilla asignada --</option>
+                            {% for team in all_teams %}
+                            <option value="{{ team.id }}">
+                                👥 {{ team.nombre }} 
+                                {% if team.area %}
+                                <small class="text-muted">({{ team.area|title }})</small>
+                                {% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Opcional, para cuadrillas</small>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <label for="telegram_id" class="form-label">Telegram ID</label>
+                        <input type="text" name="telegram_id" class="form-control" 
+                               placeholder="Ej: 123456789">
+                        <small class="form-text text-muted">Para recibir notificaciones del bot</small>
+                    </div>
+                    
+                    <div class="col-12 mt-3">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-user-plus me-2"></i>Crear Usuario
+                            </button>
+                            <button type="reset" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-2"></i>Limpiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de cuadrillas existentes -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-warning text-dark py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-users me-2"></i>Cuadrillas Existentes 
+                    <span class="badge bg-light text-dark ms-2">{{ all_teams|length }}</span>
+                </h6>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-warning">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Área</th>
+                            <th>Descripción</th>
+                            <th>Usuarios</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for team in all_teams %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ team.id }}</span></td>
+                            <td><strong>{{ team.nombre }}</strong></td>
+                            <td>
+                                {% if team.area %}
+                                <span class="badge 
+                                    {% if team.area == 'agua' %}bg-primary
+                                    {% elif team.area == 'aseo' %}bg-success
+                                    {% elif team.area == 'alumbrado' %}bg-warning text-dark
+                                    {% elif team.area == 'parques' %}bg-info
+                                    {% elif team.area == 'ecologia' %}bg-success
+                                    {% elif team.area == 'seguridad' %}bg-danger
+                                    {% elif team.area == 'obras' %}bg-dark
+                                    {% elif team.area == 'bomberos' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ team.area|title }}
+                                </span>
+                                {% else %}
+                                <span class="text-muted">Sin área</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if team.descripcion %}
+                                <small class="text-muted">{{ team.descripcion[:50] }}{% if team.descripcion|length > 50 %}...{% endif %}</small>
+                                {% else %}
+                                <span class="text-muted">Sin descripción</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% set usuarios_team = usuarios_por_cuadrilla.get(team.id, []) %}
+                                {% if usuarios_team %}
+                                <span class="badge bg-info">{{ usuarios_team|length }} usuario(s)</span>
+                                {% else %}
+                                <span class="badge bg-secondary">0 usuarios</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <!-- Botón para editar cuadrilla -->
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalEditarCuadrilla{{ team.id }}"
+                                            title="Editar cuadrilla">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    
+                                    <!-- Botón para eliminar cuadrilla -->
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminarCuadrilla{{ team.id }}"
+                                            title="Eliminar cuadrilla">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de usuarios existentes -->
+    <div class="card border-0 shadow">
+        <div class="card-header bg-info text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-users me-2"></i>Usuarios Existentes 
+                    <span class="badge bg-light text-dark">{{ usuarios|length }}</span>
+                </h6>
+                <div>
+                    <input type="text" id="searchInput" class="form-control form-control-sm" 
+                           placeholder="Buscar usuario...">
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped" id="tablaUsuarios">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Usuario</th>
+                            <th>Rol</th>
+                            <th>Área</th>
+                            <th>Cuadrilla</th>
+                            <th>Telegram ID</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in usuarios %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ user.id }}</span></td>
+                            <td>
+                                <strong>{{ user.nombre }}</strong>
+                                {% if user.telegram_id %}
+                                <br><small class="text-success"><i class="fab fa-telegram"></i> Conectado</small>
+                                {% endif %}
+                            </td>
+                            <td><code class="text-primary">{{ user.username }}</code></td>
+                            <td>
+                                <span class="badge {% if user.role == 'admin' %}bg-danger
+                                                   {% elif user.role == 'director' %}bg-primary
+                                                   {% elif user.role == 'supervisor' %}bg-warning text-dark
+                                                   {% else %}bg-info text-dark{% endif %}">
+                                    {{ user.role|title }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user.area %}
+                                <span class="badge bg-light text-dark">{{ user.area|title }}</span>
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.team %}
+                                <span class="badge bg-secondary">{{ user.team.nombre }}</span>
+                                {% if user.team.area %}
+                                <br><small class="text-muted">{{ user.team.area|title }}</small>
+                                {% endif %}
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.telegram_id %}
+                                <span class="text-primary">
+                                    <i class="fab fa-telegram"></i> {{ user.telegram_id }}
+                                </span>
+                                {% else %}
+                                <span class="text-danger">
+                                    <i class="fas fa-unlink"></i> Sin vincular
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+                                    <!-- Botón para abrir modal de edición -->
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalEditarUsuario{{ user.id }}"
+                                            title="Editar usuario">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    
+                                    <!-- Botón de eliminar -->
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modalEliminarUsuario{{ user.id }}"
+                                            title="Eliminar usuario">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Si no hay usuarios -->
+            {% if not usuarios %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay usuarios registrados</h4>
+                <p class="text-muted">Comienza creando tu primer usuario usando el formulario superior.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Modales para editar cuadrillas -->
+{% for team in all_teams %}
+<!-- Modal para editar cuadrilla -->
+<div class="modal fade" id="modalEditarCuadrilla{{ team.id }}" tabindex="-1" 
+     aria-labelledby="modalEditarCuadrillaLabel{{ team.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="modalEditarCuadrillaLabel{{ team.id }}">
+                    <i class="fas fa-edit me-2"></i>Editar Cuadrilla: {{ team.nombre }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.editar_cuadrilla', team_id=team.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="nombre_cuadrilla{{ team.id }}" class="form-label">Nombre *</label>
+                        <input type="text" name="nombre" id="nombre_cuadrilla{{ team.id }}" 
+                               class="form-control" value="{{ team.nombre }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="area_cuadrilla{{ team.id }}" class="form-label">Área *</label>
+                        <select name="area" id="area_cuadrilla{{ team.id }}" class="form-select" required>
+                            <option value="">-- Selecciona un área --</option>
+                            <option value="agua" {% if team.area == 'agua' %}selected{% endif %}>💧 Agua</option>
+                            <option value="aseo" {% if team.area == 'aseo' %}selected{% endif %}>🗑️ Aseo</option>
+                            <option value="alumbrado" {% if team.area == 'alumbrado' %}selected{% endif %}>💡 Alumbrado</option>
+                            <option value="parques" {% if team.area == 'parques' %}selected{% endif %}>🌳 Parques</option>
+                            <option value="ecologia" {% if team.area == 'ecologia' %}selected{% endif %}>🌍 Ecología</option>
+                            <option value="seguridad" {% if team.area == 'seguridad' %}selected{% endif %}>👮 Seguridad</option>
+                            <option value="obras" {% if team.area == 'obras' %}selected{% endif %}>🏗️ Obras</option>
+                            <option value="bomberos" {% if team.area == 'bomberos' %}selected{% endif %}>🚒 Bomberos</option>
+                            <option value="general" {% if team.area == 'general' %}selected{% endif %}>🔧 General</option>
+                            <option value="supervision" {% if team.area == 'supervision' %}selected{% endif %}>👁️ Supervisión</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="descripcion_cuadrilla{{ team.id }}" class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="descripcion_cuadrilla{{ team.id }}" 
+                                  class="form-control" rows="2">{{ team.descripcion or '' }}</textarea>
+                    </div>
+                    
+                    {% set usuarios_team = usuarios_por_cuadrilla.get(team.id, []) %}
+                    {% if usuarios_team %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-users me-2"></i>
+                        Esta cuadrilla tiene {{ usuarios_team|length }} usuario(s) asignado(s).
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-warning">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para eliminar cuadrilla -->
+<div class="modal fade" id="modalEliminarCuadrilla{{ team.id }}" tabindex="-1" 
+     aria-labelledby="modalEliminarCuadrillaLabel{{ team.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalEliminarCuadrillaLabel{{ team.id }}">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Eliminar Cuadrilla
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>¡Advertencia!</strong> Esta acción no se puede deshacer.
+                </div>
+                <p>¿Estás seguro de eliminar la cuadrilla?</p>
+                <div class="card">
+                    <div class="card-body">
+                        <h6>{{ team.nombre }}</h6>
+                        <p class="mb-1"><strong>Área:</strong> {{ team.area|title if team.area else 'Sin área' }}</p>
+                        <p class="mb-0"><strong>Usuarios asignados:</strong> {{ usuarios_por_cuadrilla.get(team.id, [])|length }}</p>
+                    </div>
+                </div>
+                {% set usuarios_team = usuarios_por_cuadrilla.get(team.id, []) %}
+                {% if usuarios_team %}
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Hay {{ usuarios_team|length }} usuario(s) en esta cuadrilla. 
+                    Serán asignados a "Sin cuadrilla".
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_cuadrilla', team_id=team.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar Cuadrilla</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modales para cada usuario (fuera de la tabla) -->
+{% for user in usuarios %}
+<!-- Modal para editar usuario -->
+<div class="modal fade" id="modalEditarUsuario{{ user.id }}" tabindex="-1" 
+     aria-labelledby="modalEditarUsuarioLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalEditarUsuarioLabel{{ user.id }}">
+                    <i class="fas fa-user-edit me-2"></i>Editar Usuario: {{ user.username }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.actualizar_usuario', user_id=user.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="nombre{{ user.id }}" class="form-label">Nombre Completo *</label>
+                            <input type="text" name="nombre" id="nombre{{ user.id }}" 
+                                   class="form-control" value="{{ user.nombre }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="username{{ user.id }}" class="form-label">Nombre de Usuario *</label>
+                            <input type="text" name="username" id="username{{ user.id }}" 
+                                   class="form-control" value="{{ user.username }}" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="password{{ user.id }}" class="form-label">
+                                Nueva Contraseña <small class="text-muted">(Dejar en blanco para no cambiar)</small>
+                            </label>
+                            <div class="input-group">
+                                <input type="password" name="password" id="password{{ user.id }}" 
+                                       class="form-control" placeholder="Nueva contraseña">
+                                <button type="button" class="btn btn-outline-secondary" 
+                                        onclick="togglePassword('password{{ user.id }}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="role{{ user.id }}" class="form-label">Rol *</label>
+                            <select name="role" id="role{{ user.id }}" class="form-select" required>
+                                <option value="">-- Selecciona un rol --</option>
+                                <option value="cuadrilla" {% if user.role == 'cuadrilla' %}selected{% endif %}>👷 Cuadrilla (Operador)</option>
+                                <option value="jefe_area" {% if user.role == 'jefe_area' %}selected{% endif %}>👨‍💼 Jefe de Área</option>
+                                <option value="director" {% if user.role == 'director' %}selected{% endif %}>👔 Director de Área</option>
+                                <option value="supervisor" {% if user.role == 'supervisor' %}selected{% endif %}>👁️ Supervisor</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>🔧 Administrador</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Campo Área para TODOS los usuarios -->
+                        <div class="col-md-6 mb-3">
+                            <label for="area{{ user.id }}" class="form-label">Área/Departamento</label>
+                            <select name="area" id="area{{ user.id }}" class="form-select">
+                                <option value="">-- Selecciona un área --</option>
+                                <option value="agua" {% if user.area == 'agua' %}selected{% endif %}>💧 Agua Potable y Drenaje</option>
+                                <option value="aseo" {% if user.area == 'aseo' %}selected{% endif %}>🗑️ Aseo Público</option>
+                                <option value="alumbrado" {% if user.area == 'alumbrado' %}selected{% endif %}>💡 Alumbrado Público</option>
+                                <option value="parques" {% if user.area == 'parques' %}selected{% endif %}>🌳 Parques y Jardines</option>
+                                <option value="ecologia" {% if user.area == 'ecologia' %}selected{% endif %}>🌍 Ecología</option>
+                                <option value="seguridad" {% if user.area == 'seguridad' %}selected{% endif %}>👮 Seguridad Pública</option>
+                                <option value="obras" {% if user.area == 'obras' %}selected{% endif %}>🏗️ Obras Públicas</option>
+                                <option value="bomberos" {% if user.area == 'bomberos' %}selected{% endif %}>🚒 Bomberos</option>
+                                <option value="general" {% if user.area == 'general' %}selected{% endif %}>🔧 General/Mantenimiento</option>
+                                <option value="supervision" {% if user.area == 'supervision' %}selected{% endif %}>👁️ Supervisión</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="team_id{{ user.id }}" class="form-label">Cuadrilla</label>
+                            <select name="team_id" id="team_id{{ user.id }}" class="form-select">
+                                <option value="">-- Sin cuadrilla --</option>
+                                {% for team in all_teams %}
+                                <option value="{{ team.id }}" {% if user.team_id == team.id %}selected{% endif %}>
+                                    👥 {{ team.nombre }}
+                                    {% if team.area %}
+                                    <small class="text-muted">({{ team.area|title }})</small>
+                                    {% endif %}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="telegram_id{{ user.id }}" class="form-label">Telegram ID</label>
+                            <input type="text" name="telegram_id" id="telegram_id{{ user.id }}" 
+                                   class="form-control" value="{{ user.telegram_id or '' }}" 
+                                   placeholder="Ej: 123456789">
+                            <small class="form-text">
+                                {% if user.telegram_id %}
+                                <i class="fab fa-telegram text-success"></i> Usuario vinculado a Telegram
+                                {% else %}
+                                <i class="fab fa-telegram text-danger"></i> Sin vincular
+                                {% endif %}
+                            </small>
+                        </div>
+                        
+                        <div class="col-12 mb-3">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <strong>Fecha de creación:</strong> 
+                                {% if user.created_at %}
+                                    {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para eliminar usuario -->
+<div class="modal fade" id="modalEliminarUsuario{{ user.id }}" tabindex="-1" 
+     aria-labelledby="modalEliminarUsuarioLabel{{ user.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalEliminarUsuarioLabel{{ user.id }}">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div>
+                        <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
+                    </div>
+                </div>
+                <p>¿Estás seguro de que deseas eliminar al usuario?</p>
+                <div class="card border-danger">
+                    <div class="card-body">
+                        <h6 class="card-title">{{ user.nombre }}</h6>
+                        <p class="card-text mb-1"><strong>Usuario:</strong> {{ user.username }}</p>
+                        <p class="card-text mb-1"><strong>Rol:</strong> {{ user.role|title }}</p>
+                        {% if user.team %}
+                        <p class="card-text mb-0"><strong>Cuadrilla:</strong> {{ user.team.nombre }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </button>
+                <form method="POST" action="{{ url_for('admin.eliminar_usuario', user_id=user.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% block scripts %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+// Mostrar/ocultar campo de área según rol - ELIMINADA LA RESTRICCIÓN
+document.getElementById('role').addEventListener('change', function() {
+    // El campo área siempre está visible ahora
+    // Solo actualizar si necesitas algo específico
+    const areaSelect = document.getElementById('area-select');
+    if (areaSelect) {
+        // Opcional: marcar como requerido si quieres
+        areaSelect.required = this.value !== 'admin'; // Ejemplo: admin no necesita área
+    }
+});
+
+// Función para mostrar/ocultar contraseña
+function togglePassword(inputId) {
+    const input = document.getElementById(inputId);
+    const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+    input.setAttribute('type', type);
+    
+    // Cambiar icono del botón
+    const button = input.nextElementSibling;
+    const icon = button.querySelector('i');
+    if (type === 'text') {
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+
+// Función para mostrar/ocultar área en modales de edición - SIMPLIFICADA
+function toggleAreaField(userId, role) {
+    // Ahora el área siempre es visible para todos
+    const areaField = document.querySelector('.area-field-' + userId);
+    if (areaField) {
+        areaField.style.display = 'block'; // Siempre visible
+    }
+}
+
+// Inicializar DataTable cuando se carga la página
+$(document).ready(function() {
+    // Inicializar DataTable para búsqueda y paginación
+    const table = $('#tablaUsuarios').DataTable({
+        "language": {
+            "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json"
+        },
+        "pageLength": 10,
+        "lengthMenu": [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+        "order": [[0, "desc"]],
+        "responsive": true,
+        "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>rt<"row"<"col-sm-12 col-md-6"i><"col-sm-12 col-md-6"p>>',
+        "initComplete": function() {
+            // Agregar búsqueda personalizada
+            $('#searchInput').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+        }
+    });
+    
+    // Inicializar tooltips de Bootstrap 5
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Estilos CSS personalizados
+const style = document.createElement('style');
+style.textContent = `
+    .card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .badge {
+        font-size: 0.85em;
+        padding: 0.4em 0.8em;
+    }
+    
+    .table th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85em;
+        letter-spacing: 0.5px;
+        background-color: #f8f9fa;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .modal-content {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .input-group-text {
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .d-flex.gap-2 {
+            flex-direction: column;
+            gap: 10px !important;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .modal-dialog {
+            margin: 1rem;
+        }
+    }
+    
+    .telegram-connected {
+        color: #0088cc;
+        font-weight: 500;
+    }
+    
+    .telegram-disconnected {
+        color: #dc3545;
+        font-weight: 500;
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}
+
+{% endblock %}

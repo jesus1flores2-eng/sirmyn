@@ -1,0 +1,445 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Tarjeta de Panel de Control -->
+<div class="card border-0 shadow-lg mb-4">
+    <div class="card-header bg-white py-3">
+        <h4 class="mb-0 text-primary">
+            <i class="fas fa-sliders-h me-2"></i> Panel de Control
+        </h4>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-3">
+            <a href="{{ url_for('admin.gestionar_status') }}" class="btn btn-outline-primary btn-icon">
+                <i class="fas fa-clipboard-check fa-xl"></i>
+                <span class="ms-2">Estados</span>
+            </a>
+            <a href="{{ url_for('admin.gestionar_cuadrillas') }}" class="btn btn-outline-primary btn-icon">
+                <i class="fas fa-users-gear fa-xl"></i>
+                <span class="ms-2">Cuadrillas</span>
+            </a>
+
+            <a href="{{ url_for('inteligencia.dashboard') }}" class="btn btn-outline-success btn-icon">
+        <i class="fas fa-brain fa-xl"></i>
+        <span class="ms-2">Centro de Inteligencia</span>
+    </a>
+</div>
+        </div>
+    </div>
+</div>
+
+<!-- Sección de Filtros -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <form method="get" class="row g-3 align-items-end">
+            <!-- Filtro Tipo -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Tipo</label>
+                <select name="tipo" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for tipo in tipos_disponibles %}
+                        <option value="{{ tipo }}" {% if tipo == tipo_seleccionado %}selected{% endif %}>{{ tipo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Subtipo -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Subtipo</label>
+                <select name="subtipo" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for subtipo in subtipos_disponibles %}
+                        <option value="{{ subtipo }}" {% if subtipo == subtipo_seleccionado %}selected{% endif %}>{{ subtipo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Localidad -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Localidad</label>
+                <select name="localidad" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todas</option>
+                    {% for localidad in localidades_disponibles %}
+                        <option value="{{ localidad }}" {% if localidad == localidad_seleccionada %}selected{% endif %}>{{ localidad }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Cuadrilla -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Cuadrilla</label>
+                <select name="team_id" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todas</option>
+                    {% for id, nombre in cuadrillas_disponibles %}
+                        <option value="{{ id }}" {% if id == team_id_seleccionado %}selected{% endif %}>{{ nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Filtro Estado -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Estado</label>
+                <select name="status_id" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for id, descripcion in estados_disponibles %}
+                        <option value="{{ id }}" {% if id == status_id_seleccionado %}selected{% endif %}>{{ descripcion }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <!-- Botón Filtrar -->
+            <div class="col-md-1 d-grid">
+                <button type="submit" class="btn btn-dark btn-sm">
+                    <i class="fas fa-filter me-1"></i> Filtrar
+                </button>
+            </div>
+            
+            <!-- Botón Exportar -->
+            <div class="col-md-1 d-grid">
+                <a href="{{ url_for('admin.descargar_excel', 
+                    tipo=tipo_seleccionado,
+                    subtipo=subtipo_seleccionado,
+                    localidad=localidad_seleccionada,
+                    team_id=team_id_seleccionado,
+                    status_id=status_id_seleccionado) }}" 
+                    class="btn btn-success btn-sm">
+                    <i class="fas fa-file-excel me-1"></i> Exportar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tabla de Reportes -->
+<div class="card border-0 shadow">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-borderless mb-0" id="reportsTable">
+                <thead class="text-white" style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);">
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>Fecha</th>
+                        <th>Reportante</th>
+                        <th>Tipo/Subtipo</th>
+                        <th>Ubicación</th>
+                        <th>Descripción</th>
+                        <th>Evidencias</th>
+                        <th>Cuadrilla</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="border-top-0">
+                    {% for reporte in reportes %}
+                    <tr class="border-bottom">
+                        <td class="ps-4 fw-bold">{{ reporte.id }}</td>
+                        <td>{{ reporte.timestamp|localtime if reporte.timestamp else '—' }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-user-circle me-2 text-muted"></i>
+                                <div>
+                                    <div class="fw-bold">{{ reporte.reportante }}</div>
+                                    <small class="text-muted">{{ reporte.telefono }}</small>
+                                    {% if reporte.numero_cuenta %}
+                                    <div class="small">Cuenta: {{ reporte.numero_cuenta }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info bg-opacity-10 text-info">{{ reporte.tipo }}</span>
+                            <div class="small">{{ reporte.subtipo }}</div>
+                        </td>
+                        <td>
+                            <div>{{ reporte.calle }} {{ reporte.numero or '' }}</div>
+                            <small class="text-muted">{{ reporte.localidad }}</small>
+                            {% if reporte.entre_calles %}
+                            <div class="small">Entre: {{ reporte.entre_calles }}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- Descripción del problema -->
+                            <div class="problem-description">
+                                {{ reporte.descripcion_problema or '—' }}
+                            </div>
+                            {% if reporte.observaciones %}
+                            <div class="small text-muted mt-1">
+                                <strong>Observaciones:</strong> {{ reporte.observaciones }}
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <!-- ==================== EVIDENCIA DEL USUARIO ==================== -->
+                            {% if reporte.evidencia %}
+                                {% set evidencia_completa = reporte.evidencia %}
+                                {% set ext = evidencia_completa.split('.')[-1]|lower %}
+        
+                                {# URL correcta con carpeta incluida #}
+                                {% set url = url_for('admin.uploaded_file', filename=evidencia_completa) %}
+        
+                                <div class="mb-2">
+                                    <a href="{{ url }}" target="_blank" class="evidence-link text-decoration-none">
+                                        <i class="fas fa-paperclip me-1"></i>
+                                        <span class="fw-medium">
+                                            {% if ext in ['jpg','jpeg','png','gif'] %}
+                                                📸 Ver imagen
+                                            {% elif ext in ['mp4','mov','avi'] %}
+                                                🎬 Ver video
+                                            {% else %}
+                                                📎 Descargar
+                                            {% endif %}
+                                        </span>
+                                    </a>
+                                    <div class="small text-muted mt-1">
+                                        {{ evidencia_completa }}
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+    
+                            <!-- ==================== SEPARADOR VISUAL ==================== -->
+                            {% if reporte.evidencia and reporte.evidencia_cuadrilla %}
+                                <hr class="my-2">
+                            {% endif %}
+    
+                            <!-- ==================== EVIDENCIA DE CUADRILLA ==================== -->
+                            {% if reporte.evidencia_cuadrilla %}
+                                <div class="mt-2">
+                                    {% set evidencias_cuadrilla = reporte.evidencia_cuadrilla.split(',') %}
+                                    {% for evidencia in evidencias_cuadrilla %}
+                                        {% if evidencia.strip() %}
+                                            {% set evidencia_path = evidencia.strip() %}
+                                            <div class="mb-1">
+                                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ evidencia_path) }}" 
+                                                   target="_blank" class="evidence-link text-decoration-none">
+                                                    <i class="fas fa-hard-hat me-1"></i>
+                                                    <span class="fw-medium">Evidencia cuadrilla {{ loop.index }}</span>
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+    
+                            <!-- ==================== MATERIALES UTILIZADOS ==================== -->
+                            {% if reporte.materiales_utilizados %}
+                                <div class="mt-2">
+                                    {% if '/' in reporte.materiales_utilizados or '.' in reporte.materiales_utilizados %}
+                                        {% set materiales_path = reporte.materiales_utilizados.split('/')[-1] %}
+                                        <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ materiales_path) }}" 
+                                           target="_blank" class="evidence-link text-decoration-none">
+                                            <i class="fas fa-boxes me-1"></i>
+                                            <span class="fw-medium">Materiales utilizados</span>
+                                        </a>
+                                    {% else %}
+                                        <div class="small text-muted">
+                                            <i class="fas fa-boxes me-1"></i>
+                                            <strong>Materiales:</strong> {{ reporte.materiales_utilizados }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div>{{ reporte.cuadrilla or '—' }}</div>
+                            <form method="post" action="{{ url_for('admin.asignar_cuadrilla', report_id=reporte.id) }}" class="mt-1">
+                                <select name="team_id" class="form-select form-select-sm">
+                                    <option value="">Reasignar...</option>
+                                    {% for id, nombre in cuadrillas_disponibles %}
+                                        <option value="{{ id }}">{{ nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-primary w-100 mt-1">
+                                    <i class="fas fa-save"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if reporte.estado == 'Finalizado' %}bg-success
+                                {% elif reporte.estado == 'Completado' %}bg-success
+                                {% elif reporte.estado == 'En proceso' %}bg-warning text-dark
+                                {% elif reporte.estado == 'En revisión' %}bg-info text-dark
+                                {% elif reporte.estado == 'Asignado' %}bg-primary
+                                {% elif reporte.estado == 'Pendiente' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %}">
+                                {{ reporte.estado or '—' }}
+                            </span>
+                            <form method="post" action="{{ url_for('admin.asignar_estado', reporte_id=reporte.id) }}" class="mt-1">
+                                <select name="status_id" class="form-select form-select-sm">
+                                    <option value="">Cambiar...</option>
+                                    {% for id, descripcion in estados_disponibles %}
+                                        <option value="{{ id }}">{{ descripcion }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-outline-success w-100 mt-1">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+    <div class="d-flex flex-column gap-1">
+        <!-- Botón: Ver historial -->
+        <a href="{{ url_for('admin.ver_historial', reporte_id=reporte.id) }}" 
+           class="btn btn-sm btn-outline-dark" 
+           data-bs-toggle="tooltip" 
+           title="Ver historial">
+            <i class="fas fa-history"></i>
+        </a>
+        
+        <!-- 🔥 NUEVO BOTÓN: Probar notificaciones -->
+        <form method="post" action="{{ url_for('admin.test_notificaciones_reporte', reporte_id=reporte.id) }}" 
+              style="display: inline;">
+            <button type="submit" class="btn btn-sm btn-info w-100" 
+                    data-bs-toggle="tooltip" 
+                    title="Probar envío de notificaciones iniciales"
+                    onclick="return confirm('¿Reenviar notificaciones iniciales para reporte #{{ reporte.id }}?\\n\\nTipo: {{ reporte.tipo }}\\nSubtipo: {{ reporte.subtipo }}\\n\\nSe enviarán mensajes de prueba a:\\n• Jefe Técnico (Agua)\\n• Director (otros deptos)\\n• Jefe Comercial (si es desperdicio)')">
+                <i class="fas fa-bell"></i>
+            </button>
+        </form>
+        
+        <!-- Botón: Reenviar a validación (SOLO si hay evidencia de cuadrilla y no está finalizado) -->
+        {% if reporte.evidencia_cuadrilla and reporte.estado != 'Finalizado' and reporte.estado != 'Completado' %}
+            <form method="post" action="{{ url_for('admin.reenviar_validacion', reporte_id=reporte.id) }}" 
+                  style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-warning w-100" 
+                        data-bs-toggle="tooltip" 
+                        title="Reenviar a validación del supervisor">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+            
+            <!-- Botón: Validar manualmente -->
+            <form method="post" action="{{ url_for('admin.validar_manual', reporte_id=reporte.id) }}" 
+                  style="display: inline;">
+                <button type="submit" class="btn btn-sm btn-success w-100" 
+                        data-bs-toggle="tooltip" 
+                        title="Marcar como validado manualmente">
+                    <i class="fas fa-check-circle"></i>
+                </button>
+            </form>
+        {% endif %}
+        
+        <!-- Botón: Asignar por defecto -->
+        {% if not reporte.team_id or not reporte.status_id %}
+            <form method="post" action="{{ url_for('admin.asignar_por_defecto', report_id=reporte.id) }}">
+                <button type="submit" class="btn btn-sm btn-warning w-100" 
+                        data-bs-toggle="tooltip" 
+                        title="Asignar por defecto">
+                    <i class="fas fa-magic"></i>
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</td>
+                                
+                                <!-- Botón: Reenviar a validación (SOLO si hay evidencia de cuadrilla y no está finalizado) -->
+                                {% if reporte.evidencia_cuadrilla and reporte.estado != 'Finalizado' and reporte.estado != 'Completado' %}
+                                    <form method="post" action="{{ url_for('admin.reenviar_validacion', reporte_id=reporte.id) }}" 
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-warning w-100" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Reenviar a validación del supervisor">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- Botón: Validar manualmente -->
+                                    <form method="post" action="{{ url_for('admin.validar_manual', reporte_id=reporte.id) }}" 
+                                          style="display: inline;">
+                                        <button type="submit" class="btn btn-sm btn-success w-100" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Marcar como validado manualmente">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                
+                                <!-- Botón: Asignar por defecto -->
+                                {% if not reporte.team_id or not reporte.status_id %}
+                                    <form method="post" action="{{ url_for('admin.asignar_por_defecto', report_id=reporte.id) }}">
+                                        <button type="submit" class="btn btn-sm btn-warning w-100" 
+                                                data-bs-toggle="tooltip" 
+                                                title="Asignar por defecto">
+                                            <i class="fas fa-magic"></i>
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1/13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Verificar si DataTable ya está inicializado y destruirlo primero
+    if ($.fn.DataTable.isDataTable('#reportsTable')) {
+        $('#reportsTable').DataTable().destroy();
+    }
+    
+    // Inicializar DataTables
+    var table = $('#reportsTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json',
+            lengthMenu: "Mostrar _MENU_ reportes por página",
+            zeroRecords: "No se encontraron reportes",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ reportes",
+            infoEmpty: "No hay reportes disponibles",
+            infoFiltered: "(filtrados de _MAX_ reportes totales)",
+            paginate: {
+                first: "Primero",
+                last: "Último",
+                next: "Siguiente",
+                previous: "Anterior"
+            }
+        },
+        responsive: true,
+        dom: '<"top"l>rt<"bottom"ip><"clear">',
+        pageLength: 25,
+        order: [[1, 'desc']],
+        searching: false,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        columnDefs: [
+            { responsivePriority: 1, targets: 0 }, // ID
+            { responsivePriority: 2, targets: 1 }, // Fecha
+            { responsivePriority: 3, targets: 2 }, // Reportante
+            { responsivePriority: 4, targets: 5 }, // Descripción
+            { responsivePriority: 5, targets: 9 }  // Acciones
+        ]
+    });
+    
+    // Inicializar tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip({
+        trigger: 'hover',
+        placement: 'top'
+    });
+    
+    // Función para confirmar antes de reenviar a validación
+    $('form[action*="reenviar_validacion"] button').on('click', function(e) {
+        if (!confirm('¿Estás seguro de reenviar este reporte a validación del supervisor?')) {
+            e.preventDefault();
+        }
+    });
+    
+    // Función para confirmar antes de validar manualmente
+    $('form[action*="validar_manual"] button').on('click', function(e) {
+        if (!confirm('¿Estás seguro de marcar este reporte como validado manualmente?\n\nEsta acción cambiará el estado a "Finalizado" sin notificación al supervisor.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

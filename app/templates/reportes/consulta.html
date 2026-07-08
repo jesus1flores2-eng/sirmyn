@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include '_navbar.html' %}
+
+<div class="container mt-4">
+  <h2>Consulta del Reporte</h2>
+
+  <p><strong>ID del Reporte:</strong> {{ assignment.report.id }}</p>
+  <p><strong>Teléfono:</strong> {{ assignment.report.telefono }}</p>
+  <p><strong>Reportante:</strong> {{ assignment.report.reportante }}</p>
+  <p><strong>Tipo:</strong> {{ assignment.report.tipo }}</p>
+  <p><strong>Subtipo:</strong> {{ assignment.report.subtipo }}</p>
+  <p><strong>Calle:</strong> {{ assignment.report.calle }}</p>
+  <p><strong>Entre Calles:</strong> {{ assignment.report.entre_calles }}</p>
+  <p><strong>Localidad:</strong> {{ assignment.report.localidad }}</p>
+  <p><strong>Descripción del Problema:</strong> {{ assignment.report.descripcion_problema or 'No disponible' }}</p>
+
+  <p><strong>Estado del Reporte:</strong> {{ assignment.status.nombre if assignment.status else 'No asignado' }}</p>
+  <p><strong>Cuadrilla Asignada:</strong> {{ assignment.team.nombre if assignment.team else 'No asignada' }}</p>
+
+  <p><strong>Evidencia del Usuario:</strong>
+    {% if assignment.report.evidencia %}
+      <a href="{{ url_for('static', filename=assignment.report.evidencia.split('static/')[-1]) }}" target="_blank">Ver evidencia</a>
+    {% else %}
+      No disponible.
+    {% endif %}
+  </p>
+
+  <p><strong>Evidencia de la Cuadrilla:</strong>
+    {% if assignment.evidencia_cuadrilla %}
+      <a href="{{ url_for('static', filename=assignment.evidencia_cuadrilla.split('static/')[-1]) }}" target="_blank">Ver evidencia</a>
+    {% else %}
+      No disponible.
+    {% endif %}
+  </p>
+
+  <p><strong>Materiales Utilizados:</strong> {{ assignment.materiales_utilizados or 'No especificado' }}</p>
+  <p><strong>Observaciones:</strong> {{ assignment.observaciones or 'Sin observaciones' }}</p>
+
+  <hr>
+
+  {% if assignment.status and assignment.status.nombre not in ['Terminado', 'Resuelto'] %}
+    <h5>Reasignar reporte a otra cuadrilla</h5>
+    <form method="POST" action="{{ url_for('reportes.reasignar_consulta', assignment_id=assignment.id) }}">
+      <div class="mb-3">
+        <label for="new_team_id" class="form-label">Selecciona nueva cuadrilla:</label>
+        <select name="new_team_id" class="form-select" required>
+          <option value="">-- Seleccionar --</option>
+          {% for team in all_teams %}
+            {% if team.id != assignment.team_id %}
+              <option value="{{ team.id }}">{{ team.nombre }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="mb-3">
+        <label for="motivo" class="form-label">Motivo de la reasignación:</label>
+        <textarea name="motivo" class="form-control" rows="3" required></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-warning">Reasignar</button>
+    </form>
+  {% else %}
+    <p class="text-muted">Este reporte ya fue marcado como <strong>{{ assignment.status.nombre }}</strong>, no se puede reasignar.</p>
+  {% endif %}
+</div>
+
+{% endblock %}

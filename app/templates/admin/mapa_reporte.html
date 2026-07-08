@@ -1,0 +1,636 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="card border-0 shadow">
+        <div class="card-header bg-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-map-marked-alt me-2"></i>
+                    Ubicación del Reporte #{{ reporte.id }}
+                </h4>
+                <div>
+                    <button id="btn-editar-ubicacion" class="btn btn-warning me-2" onclick="toggleEdit()">
+                        <i class="fas fa-edit me-1"></i> Editar Ubicación
+                    </button>
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <!-- Información del reporte -->
+                <div class="col-md-4 p-4 border-end bg-light">
+                    <h5 class="border-bottom pb-2 mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Detalles del reporte
+                    </h5>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Información básica</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th class="text-muted" style="width: 120px;">Folio:</th>
+                                <td><span class="badge bg-primary">#{{ reporte.id }}</span></td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Reportante:</th>
+                                <td>{{ reporte.reportante }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Teléfono:</th>
+                                <td>{{ reporte.telefono }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Tipo:</th>
+                                <td>
+                                    <span class="badge bg-info">{{ reporte.tipo }}</span>
+                                    <div class="small">{{ reporte.subtipo }}</div>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Ubicación</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th class="text-muted">Dirección:</th>
+                                <td>{{ reporte.calle }} #{{ reporte.numero }}</td>
+                            </tr>
+                            <tr>
+                                <th class="text-muted">Localidad:</th>
+                                <td>{{ reporte.localidad.nombre if reporte.localidad else 'N/A' }}</td>
+                            </tr>
+                            {% if reporte.entre_calles %}
+                            <tr>
+                                <th class="text-muted">Entre calles:</th>
+                                <td>{{ reporte.entre_calles }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Coordenadas</h6>
+                        <div class="card bg-white border">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <div id="coordenada-lat" class="h5 mb-1">{{ "%.6f"|format(latitud) }}</div>
+                                            <small class="text-muted">Latitud</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center">
+                                            <div id="coordenada-lng" class="h5 mb-1">{{ "%.6f"|format(longitud) }}</div>
+                                            <small class="text-muted">Longitud</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="coordenadas-editadas" class="mt-3 text-center d-none">
+                                    <small class="text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Coordenadas modificadas (no guardadas)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">Estado actual</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge 
+                                {% if estado == 'Finalizado' %}bg-success
+                                {% elif estado == 'Completado' %}bg-success
+                                {% elif estado == 'En proceso' %}bg-warning text-dark
+                                {% elif estado == 'En revisión' %}bg-info text-dark
+                                {% elif estado == 'Asignado' %}bg-primary
+                                {% elif estado == 'Pendiente' %}bg-danger
+                                {% else %}bg-secondary
+                                {% endif %} fs-6">
+                                {{ estado or 'Sin estado' }}
+                            </span>
+                            <div class="small text-muted">Cuadrilla: {{ cuadrilla or 'Sin asignar' }}</div>
+                        </div>
+                    </div>
+                    
+                    <div id="acciones-normales">
+                        <h6 class="text-muted mb-2">Acciones</h6>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" onclick="centrarMapa()">
+                                <i class="fas fa-crosshairs me-1"></i> Centrar mapa
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="copiarCoordenadas()">
+                                <i class="fas fa-copy me-1"></i> Copiar coordenadas
+                            </button>
+                            <a href="https://www.google.com/maps?q={{ latitud }},{{ longitud }}" 
+                               target="_blank" id="btn-google-maps" class="btn btn-outline-success">
+                                <i class="fab fa-google me-1"></i> Ver en Google Maps
+                            </a>
+                            <a href="https://www.openstreetmap.org/?mlat={{ latitud }}&mlon={{ longitud }}&zoom=17" 
+                               target="_blank" id="btn-openstreetmap" class="btn btn-outline-dark">
+                                <i class="fas fa-external-link-alt me-1"></i> Ver en OpenStreetMap
+                            </a>
+                            <a href="{{ url_for('admin.ver_historial', reporte_id=reporte.id) }}" 
+                               class="btn btn-outline-info">
+                                <i class="fas fa-history me-1"></i> Ver historial
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div id="acciones-edicion" class="d-none">
+                        <h6 class="text-muted mb-2">Acciones de Edición</h6>
+                        <div class="alert alert-warning">
+                            <small>
+                                <i class="fas fa-info-circle me-1"></i>
+                                Modo edición activado. Arrastra el marcador verde a la nueva ubicación.
+                            </small>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success" onclick="guardarUbicacion()">
+                                <i class="fas fa-save me-1"></i> Guardar nueva ubicación
+                            </button>
+                            <button class="btn btn-danger" onclick="cancelarEdicion()">
+                                <i class="fas fa-times me-1"></i> Cancelar edición
+                            </button>
+                            <button class="btn btn-outline-primary" onclick="buscarDireccion()">
+                                <i class="fas fa-search me-1"></i> Buscar dirección
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mapa -->
+                <div class="col-md-8">
+                    <div id="map" style="height: 100vh; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Leaflet CSS y JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<!-- Leaflet Fullscreen -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.css" />
+<script src="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
+
+<!-- Leaflet Geocoder para buscar direcciones -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+<script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+<!-- SweetAlert2 para mejores alertas -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+// Variables globales
+var map;
+var marker;
+var circle;
+var geocoder;
+var isEditing = false;
+var originalLat = {{ latitud }};
+var originalLng = {{ longitud }};
+var nuevaLat = {{ latitud }};
+var nuevaLng = {{ longitud }};
+
+$(document).ready(function() {
+    // Inicializar mapa
+    initMap();
+});
+
+function initMap() {
+    // Crear mapa centrado en las coordenadas del reporte
+    map = L.map('map').setView([{{ latitud }}, {{ longitud }}], 17);
+    
+    // Agregar capa de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    // Agregar control de pantalla completa
+    L.control.fullscreen({
+        position: 'topleft',
+        title: 'Pantalla completa',
+        titleCancel: 'Salir de pantalla completa',
+        forceSeparateButton: true
+    }).addTo(map);
+    
+    // Agregar control de geocoder
+    geocoder = L.Control.geocoder({
+        position: 'topright',
+        placeholder: 'Buscar dirección...',
+        defaultMarkGeocode: false,
+        geocoder: new L.Control.Geocoder.Nominatim()
+    }).on('markgeocode', function(e) {
+        var center = e.geocode.center;
+        map.setView(center, 17);
+        if (marker) {
+            marker.setLatLng(center);
+            if (isEditing) {
+                actualizarCoordenadas(center.lat, center.lng);
+            }
+        }
+    }).addTo(map);
+    
+    // Crear el marcador
+    createMarker([{{ latitud }}, {{ longitud }}]);
+    
+    // Agregar círculo de precisión (50 metros)
+    circle = L.circle([{{ latitud }}, {{ longitud }}], {
+        color: '#dc3545',
+        fillColor: '#dc3545',
+        fillOpacity: 0.1,
+        radius: 50
+    }).addTo(map).bindPopup('Radio aproximado: 50 metros');
+    
+    // Agregar control de escala
+    L.control.scale({ imperial: false }).addTo(map);
+    
+    // Configurar evento para clics en el mapa
+    map.on('click', function(e) {
+        if (isEditing) {
+            marker.setLatLng(e.latlng);
+            actualizarCoordenadas(e.latlng.lat, e.latlng.lng);
+        }
+    });
+}
+
+function createMarker(latlng) {
+    // Icono normal (rojo)
+    var reportIcon = L.divIcon({
+        className: 'report-marker',
+        html: '<div style="background-color: #dc3545; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">#{{ reporte.id }}</div>',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    });
+    
+    // Crear marcador
+    marker = L.marker(latlng, {
+        icon: reportIcon,
+        draggable: false,
+        autoPan: true
+    }).addTo(map);
+    
+    // Configurar popup
+    actualizarPopup();
+    
+    // Evento cuando se mueve el marcador
+    marker.on('dragend', function(e) {
+        var newLatLng = marker.getLatLng();
+        actualizarCoordenadas(newLatLng.lat, newLatLng.lng);
+    });
+}
+
+function actualizarPopup() {
+    var contenido = isEditing ? `
+        <div style="min-width: 250px;">
+            <h6 class="mb-1">Reporte #{{ reporte.id }} - Editando</h6>
+            <p class="mb-1"><strong>Arrastra el marcador a la nueva ubicación</strong></p>
+            <p class="mb-1 small">Lat: ${nuevaLat.toFixed(6)}</p>
+            <p class="mb-1 small">Lng: ${nuevaLng.toFixed(6)}</p>
+            <div class="alert alert-info p-2 mb-2">
+                <small><i class="fas fa-info-circle"></i> También puedes hacer clic en el mapa</small>
+            </div>
+        </div>
+    ` : `
+        <div style="min-width: 200px;">
+            <h6 class="mb-1">Reporte #{{ reporte.id }}</h6>
+            <p class="mb-1"><strong>{{ reporte.calle }} #{{ reporte.numero }}</strong></p>
+            <p class="mb-1 small">Lat: ${originalLat.toFixed(6)}</p>
+            <p class="mb-1 small">Lng: ${originalLng.toFixed(6)}</p>
+            <p class="mb-1 small">Tipo: {{ reporte.tipo }}</p>
+            <p class="mb-2 small">Estado: <span class="badge bg-primary">${getEstadoBadge('{{ estado }}')}</span></p>
+        </div>
+    `;
+    
+    marker.bindPopup(contenido);
+    
+    if (!isEditing) {
+        marker.openPopup();
+    }
+}
+
+function toggleEdit() {
+    isEditing = !isEditing;
+    
+    if (isEditing) {
+        // Habilitar modo edición
+        marker.dragging.enable();
+        marker.options.draggable = true;
+        
+        // Cambiar a icono verde editable
+        marker.setIcon(L.divIcon({
+            className: 'report-marker-editable',
+            html: '<div style="background-color: #28a745; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); cursor: move;">#{{ reporte.id }}</div>',
+            iconSize: [40, 40],
+            iconAnchor: [20, 40],
+            popupAnchor: [0, -40]
+        }));
+        
+        // Mostrar acciones de edición
+        $('#acciones-normales').addClass('d-none');
+        $('#acciones-edicion').removeClass('d-none');
+        $('#btn-editar-ubicacion').html('<i class="fas fa-times me-1"></i> Cancelar Edición');
+        $('#btn-editar-ubicacion').removeClass('btn-warning').addClass('btn-danger');
+        
+        // Mostrar alerta
+        Swal.fire({
+            title: 'Modo Edición Activado',
+            text: 'Arrastra el marcador verde a la nueva ubicación. También puedes hacer clic en el mapa.',
+            icon: 'info',
+            confirmButtonText: 'Entendido',
+            timer: 3000,
+            timerProgressBar: true
+        });
+        
+    } else {
+        // Deshabilitar modo edición
+        cancelarEdicion();
+    }
+    
+    actualizarPopup();
+}
+
+function actualizarCoordenadas(lat, lng) {
+    nuevaLat = lat;
+    nuevaLng = lng;
+    
+    // Actualizar la interfaz
+    $('#coordenada-lat').text(lat.toFixed(6));
+    $('#coordenada-lng').text(lng.toFixed(6));
+    $('#coordenadas-editadas').removeClass('d-none');
+    
+    // Actualizar enlaces
+    $('#btn-google-maps').attr('href', `https://www.google.com/maps?q=${lat},${lng}`);
+    $('#btn-openstreetmap').attr('href', `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}&zoom=17`);
+    
+    // Mover el círculo
+    circle.setLatLng([lat, lng]);
+    
+    actualizarPopup();
+}
+
+function guardarUbicacion() {
+    Swal.fire({
+        title: '¿Guardar nueva ubicación?',
+        html: `
+            <div class="text-start">
+                <p><strong>Coordenadas actuales:</strong></p>
+                <p>Latitud: ${originalLat.toFixed(6)}</p>
+                <p>Longitud: ${originalLng.toFixed(6)}</p>
+                <hr>
+                <p><strong>Nuevas coordenadas:</strong></p>
+                <p>Latitud: ${nuevaLat.toFixed(6)}</p>
+                <p>Longitud: ${nuevaLng.toFixed(6)}</p>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, guardar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#dc3545'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Enviar datos al servidor
+            guardarEnServidor();
+        }
+    });
+}
+
+function guardarEnServidor() {
+    // Mostrar carga
+    Swal.fire({
+        title: 'Guardando...',
+        text: 'Actualizando ubicación en el sistema',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Enviar datos al servidor
+    $.ajax({
+        url: '{{ url_for("admin.actualizar_ubicacion", reporte_id=reporte.id) }}',
+        method: 'POST',
+        data: {
+            latitud: nuevaLat,
+            longitud: nuevaLng,
+            {% if csrf_token %}
+            csrf_token: '{{ csrf_token() }}'
+            {% endif %}
+        },
+        success: function(response) {
+            if (response.success) {
+                // Actualizar coordenadas originales
+                originalLat = nuevaLat;
+                originalLng = nuevaLng;
+                
+                // Salir del modo edición
+                toggleEdit();
+                $('#coordenadas-editadas').addClass('d-none');
+                
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: 'Ubicación actualizada correctamente',
+                    icon: 'success',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+                
+                // Registrar en el historial local
+                agregarAlHistorial();
+                
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: response.message || 'Error al guardar la ubicación',
+                    icon: 'error'
+                });
+            }
+        },
+        error: function(xhr) {
+            Swal.fire({
+                title: 'Error',
+                text: 'Error de conexión con el servidor',
+                icon: 'error'
+            });
+            console.error('Error:', xhr.responseText);
+        }
+    });
+}
+
+function agregarAlHistorial() {
+    // Aquí podrías hacer una llamada adicional para registrar en el historial
+    // o simplemente mostrar un mensaje
+    console.log('Ubicación actualizada:', nuevaLat, nuevaLng);
+}
+
+function cancelarEdicion() {
+    // Restaurar valores originales
+    marker.setLatLng([originalLat, originalLng]);
+    circle.setLatLng([originalLat, originalLng]);
+    nuevaLat = originalLat;
+    nuevaLng = originalLng;
+    
+    // Restaurar icono original
+    marker.setIcon(L.divIcon({
+        className: 'report-marker',
+        html: '<div style="background-color: #dc3545; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">#{{ reporte.id }}</div>',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    }));
+    
+    // Deshabilitar arrastre
+    marker.dragging.disable();
+    marker.options.draggable = false;
+    
+    // Actualizar interfaz
+    $('#coordenada-lat').text(originalLat.toFixed(6));
+    $('#coordenada-lng').text(originalLng.toFixed(6));
+    $('#coordenadas-editadas').addClass('d-none');
+    $('#btn-google-maps').attr('href', `https://www.google.com/maps?q=${originalLat},${originalLng}`);
+    $('#btn-openstreetmap').attr('href', `https://www.openstreetmap.org/?mlat=${originalLat}&mlon=${originalLng}&zoom=17`);
+    
+    // Cambiar botones
+    $('#acciones-normales').removeClass('d-none');
+    $('#acciones-edicion').addClass('d-none');
+    $('#btn-editar-ubicacion').html('<i class="fas fa-edit me-1"></i> Editar Ubicación');
+    $('#btn-editar-ubicacion').removeClass('btn-danger').addClass('btn-warning');
+    
+    isEditing = false;
+    actualizarPopup();
+}
+
+function centrarMapa() {
+    map.setView([originalLat, originalLng], 17);
+    marker.openPopup();
+    
+    // Animación del marcador
+    marker.setIcon(L.divIcon({
+        className: 'report-marker-pulse',
+        html: '<div style="background-color: #dc3545; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); animation: pulse 1s infinite;">#{{ reporte.id }}</div>',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+        popupAnchor: [0, -40]
+    }));
+    
+    setTimeout(() => {
+        if (!isEditing) {
+            marker.setIcon(L.divIcon({
+                className: 'report-marker',
+                html: '<div style="background-color: #dc3545; color: white; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">#{{ reporte.id }}</div>',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            }));
+        }
+    }, 1000);
+}
+
+function copiarCoordenadas() {
+    const coords = `${originalLat.toFixed(6)}, ${originalLng.toFixed(6)}`;
+    navigator.clipboard.writeText(coords).then(() => {
+        Swal.fire({
+            title: 'Copiado!',
+            text: 'Coordenadas copiadas al portapapeles',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+        });
+    }).catch(err => {
+        Swal.fire({
+            title: 'Error',
+            text: 'No se pudieron copiar las coordenadas',
+            icon: 'error'
+        });
+    });
+}
+
+function buscarDireccion() {
+    // Enfocar en el campo de búsqueda del geocoder
+    $('.leaflet-control-geocoder-form input').focus().select();
+    
+    Swal.fire({
+        title: 'Buscar Dirección',
+        text: 'Usa el buscador en la esquina superior derecha del mapa',
+        icon: 'info',
+        timer: 3000,
+        showConfirmButton: false
+    });
+}
+
+function getEstadoBadge(estado) {
+    const estados = {
+        'Finalizado': 'success',
+        'Completado': 'success',
+        'En proceso': 'warning',
+        'En revisión': 'info',
+        'Asignado': 'primary',
+        'Pendiente': 'danger'
+    };
+    
+    const color = estados[estado] || 'secondary';
+    return `<span class="badge bg-${color}">${estado}</span>`;
+}
+
+// Estilos CSS para animaciones
+var style = document.createElement('style');
+style.innerHTML = `
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+    
+    .report-marker-pulse {
+        animation: pulse 1s infinite;
+    }
+    
+    .report-marker-editable {
+        cursor: move !important;
+        z-index: 1000 !important;
+    }
+    
+    .leaflet-control-fullscreen a {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-fullscreen" viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/></svg>');
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+    
+    .leaflet-control-fullscreen a.leaflet-fullscreen-on {
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-fullscreen-exit" viewBox="0 0 16 16"><path d="M5.5 0a.5.5 0 0 1 .5.5v4A1.5 1.5 0 0 1 4.5 6h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5zm5 0a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 10 4.5v-4a.5.5 0 0 1 .5-.5zM0 10.5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 6 11.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zm10 1a1.5 1.5 0 0 1 1.5-1.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4z"/></svg>');
+    }
+    
+    .leaflet-control-geocoder-form input {
+        width: 250px !important;
+    }
+    
+    #coordenadas-editadas {
+        animation: fadeIn 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

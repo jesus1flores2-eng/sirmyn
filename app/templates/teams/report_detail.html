@@ -1,0 +1,71 @@
+{% extends 'base_cuadrillas.html' %}
+
+{% block title %}Detalle de Reporte{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Detalle del Reporte #{{ assignment.report_id }}</h2>
+
+    <!-- Información del Reporte -->
+    <div class="card mb-3">
+        <div class="card-header">Información del Reporte</div>
+        <div class="card-body">
+            <p><strong>Reportante:</strong> {{ assignment.report.reportante }}</p>
+            <p><strong>Teléfono:</strong> {{ assignment.report.telefono }}</p>
+            <p><strong>Localidad:</strong> {{ assignment.report.localidad }}</p>
+            <p><strong>Tipo:</strong> {{ assignment.report.tipo }} / {{ assignment.report.subtipo }}</p>
+            <p><strong>Descripción:</strong> {{ assignment.report.descripcion_problema }}</p>
+
+            <!-- Evidencia del Usuario -->
+            {% if assignment.report.evidencia %}
+            <p><strong>Evidencia del Usuario:</strong></p>
+            {% set ext_user = assignment.report.evidencia.rsplit('.', 1)[-1].lower() %}
+            {% if ext_user in ['mp4', 'webm', 'ogg'] %}
+            <video controls class="mb-2" style="max-width: 400px;">
+                <source src="{{ url_for('admin.archivo_publico', filename=assignment.report.evidencia) }}" type="video/{{ ext_user }}">
+                Tu navegador no soporta la reproducción de video.
+            </video>
+            {% elif ext_user in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+            <img src="{{ url_for('admin.archivo_publico', filename=assignment.report.evidencia) }}" 
+                 class="img-fluid mb-2 rounded shadow-sm" style="max-width: 400px;">
+            {% else %}
+            <p>Tipo de archivo no soportado para previsualización.</p>
+            {% endif %}
+            {% endif %}
+
+            <!-- Evidencia de la Cuadrilla -->
+            {% if assignment.evidencia_cuadrilla %}
+            <p><strong>Evidencia de la Cuadrilla:</strong></p>
+            {% set ext_team = assignment.evidencia_cuadrilla.rsplit('.', 1)[-1].lower() %}
+            {% if ext_team in ['mp4', 'webm', 'ogg'] %}
+            <video controls class="mb-2" style="max-width: 400px;">
+                <source src="{{ url_for('static', filename='evidencias/cuadrilla/' ~ assignment.evidencia_cuadrilla) }}" type="video/{{ ext_team }}">
+                Tu navegador no soporta la reproducción de video.
+            </video>
+            {% elif ext_team in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+            <img src="{{ url_for('static', filename='evidencias/cuadrilla/' ~ assignment.evidencia_cuadrilla) }}" 
+                 class="img-fluid mb-2 rounded shadow-sm" style="max-width: 400px;">
+            {% else %}
+            <p>Tipo de archivo no soportado para previsualización.</p>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Opciones de acción -->
+    <div class="card mb-3">
+        <div class="card-header">Acciones</div>
+        <div class="card-body d-flex flex-wrap gap-2">
+            <!-- Botón Subir Evidencia -->
+            <a href="{{ url_for('teams.subir_evidencia', assignment_id=assignment.id) }}" class="btn btn-success">
+                📷 Subir Evidencia
+            </a>
+
+            <!-- Botón Reasignar -->
+            <a href="{{ url_for('teams.mostrar_form_reasignar', assignment_id=assignment.id) }}" class="btn btn-warning">
+                🔄 Reasignar Reporte
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

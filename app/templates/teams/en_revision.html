@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+
+  <div class="container mt-4">
+    <h2>Reportes enviados a Revisión</h2>
+    <p>Estos reportes ya han sido enviados al Supervisor y no pueden modificarse.</p>
+
+    <div class="table-responsive mt-4">
+      <table class="table table-bordered table-striped align-middle">
+        <thead class="table-dark">
+          <tr>
+            <th>ID</th>
+            <th>Tipo</th>
+            <th>Subtipo</th>
+            <th>Localidad</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for assignment in assignments %}
+            <tr>
+              <td>{{ assignment.report.id }}</td>
+              <td>{{ assignment.report.tipo }}</td>
+              <td>{{ assignment.report.subtipo }}</td>
+              <td>{{ assignment.report.localidad }}</td>
+              <td>{{ assignment.report.timestamp|localtime if assignment.report.timestamp else '—' }}</td>
+              <td>{{ assignment.status.descripcion }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

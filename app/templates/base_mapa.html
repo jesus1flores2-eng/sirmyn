@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mapa{% endblock %}</title>
+    
+    <!-- Bootstrap mínimo -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Estilos CRÍTICOS para el mapa -->
+    <style>
+        /* RESET ABSOLUTO */
+        html, body {
+            height: 100vh !important;
+            width: 100vw !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+        }
+        
+        /* Contenedor principal */
+        .container-fluid {
+            height: 100vh !important;
+            width: 100vw !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        
+        /* Asegurar que ningún estilo de Bootstrap afecte al mapa */
+        #mapaCalor, .leaflet-container, .leaflet-tile, .leaflet-marker-icon {
+            box-sizing: content-box !important;
+            max-width: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+            transform: none !important;
+        }
+    </style>
+    
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar MUY SIMPLE -->
+    <nav class="navbar navbar-dark bg-dark py-2">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0">
+                <i class="fas fa-map-marked-alt"></i> Mapa de Calor
+            </span>
+            <a href="{{ url_for('inteligencia.dashboard') }}" class="btn btn-sm btn-light">
+                ← Volver al Dashboard
+            </a>
+        </div>
+    </nav>
+    
+    <!-- Contenido principal -->
+    <main class="container-fluid">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

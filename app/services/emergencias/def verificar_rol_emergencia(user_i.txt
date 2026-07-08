@@ -1,0 +1,44 @@
+def verificar_rol_emergencia(user_id):
+    """
+    Verifica si el usuario tiene rol de emergencia basado en la tabla users
+    """
+    try:
+        logger.info(f"🔍 Verificando rol emergencia para telegram_id: {user_id}")
+        
+        # Buscar usuario por telegram_id usando DatabaseManager
+        def query_func(session):
+            user = session.query(User).filter_by(telegram_id=user_id).first()
+            return user
+        
+        user = DatabaseManager.execute_query(query_func)
+        
+        if not user:
+            logger.info(f"❌ Usuario con telegram_id {user_id} no encontrado en BD")
+            return False
+        
+        # Áreas que se consideran de emergencia (según tu BD)
+        areas_emergencia = [
+            'bomberos',
+            'seguridad',  # Seguridad pública
+            'policia',    # Por si acaso
+            'emergencia'
+        ]
+        
+        # Verificar si el área del usuario es de emergencia
+        tiene_rol = False
+        if user.area:
+            area_lower = user.area.lower()
+            tiene_rol = any(area_emerg in area_lower for area_emerg in areas_emergencia)
+        
+        # Log para depuración
+        logger.info(f"📊 Usuario {user.nombre}: area='{user.area}', "
+                   f"telegram_id={user.telegram_id}, rol_emergencia={tiene_rol}")
+        
+        return tiene_rol
+        
+    except Exception as e:
+        logger.error(f"❌ Error verificando rol emergencia: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return False
+

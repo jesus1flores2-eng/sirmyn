@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Gestión de Estados</h1>
+
+<!-- Crear nuevo estado -->
+<form method="POST" action="{{ url_for('admin.crear_status') }}">
+  <input type="text" name="descripcion" placeholder="Descripción" required>
+  <input type="color" name="color" value="#cccccc">
+  <button type="submit">Crear Estado</button>
+</form>
+
+<hr>
+
+<!-- Listado de estados -->
+<table border="1">
+  <tr>
+    <th>ID</th>
+    <th>Descripción</th>
+    <th>Color</th>
+    <th>Acciones</th>
+  </tr>
+  {% for estado in estados %}
+  <tr>
+    <form method="POST" action="{{ url_for('admin.editar_status', id=estado.id) }}">
+      <td>{{ estado.id }}</td>
+      <td><input type="text" name="descripcion" value="{{ estado.descripcion }}"></td>
+      <td><input type="color" name="color" value="{{ estado.color }}"></td>
+      <td>
+        <button type="submit">Actualizar</button>
+    </form>
+    <form method="POST" action="{{ url_for('admin.eliminar_status', id=estado.id) }}" style="display:inline;">
+        <button type="submit" onclick="return confirm('¿Estás seguro de eliminar?')">Eliminar</button>
+    </form>
+      </td>
+  </tr>
+  {% endfor %}
+</table>
+
+<a href="{{ url_for('admin.dashboard') }}">← Volver al Dashboard</a>
+{% endblock %}
