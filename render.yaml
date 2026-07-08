@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: sirmyn
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      flask db upgrade
+    startCommand: gunicorn run:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sirmyn-db
+          property: connectionString
+      - key: FLASK_SECRET_KEY
+        sync: false
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: TELEGRAM_ADMIN_ID
+        sync: false
+      - key: SERVER_URL
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: OPERADOR_NUMERO
+        sync: false
+      - key: OSM_USER_AGENT
+        sync: false
+      - key: UPLOAD_FOLDER
+        value: uploads
+
+databases:
+  - name: sirmyn-db
+    plan: free
