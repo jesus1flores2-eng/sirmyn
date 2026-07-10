@@ -37,7 +37,32 @@
                 </td>
                 <td>
                     {% if a.materiales_utilizados %}
-                        <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
+                        {% if a.materiales_utilizados.startswith('evidencias/') %}
+                            <a href="{{ url_for('static', filename=a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
+                        {% else %}
+                            {# ✅ Para reportes antiguos: construir ruta usando el tipo del reporte #}
+                            {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
+                                {% set carpeta = 'agua_potable' %}
+                            {% elif reporte.tipo == 'Aseo público' %}
+                                {% set carpeta = 'aseo_publico' %}
+                            {% elif reporte.tipo == 'Alumbrado público' %}
+                                {% set carpeta = 'alumbrado_publico' %}
+                            {% elif reporte.tipo == 'Parques y jardines' %}
+                                {% set carpeta = 'parques_jardines' %}
+                            {% elif reporte.tipo == 'Ecología' %}
+                                {% set carpeta = 'ecologia' %}
+                            {% elif reporte.tipo == 'Seguridad pública' %}
+                                {% set carpeta = 'seguridad_publica' %}
+                            {% elif reporte.tipo == 'Obras públicas' %}
+                                {% set carpeta = 'obras_publicas' %}
+                            {% elif reporte.tipo == 'Bomberos' %}
+                                {% set carpeta = 'bomberos' %}
+                            {% else %}
+                                {% set carpeta = 'general' %}
+                            {% endif %}
+                            {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ a.materiales_utilizados %}
+                            <a href="{{ url_for('static', filename=ruta_completa) }}" target="_blank">Ver Foto</a>
+                        {% endif %}
                     {% else %}
                         — 
                     {% endif %}
@@ -45,7 +70,39 @@
                 <td>{{ a.observaciones or '—' }}</td>
                 <td>
                     {% if a.evidencia_cuadrilla %}
-                        <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ a.evidencia_cuadrilla) }}" target="_blank">Ver Foto</a>
+                        {% set evidencias = a.evidencia_cuadrilla.split(',') %}
+                        {% for ev in evidencias %}
+                            {% if ev.strip() %}
+                                {% if ev.strip().startswith('evidencias/') %}
+                                    {# Reporte nuevo: ya tiene ruta completa #}
+                                    <a href="{{ url_for('static', filename=ev.strip()) }}" target="_blank">Ver Foto {{ loop.index }}</a>
+                                {% else %}
+                                    {# Reporte antiguo: solo nombre, construir ruta #}
+                                    {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
+                                        {% set carpeta = 'agua_potable' %}
+                                    {% elif reporte.tipo == 'Aseo público' %}
+                                        {% set carpeta = 'aseo_publico' %}
+                                    {% elif reporte.tipo == 'Alumbrado público' %}
+                                        {% set carpeta = 'alumbrado_publico' %}
+                                    {% elif reporte.tipo == 'Parques y jardines' %}
+                                        {% set carpeta = 'parques_jardines' %}
+                                    {% elif reporte.tipo == 'Ecología' %}
+                                        {% set carpeta = 'ecologia' %}
+                                    {% elif reporte.tipo == 'Seguridad pública' %}
+                                        {% set carpeta = 'seguridad_publica' %}
+                                    {% elif reporte.tipo == 'Obras públicas' %}
+                                        {% set carpeta = 'obras_publicas' %}
+                                    {% elif reporte.tipo == 'Bomberos' %}
+                                        {% set carpeta = 'bomberos' %}
+                                    {% else %}
+                                        {% set carpeta = 'general' %}
+                                    {% endif %}
+                                    {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/cuadrilla/' ~ ev.strip() %}
+                                    <a href="{{ url_for('static', filename=ruta_completa) }}" target="_blank">Ver Foto {{ loop.index }}</a>
+                                {% endif %}
+                                {% if not loop.last %}<br>{% endif %}
+                            {% endif %}
+                        {% endfor %}
                     {% else %}
                         — 
                     {% endif %}

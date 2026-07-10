@@ -1,3 +1,4 @@
+# app/telegram/callbacks/dashboard.py
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from app.services.db_manager import DatabaseManager

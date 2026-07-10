@@ -1,3 +1,4 @@
+# app/telegram/callbacks/aceptacion.py
 from telegram import Update
 from telegram.ext import ContextTypes
 import logging

@@ -1,3 +1,4 @@
+# app/telegram/bot.py
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 from app.telegram.states import *
 from app.telegram.handlers.start import start, manejar_aceptacion, menu_principal_handler
@@ -8,6 +9,7 @@ from app.telegram.handlers.numero import numero_handler, duplicado_confirmacion_
 from app.telegram.handlers.descripcion import entre_calles_handler, descripcion_handler
 from app.telegram.handlers.evidencia import evidencia_handler, manejar_texto_evidencia, manejar_multimedia_evidencia, mostrar_resumen
 from app.telegram.handlers.confirmacion import confirmacion_handler
+from app.telegram.handlers.mensajes_generales import router_texto_completo
 from app.telegram.commands.cancelar import cancelar_command
 from app.telegram.commands.registrar import registrar_command, registro_confirmacion_handler
 from app.telegram.commands.estado import estado_command
@@ -17,8 +19,18 @@ from app.telegram.commands.miestado import miestado_command
 from app.telegram.commands.dashboard import dashboard_command
 from app.telegram.callbacks.aceptacion import aceptar_privacidad_callback
 from app.telegram.callbacks.presidente import presidencia_command, presidente_callback_handler_simple
+from app.telegram.callbacks.director import director_callback_handler
 from app.telegram.callbacks.dashboard import dashboard_callback_handler
 from app.telegram.callbacks.general import button_callback_handler
+# Nuevos imports para handlers de rechazo, encuesta, supervisor, usuario
+from app.telegram.callbacks.supervisor import supervisor_callback_handler, rechazo_opciones_handler
+from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
+from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
+from app.telegram.callbacks.rechazo import (
+    rechazo_motivo_handler, rechazo_descripcion_handler,
+    rechazo_evidencia_handler, rechazo_confirmacion_handler
+)
+from app.telegram.handlers.reparacion import manejar_modo_reparacion
 import logging
 
 logger = logging.getLogger(__name__)
@@ -97,6 +109,53 @@ def build_telegram_app(token):
         per_chat=True,
     )
     
+    # ConversationHandler para RECHAZO (usuario)
+    conv_handler_rechazo = ConversationHandler(
+        entry_points=[CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_")],
+        states={
+            RECHAZO_DESCRIPCION: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, rechazo_descripcion_handler)
+            ],
+            RECHAZO_EVIDENCIA: [
+                MessageHandler(filters.PHOTO | filters.VIDEO, rechazo_evidencia_handler)
+            ],
+            RECHAZO_CONFIRMACION: [
+                CallbackQueryHandler(rechazo_confirmacion_handler, pattern="^rech_(confirmar|cancelar)_")
+            ]
+        },
+        fallbacks=[
+            CommandHandler('cancelar', cancelar_command),
+            CommandHandler('start', start)
+        ],
+        name="rechazo_usuario",
+        persistent=False,
+        per_user=True,
+        per_chat=True
+    )
+    app.add_handler(conv_handler_rechazo)
+    
+    # ConversationHandler para ENCUESTA
+    conv_handler_encuesta = ConversationHandler(
+        entry_points=[CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_")],
+        states={
+            ENCUESTA_VELOCIDAD: [
+                CallbackQueryHandler(encuesta_velocidad_handler, pattern="^enc_vel_")
+            ],
+            ENCUESTA_COMENTARIO: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, encuesta_comentario_handler)
+            ]
+        },
+        fallbacks=[
+            CommandHandler('cancelar', cancelar_command),
+            CommandHandler('start', start)
+        ],
+        name="encuesta_satisfaccion",
+        persistent=False,
+        per_user=True,
+        per_chat=True
+    )
+    app.add_handler(conv_handler_encuesta)
+    
     # ============================================================
     # AGREGAR HANDLERS
     # ============================================================
@@ -115,11 +174,64 @@ def build_telegram_app(token):
     app.add_handler(CommandHandler('presidencia', presidencia_command))
     app.add_handler(CommandHandler('dashboard', dashboard_command))
     
-    # Callbacks
+    # ============================================================
+    # CALLBACKS (ORDEN IMPORTANTE)
+    # ============================================================
+    
+    # 1. Callbacks específicos de aceptación de privacidad
     app.add_handler(CallbackQueryHandler(aceptar_privacidad_callback, pattern="^(aceptar|rechazar)_privacidad$"))
+    
+    # 2. Callbacks de presidente (patrón específico)
     app.add_handler(CallbackQueryHandler(presidente_callback_handler_simple, pattern="^pres_"))
+    
+    # 3. Callbacks de dashboard (patrón específico)
     app.add_handler(CallbackQueryHandler(dashboard_callback_handler, pattern="^dash_"))
+    
+    # 4. Callbacks de DIRECTORES (DEBE IR ANTES del handler general)
+    app.add_handler(CallbackQueryHandler(director_callback_handler, pattern="^dir_"))
+    
+    # 4.1 Callbacks de SUPERVISOR
+    app.add_handler(CallbackQueryHandler(supervisor_callback_handler, pattern="^super_"))
+    app.add_handler(CallbackQueryHandler(rechazo_opciones_handler, pattern="^rechazar_"))
+    
+    # 4.2 Callbacks de USUARIO (validación final)
+    app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_"))
+    
+    # 4.3 Callbacks de ENCUESTA
+    app.add_handler(CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_"))
+    app.add_handler(CallbackQueryHandler(encuesta_velocidad_handler, pattern="^enc_vel_"))
+    
+    # 4.4 Callbacks de RECHAZO (usuario)
+    app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_"))
+    app.add_handler(CallbackQueryHandler(rechazo_confirmacion_handler, pattern="^rech_(confirmar|cancelar)_"))
+        
+    # 5. Callbacks generales (sin patrón, pero solo para casos específicos)
+    #    IMPORTANTE: Este debe ser el ÚLTIMO en la lista de CallbackQueryHandler
+    #    para que los específicos tengan prioridad.
     app.add_handler(CallbackQueryHandler(button_callback_handler))
+    
+    # ============================================================
+    # HANDLERS DE UBICACIÓN (ORDEN IMPORTANTE)
+    # ============================================================
+    
+    # ⭐ Handler para ubicaciones GPS en modo "problema de ubicación"
+    # Debe ir ANTES del ConversationHandler para capturar ubicaciones fuera de la conversación
+    app.add_handler(
+        MessageHandler(
+            filters.LOCATION,
+            manejar_ubicacion_problema_gps
+        )
+    )
+    
+    # HANDLER PARA FOTOS/VIDEOS EN REPARACIÓN
+    app.add_handler(
+        MessageHandler(filters.PHOTO | filters.VIDEO, manejar_media_reparacion)
+    )
+    
+    # Handler central para mensajes de texto (gracias, saludos, etc.)
+    app.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, router_texto_completo)
+    )
     
     logger.info("✅ Bot de Telegram configurado correctamente con todos los handlers")
     

@@ -1,5 +1,6 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove, KeyboardButton
 from telegram.ext import ContextTypes, ConversationHandler
+from telegram.constants import ParseMode
 from app.telegram.states import *
 from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario, buscar_coincidencias_flexibles, _normalize_text
 from app.services.db_manager import DatabaseManager
@@ -53,8 +54,7 @@ async def elegir_ubicacion_handler(update: Update, context: ContextTypes.DEFAULT
         keyboard = [[KeyboardButton("📍 Compartir mi ubicación", request_location=True)]]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(
-            "📍 *Comparte tu ubicación GPS:*\n\n"
-            "Toca el botón azul '📍 Compartir mi ubicación' de abajo.",
+            "📍 *Comparte tu ubicación GPS:*\n\nToca el botón azul '📍 Compartir mi ubicación' de abajo.",
             parse_mode="Markdown",
             reply_markup=reply_markup
         )
@@ -82,6 +82,7 @@ async def elegir_ubicacion_handler(update: Update, context: ContextTypes.DEFAULT
     return ELEGIR_UBICACION
 
 async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Maneja la ubicación GPS enviada durante la creación de un reporte"""
     print("🚨🚨🚨 UBICACION_GPS_HANDLER EJECUTADO 🚨🚨🚨")
     try:
         user_id = update.effective_user.id
@@ -163,8 +164,7 @@ async def localidad_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     candidatos = obtener_localidades_con_fallback()
     if not candidatos:
         await update.message.reply_text(
-            "⚠️ No hay localidades registradas en el sistema.\n"
-            "Por favor, contacta al administrador.",
+            "⚠️ No hay localidades registradas en el sistema.\nPor favor, contacta al administrador.",
             reply_markup=ReplyKeyboardRemove()
         )
         return LOCALIDAD
@@ -214,8 +214,7 @@ async def localidad_sugerencias_handler(update: Update, context: ContextTypes.DE
             user_data[user_id]["localidad_nombre"] = localidad["nombre"]
             
             await update.message.reply_text(
-                f"✅ Localidad: {localidad['nombre']}\n\n"
-                "Ahora escribe la *calle* (o las primeras letras).",
+                f"✅ Localidad: {localidad['nombre']}\n\nAhora escribe la *calle* (o las primeras letras).",
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardRemove()
             )
@@ -241,8 +240,7 @@ async def calle_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     candidatos = obtener_calles_con_fallback(loc_id)
     if not candidatos:
         await update.message.reply_text(
-            f"⚠️ No hay calles registradas para esta localidad.\n"
-            "Por favor, escribe el nombre de la calle manualmente:",
+            f"⚠️ No hay calles registradas para esta localidad.\nPor favor, escribe el nombre de la calle manualmente:",
             reply_markup=ReplyKeyboardRemove()
         )
         return CALLE
@@ -292,8 +290,7 @@ async def calle_sugerencias_handler(update: Update, context: ContextTypes.DEFAUL
             user_data[user_id]["calle_nombre"] = calle["nombre"]
             
             await update.message.reply_text(
-                f"✅ Calle: {calle['nombre']}\n\n"
-                "Escribe el *número exterior* (o 'S/N'):",
+                f"✅ Calle: {calle['nombre']}\n\nEscribe el *número exterior* (o 'S/N'):",
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardRemove()
             )
@@ -301,3 +298,313 @@ async def calle_sugerencias_handler(update: Update, context: ContextTypes.DEFAUL
     
     await update.message.reply_text("No pude identificar la calle. Intenta de nuevo:")
     return CALLE_SUGERENCIAS
+
+# ============================================================================
+# FUNCIÓN: SOLICITAR UBICACIÓN EXACTA (para problemas de ubicación)
+# ============================================================================
+
+async def solicitar_ubicacion_exacta_al_reportante(reporte_id: int, cuadrilla_nombre: str, context=None):
+    """
+    Solicita al reportante que envíe su ubicación GPS exacta.
+    Se usa cuando la cuadrilla reporta problema de ubicación.
+    
+    Args:
+        reporte_id: ID del reporte
+        cuadrilla_nombre: Nombre de la cuadrilla que reporta el problema
+        context: Contexto de Telegram (opcional). Si no se proporciona, usa get_telegram_app()
+    
+    Returns:
+        bool: True si se envió correctamente, False en caso contrario
+    """
+    try:
+        logger = logging.getLogger(__name__)
+        logger.info(f"📍 [UBICACION] Solicitando ubicación exacta para reporte #{reporte_id}")
+        
+        app = DatabaseManager.get_app()
+        
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.status import Status
+            from app.extensions import db
+            from datetime import datetime
+            
+            # 1. Obtener reporte
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                logger.error(f"❌ Reporte {reporte_id} no encontrado")
+                return False
+            
+            # 2. Obtener telegram_id del reportante
+            telegram_id_reportante = reporte.telefono
+            if not telegram_id_reportante:
+                logger.error(f"❌ Reporte {reporte_id} no tiene teléfono")
+                return False
+            
+            try:
+                user_id = int(str(telegram_id_reportante).strip())
+            except ValueError:
+                logger.error(f"❌ Telegram ID inválido: {telegram_id_reportante}")
+                return False
+            
+            # 3. Cambiar estado a "Problema ubicación" (ID 9 o buscar por nombre)
+            status_problema = Status.query.get(9)
+            if not status_problema:
+                status_problema = Status.query.filter_by(descripcion="Problema ubicación").first()
+                if not status_problema:
+                    status_problema = Status(descripcion="Problema ubicación", color="warning")
+                    db.session.add(status_problema)
+                    db.session.commit()
+                    logger.info(f"✅ Estado 'Problema ubicación' creado con ID {status_problema.id}")
+            
+            # Actualizar asignación
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+            
+            if asignacion:
+                asignacion.status_id = status_problema.id
+                asignacion.observaciones = f"Problema de ubicación - Cuadrilla {cuadrilla_nombre}"
+                db.session.commit()
+                logger.info(f"✅ Estado actualizado a 'Problema ubicación' para reporte #{reporte_id}")
+            else:
+                logger.warning(f"⚠️ No hay asignación para reporte #{reporte_id}")
+            
+            # 4. Guardar estado en user_data para manejar la respuesta
+            user_data[user_id] = {
+                'modo_ubicacion_exacta': True,
+                'reporte_id': reporte_id,
+                'cuadrilla_nombre': cuadrilla_nombre,
+                'timestamp': datetime.now().isoformat()
+            }
+            logger.info(f"💾 Estado guardado en user_data para usuario {user_id}")
+            
+            # 5. Obtener el bot (si no hay context, usar get_telegram_app)
+            if context is None:
+                from app.routes.telegram_routes import get_telegram_app
+                bot_app = get_telegram_app()
+                if not bot_app or not bot_app.bot:
+                    logger.error("❌ Bot de Telegram no disponible")
+                    return False
+                bot = bot_app.bot
+            else:
+                bot = context.bot
+            
+            # 6. Enviar mensaje al reportante
+            mensaje = (
+                f"⚠️ *UBICACIÓN NO ENCONTRADA*\n\n"
+                f"La cuadrilla *{cuadrilla_nombre}* no pudo encontrar tu ubicación.\n\n"
+                f"📍 *Cómo enviar tu ubicación exacta:*\n"
+                f"1. Ve al lugar del reporte\n"
+                f"2. Toca el ícono 📎 (clip) en el chat\n"
+                f"3. Selecciona '📍 Ubicación'\n"
+                f"4. Envía tu ubicación actual\n\n"
+                f"⏰ *Tienes 24 horas para responder.*\n\n"
+                f"*Si no respondes, el reporte se cancelará automáticamente.*"
+            )
+            
+            await bot.send_message(
+                chat_id=user_id,
+                text=mensaje,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=ReplyKeyboardRemove()
+            )
+            
+            logger.info(f"✅ Solicitud de ubicación enviada al reportante {user_id}")
+            return True
+            
+    except Exception as e:
+        logger.error(f"❌ Error en solicitar_ubicacion_exacta_al_reportante: {e}", exc_info=True)
+        return False
+
+# ============================================================================
+# NUEVO HANDLER: RESPUESTA A PROBLEMA DE UBICACIÓN (GPS)
+# ============================================================================
+
+async def manejar_ubicacion_problema_gps(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Maneja la ubicación GPS enviada por el reportante en respuesta a un problema de ubicación.
+    VERSIÓN CORREGIDA: usa exclusivamente context.bot para enviar mensajes.
+    """
+    user_id = update.effective_user.id
+    location = update.message.location
+
+    logger.info(f"📍 [PROBLEMA GPS] Usuario {user_id} envió ubicación en modo_exacta")
+
+    # Verificar que esté en modo_ubicacion_exacta
+    user_data_entry = user_data.get(user_id, {})
+    if not user_data_entry.get('modo_ubicacion_exacta', False):
+        logger.warning(f"⚠️ Usuario {user_id} no está en modo_ubicacion_exacta, ignorando")
+        return
+
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.status import Status
+            from app.models.user import User
+            from app.extensions import db
+            from datetime import datetime
+            from app.routes.telegram_routes import get_telegram_app
+
+            reporte_id = user_data_entry.get('reporte_id')
+            cuadrilla_nombre = user_data_entry.get('cuadrilla_nombre', 'Cuadrilla desconocida')
+
+            if not reporte_id:
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="❌ No se encontró el reporte asociado."
+                )
+                limpiar_estado(user_id)
+                return
+
+            # 1. Obtener reporte
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await context.bot.send_message(
+                    chat_id=user_id,
+                    text="❌ Reporte no encontrado."
+                )
+                limpiar_estado(user_id)
+                return
+
+            # 2. Actualizar coordenadas
+            reporte.latitud = location.latitude
+            reporte.longitud = location.longitude
+
+            # 3. Cambiar estado a "En proceso" (ID: 3)
+            status_en_proceso = Status.query.get(3)
+            if not status_en_proceso:
+                status_en_proceso = Status.query.filter_by(descripcion="En proceso").first()
+                if not status_en_proceso:
+                    status_en_proceso = Status(descripcion="En proceso", color="warning")
+                    db.session.add(status_en_proceso)
+                    db.session.commit()
+
+            # 4. Actualizar asignación
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            if asignacion:
+                asignacion.status_id = status_en_proceso.id
+                asignacion.observaciones = f"Ubicación exacta recibida del reportante el {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+                db.session.commit()
+                logger.info(f"✅ Estado actualizado a 'En proceso' para reporte #{reporte_id}")
+
+            # 5. Limpiar user_data del usuario
+            user_data[user_id].pop('modo_ubicacion_exacta', None)
+            user_data[user_id].pop('reporte_id', None)
+            user_data[user_id].pop('cuadrilla_nombre', None)
+
+            # 6. Confirmar al reportante (usar context.bot SIEMPRE)
+            mensaje_confirmacion = (
+                f"✅ *Ubicación recibida*\n\n"
+                f"La cuadrilla *{cuadrilla_nombre}* ha sido notificada con tu ubicación exacta.\n\n"
+                f"📍 Coordenadas:\n"
+                f"Latitud: {location.latitude}\n"
+                f"Longitud: {location.longitude}\n\n"
+                f"Gracias por tu colaboración."
+            )
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=mensaje_confirmacion,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=ReplyKeyboardRemove()
+            )
+
+            # 7. Notificar a la cuadrilla asignada
+            if asignacion and asignacion.team_id:
+                usuarios_cuadrilla = User.query.filter_by(
+                    team_id=asignacion.team_id,
+                    is_active=True
+                ).all()
+
+                calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+                localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+
+                mensaje_cuadrilla = (
+                    f"📍 *UBICACIÓN EXACTA RECIBIDA - Reporte #{reporte.id}*\n\n"
+                    f"El reportante ha compartido su ubicación exacta.\n\n"
+                    f"📋 *Detalles:*\n"
+                    f"• Reportante: {reporte.reportante}\n"
+                    f"• Teléfono: {reporte.telefono}\n"
+                    f"• Dirección original: {calle_nombre} #{reporte.numero}, {localidad_nombre}\n\n"
+                    f"📍 *Coordenadas:*\n"
+                    f"Latitud: {location.latitude}\n"
+                    f"Longitud: {location.longitude}\n\n"
+                    f"🔗 *Ver en Google Maps:*\n"
+                    f"https://www.google.com/maps?q={location.latitude},{location.longitude}\n\n"
+                    f"✅ Ahora pueden dirigirse a la ubicación exacta."
+                )
+
+                for usuario in usuarios_cuadrilla:
+                    if usuario.telegram_id:
+                        try:
+                            await context.bot.send_message(
+                                chat_id=int(usuario.telegram_id),
+                                text=mensaje_cuadrilla,
+                                parse_mode=ParseMode.MARKDOWN
+                            )
+                            logger.info(f"✅ Notificación enviada a {usuario.nombre} (cuadrilla)")
+                        except Exception as e:
+                            logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
+
+            # 8. Notificar al responsable (Jefe Técnico para agua, Director para otros)
+            try:
+                responsable = None
+                if reporte.tipo in ["Agua potable", "Drenaje"]:
+                    responsable = User.query.filter_by(
+                        area='agua',
+                        rol_especifico='jefe_area_tecnica',
+                        is_active=True
+                    ).first()
+                    rol_nombre = "Jefe Técnico de Agua/Drenaje"
+                else:
+                    mapeo_tipo_a_area = {
+                        "Aseo público": "aseo",
+                        "Alumbrado público": "alumbrado",
+                        "Parques y jardines": "parques",
+                        "Ecología": "ecologia",
+                        "Seguridad pública": "seguridad",
+                        "Obras públicas": "obras",
+                        "Bomberos": "bomberos"
+                    }
+                    area = mapeo_tipo_a_area.get(reporte.tipo)
+                    if area:
+                        responsable = User.query.filter_by(
+                            area=area,
+                            rol_especifico='director',
+                            is_active=True
+                        ).first()
+                        rol_nombre = f"Director de {area.title()}"
+
+                if responsable and responsable.telegram_id:
+                    mensaje_responsable = (
+                        f"📍 *UBICACIÓN RECIBIDA - Reporte #{reporte.id}*\n\n"
+                        f"El reportante ha compartido su ubicación exacta.\n\n"
+                        f"• Cuadrilla: {cuadrilla_nombre}\n"
+                        f"• Coordenadas: {location.latitude}, {location.longitude}\n\n"
+                        f"✅ El reporte está ahora en estado 'En proceso'."
+                    )
+                    await context.bot.send_message(
+                        chat_id=int(responsable.telegram_id),
+                        text=mensaje_responsable,
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                    logger.info(f"✅ Notificación enviada a {responsable.nombre}")
+            except Exception as e:
+                logger.error(f"❌ Error notificando responsable: {e}")
+
+            logger.info(f"✅ Flujo de ubicación completado para reporte #{reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_ubicacion_problema_gps: {e}", exc_info=True)
+        try:
+            await context.bot.send_message(
+                chat_id=user_id,
+                text="❌ Ocurrió un error al procesar tu ubicación. Intenta de nuevo.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+        except:
+            pass
+        limpiar_estado(user_id)

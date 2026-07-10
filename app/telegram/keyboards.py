@@ -1,4 +1,3 @@
-# app/telegram/keyboards.py
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from app.services.db_manager import DatabaseManager
 import os
@@ -20,7 +19,7 @@ def crear_teclado_subtipos(subtipos_dict: dict, columnas: int = 2):
 def obtener_carpeta_departamento(tipo_reporte: str) -> str:
     mapeo = {
         "Agua potable": "agua_potable",
-        "Drenaje": "drenaje",
+        "Drenaje": "agua_potable",
         "Aseo público": "aseo_publico",
         "Alumbrado público": "alumbrado_publico",
         "Parques y jardines": "parques_jardines",
@@ -46,7 +45,6 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             keyboard = []
             
             if es_director:
-                # Botones para director
                 fila1 = [
                     InlineKeyboardButton(
                         "👷 Asignar a Cuadrilla",
@@ -54,7 +52,6 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                     )
                 ]
                 
-                # Evidencia si existe
                 if reporte.evidencia:
                     upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
                     evidencia_path = os.path.join(upload_folder, reporte.evidencia)
@@ -95,7 +92,6 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             keyboard.append(fila1)
             
-            # Mapa
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 texto_mapa = "📍 Ubicación Exacta (GPS)"
@@ -108,7 +104,6 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             fila2 = [InlineKeyboardButton(texto_mapa, callback_data=f"mapa_{reporte_id}")]
             
-            # Evidencia
             if reporte.evidencia:
                 upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
                 evidencia_path = os.path.join(upload_folder, reporte.evidencia)
@@ -120,9 +115,8 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             keyboard.append(fila2)
             
-            # Botón de reparación (si la cuadrilla está asignada)
+            # Botón de reparación
             if context is not None:
-                # Obtener user_id del contexto (simplificado)
                 user_id = None
                 if hasattr(context, 'user_data') and context.user_data:
                     user_id = context.user_data.get('user_id')
@@ -140,6 +134,38 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                                 InlineKeyboardButton(
                                     "🔧 Subir evidencia reparación",
                                     callback_data=f"reparacion_{reporte_id}"
+                                )
+                            ])
+            
+            # Solicitudes de apoyo
+            if context is not None:
+                user_id = None
+                if hasattr(context, 'user_data') and context.user_data:
+                    user_id = context.user_data.get('user_id')
+                elif hasattr(context, '_user_id'):
+                    user_id = context._user_id
+                
+                if user_id:
+                    asignacion = Assignment.query.filter_by(
+                        report_id=reporte_id
+                    ).order_by(Assignment.timestamp.desc()).first()
+                    if asignacion and asignacion.team_id:
+                        usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
+                        if usuario_actual and usuario_actual.team_id == asignacion.team_id:
+                            keyboard.append([
+                                InlineKeyboardButton(
+                                    "🛠️ Solicitar retroexcavadora",
+                                    callback_data=f"solicitar_retro_{reporte_id}"
+                                ),
+                                InlineKeyboardButton(
+                                    "🚛 Solicitar camión de material",
+                                    callback_data=f"solicitar_camion_{reporte_id}"
+                                )
+                            ])
+                            keyboard.append([
+                                InlineKeyboardButton(
+                                    "👷 Solicitar apoyo de otra cuadrilla",
+                                    callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
                                 )
                             ])
             

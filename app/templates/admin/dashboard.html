@@ -202,7 +202,6 @@
                             {% endif %}
                         </td>
                         <td>
-                            <!-- Descripción del problema -->
                             <div class="problem-description">
                                 {{ reporte.descripcion_problema or '—' }}
                             </div>
@@ -217,10 +216,7 @@
                             {% if reporte.evidencia %}
                                 {% set evidencia_completa = reporte.evidencia %}
                                 {% set ext = evidencia_completa.split('.')[-1]|lower %}
-
-                                {# URL correcta con carpeta incluida #}
                                 {% set url = url_for('admin.uploaded_file', filename=evidencia_completa) %}
-
                                 <div class="mb-2">
                                     <a href="{{ url }}" target="_blank" class="evidence-link text-decoration-none">
                                         <i class="fas fa-paperclip me-1"></i>
@@ -234,28 +230,50 @@
                                             {% endif %}
                                         </span>
                                     </a>
-                                    <div class="small text-muted mt-1">
-                                        {{ evidencia_completa }}
-                                    </div>
+                                    <div class="small text-muted mt-1">{{ evidencia_completa }}</div>
                                 </div>
                             {% else %}
                                 <span class="text-muted">—</span>
                             {% endif %}
-    
+
                             <!-- ==================== SEPARADOR VISUAL ==================== -->
                             {% if reporte.evidencia and reporte.evidencia_cuadrilla %}
                                 <hr class="my-2">
                             {% endif %}
-    
+
                             <!-- ==================== EVIDENCIA DE CUADRILLA ==================== -->
                             {% if reporte.evidencia_cuadrilla %}
                                 <div class="mt-2">
                                     {% set evidencias_cuadrilla = reporte.evidencia_cuadrilla.split(',') %}
                                     {% for evidencia in evidencias_cuadrilla %}
                                         {% if evidencia.strip() %}
-                                            {% set evidencia_path = evidencia.strip() %}
+                                            {% set nombre_archivo = evidencia.strip() %}
+                                            {% if not nombre_archivo.startswith('evidencias/') %}
+                                                {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
+                                                    {% set carpeta = 'agua_potable' %}
+                                                {% elif reporte.tipo == 'Aseo público' %}
+                                                    {% set carpeta = 'aseo_publico' %}
+                                                {% elif reporte.tipo == 'Alumbrado público' %}
+                                                    {% set carpeta = 'alumbrado_publico' %}
+                                                {% elif reporte.tipo == 'Parques y jardines' %}
+                                                    {% set carpeta = 'parques_jardines' %}
+                                                {% elif reporte.tipo == 'Ecología' %}
+                                                    {% set carpeta = 'ecologia' %}
+                                                {% elif reporte.tipo == 'Seguridad pública' %}
+                                                    {% set carpeta = 'seguridad_publica' %}
+                                                {% elif reporte.tipo == 'Obras públicas' %}
+                                                    {% set carpeta = 'obras_publicas' %}
+                                                {% elif reporte.tipo == 'Bomberos' %}
+                                                    {% set carpeta = 'bomberos' %}
+                                                {% else %}
+                                                    {% set carpeta = 'general' %}
+                                                {% endif %}
+                                                {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/cuadrilla/' ~ nombre_archivo %}
+                                            {% else %}
+                                                {% set ruta_completa = nombre_archivo %}
+                                            {% endif %}
                                             <div class="mb-1">
-                                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ evidencia_path) }}" 
+                                                <a href="{{ url_for('static', filename=ruta_completa) }}" 
                                                    target="_blank" class="evidence-link text-decoration-none">
                                                     <i class="fas fa-hard-hat me-1"></i>
                                                     <span class="fw-medium">Evidencia cuadrilla {{ loop.index }}</span>
@@ -265,22 +283,46 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-    
+
                             <!-- ==================== MATERIALES UTILIZADOS ==================== -->
                             {% if reporte.materiales_utilizados %}
                                 <div class="mt-2">
-                                    {% if '/' in reporte.materiales_utilizados or '.' in reporte.materiales_utilizados %}
-                                        {% set materiales_path = reporte.materiales_utilizados.split('/')[-1] %}
-                                        <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ materiales_path) }}" 
+                                    {% set materiales = reporte.materiales_utilizados %}
+                                    {% if materiales.startswith('evidencias/') %}
+                                        {# Ya tiene ruta completa #}
+                                        <a href="{{ url_for('static', filename=materiales) }}" 
                                            target="_blank" class="evidence-link text-decoration-none">
                                             <i class="fas fa-boxes me-1"></i>
                                             <span class="fw-medium">Materiales utilizados</span>
                                         </a>
                                     {% else %}
-                                        <div class="small text-muted">
+                                        {# Reporte antiguo: construir ruta con materiales_utilizados #}
+                                        {# Mapeo de tipo a carpeta #}
+                                        {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
+                                            {% set carpeta = 'agua_potable' %}
+                                        {% elif reporte.tipo == 'Aseo público' %}
+                                            {% set carpeta = 'aseo_publico' %}
+                                        {% elif reporte.tipo == 'Alumbrado público' %}
+                                            {% set carpeta = 'alumbrado_publico' %}
+                                        {% elif reporte.tipo == 'Parques y jardines' %}
+                                            {% set carpeta = 'parques_jardines' %}
+                                        {% elif reporte.tipo == 'Ecología' %}
+                                            {% set carpeta = 'ecologia' %}
+                                        {% elif reporte.tipo == 'Seguridad pública' %}
+                                            {% set carpeta = 'seguridad_publica' %}
+                                        {% elif reporte.tipo == 'Obras públicas' %}
+                                            {% set carpeta = 'obras_publicas' %}
+                                        {% elif reporte.tipo == 'Bomberos' %}
+                                            {% set carpeta = 'bomberos' %}
+                                        {% else %}
+                                            {% set carpeta = 'general' %}
+                                        {% endif %}
+                                        {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ materiales %}
+                                        <a href="{{ url_for('static', filename=ruta_completa) }}" 
+                                           target="_blank" class="evidence-link text-decoration-none">
                                             <i class="fas fa-boxes me-1"></i>
-                                            <strong>Materiales:</strong> {{ reporte.materiales_utilizados }}
-                                        </div>
+                                            <span class="fw-medium">Materiales utilizados</span>
+                                        </a>
                                     {% endif %}
                                 </div>
                             {% endif %}
@@ -355,7 +397,7 @@
                                     </button>
                                 </form>
                                 
-                                <!-- 🔽 NUEVO: MENÚ DE PRUEBAS DE ENVÍO -->
+                                <!-- 🔽 MENÚ DE PRUEBAS DE ENVÍO -->
                                 <div class="dropdown">
                                     <button class="btn btn-sm btn-warning dropdown-toggle w-100" 
                                             type="button" 
@@ -430,7 +472,7 @@
                                                 </button>
                                             </form>
                                             
-                                            <!-- 🔽 NUEVAS PRUEBAS ESPECÍFICAS POR ÁREA -->
+                                            <!-- NUEVAS PRUEBAS ESPECÍFICAS POR ÁREA -->
                                             <hr class="my-1">
                                             <h6 class="dropdown-header text-center fw-bold">🔧 PRUEBAS ESPECÍFICAS</h6>
                                             
@@ -465,7 +507,6 @@
                                                 </button>
                                             </form>
                                             {% endif %}
-                                            <!-- 🔼 FIN NUEVAS PRUEBAS ESPECÍFICAS -->
                                         </div>
                                         <div class="dropdown-divider"></div>
                                         <div class="small text-muted text-center">
@@ -473,7 +514,6 @@
                                         </div>
                                     </div>
                                 </div>
-                                <!-- 🔼 FIN MENÚ DE PRUEBAS -->
                                 
                                 <!-- Botón: Reenviar a validación (SOLO si hay evidencia de cuadrilla y no está finalizado) -->
                                 {% if reporte.evidencia_cuadrilla and reporte.estado != 'Finalizado' and reporte.estado != 'Completado' %}
@@ -612,7 +652,7 @@ $(document).ready(function() {
         }
     });
     
-    // ========== NUEVO: EDITAR COORDENADAS ==========
+    // ========== EDITAR COORDENADAS ==========
     $('.btn-coordenada-edit').on('click', function() {
         var reporteId = $(this).data('reporte-id');
         var field = $(this).data('field');
@@ -625,7 +665,7 @@ $(document).ready(function() {
         $('#coordenadaField').val(field);
         
         // Configurar validación según campo
-        if field === 'latitud') {
+        if (field === 'latitud') {
             $('#coordenadaValue').attr({
                 'min': -90,
                 'max': 90,
@@ -677,12 +717,12 @@ $(document).ready(function() {
         });
     });
     
-    // ========== NUEVO: FUNCIÓN DE CONFIRMACIÓN PARA PRUEBAS ==========
+    // ========== FUNCIÓN DE CONFIRMACIÓN PARA PRUEBAS ==========
     window.confirmTest = function(message) {
         return confirm(message + '\n\n⚠️ ESTO ES UNA PRUEBA\n• No cambiará estados en la BD\n• Solo enviará mensajes de prueba\n• Verifica logs para confirmar envío');
     };
     
-    // ========== NUEVO: MOSTRAR ALERTAS ==========
+    // ========== MOSTRAR ALERTAS ==========
     function showAlert(type, message) {
         // Crear alerta Bootstrap
         var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show position-fixed top-0 end-0 m-3" style="z-index: 9999;" role="alert">' +
@@ -698,7 +738,7 @@ $(document).ready(function() {
         }, 5000);
     }
     
-    // ========== NUEVO: PREVENIR DOBLE CLIC EN BOTONES DE PRUEBA ==========
+    // ========== PREVENIR DOBLE CLIC EN BOTONES DE PRUEBA ==========
     $('.dropdown-menu form').on('submit', function() {
         var btn = $(this).find('button[type="submit"]');
         btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Procesando...');
