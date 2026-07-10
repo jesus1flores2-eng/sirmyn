@@ -31,6 +31,8 @@ services:
         sync: false
       - key: UPLOAD_FOLDER
         value: uploads
+      - key: STATIC_FOLDER
+        value: app/static
 
 databases:
   - name: sirmyn-db

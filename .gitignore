@@ -3,3 +3,8 @@ instance/
 uploads/
 __pycache__/
 *.pyc
+venv/
+*.pyc
+*.db
+*.sqlite
+.python-version
