@@ -27,3 +27,32 @@ services:
 databases:
   - name: sirmyn-db
     plan: free
+services:
+  - type: web
+    name: sirmyn
+    env: python
+    buildCommand: |
+      pip install -r requirements.txt
+      python -c "from app import create_app; app = create_app(); app.app_context().push(); from app.extensions import db; db.create_all()"
+    startCommand: gunicorn run:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sirmyn-db
+          property: connectionString
+      - key: FLASK_SECRET_KEY
+        sync: false
+      - key: TELEGRAM_TOKEN
+        sync: false
+      - key: TELEGRAM_ADMIN_ID
+        sync: false
+      - key: SERVER_URL
+        sync: false
+      - key: UPLOAD_FOLDER
+        value: uploads
+      - key: STATIC_FOLDER
+        value: app/static
+
+databases:
+  - name: sirmyn-db
+    plan: free
