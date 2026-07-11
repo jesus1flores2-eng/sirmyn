@@ -225,7 +225,7 @@ def build_telegram_app(token):
     
     # HANDLER PARA FOTOS/VIDEOS EN REPARACIÓN
     app.add_handler(
-        MessageHandler(filters.PHOTO | filters.VIDEO, manejar_media_reparacion)
+        MessageHandler(filters.PHOTO | filters.VIDEO, manejar_modo_reparacion)
     )
     
     # Handler central para mensajes de texto (gracias, saludos, etc.)
