@@ -75,8 +75,15 @@ def webhook():
 
 @telegram_bp.route('/health', methods=['GET'])
 def health():
+    try:
+        # Intentar inicializar el bot si no está listo
+        bot_app = get_telegram_app()
+        initialized = bot_app is not None
+    except:
+        initialized = False
+    
     return jsonify({
         "status": "ok",
         "service": "telegram",
-        "initialized": _telegram_app_initialized
+        "initialized": initialized
     }), 200
