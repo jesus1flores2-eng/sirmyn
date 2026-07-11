@@ -37,7 +37,10 @@
                 </td>
                 <td>
                     {% if a.materiales_utilizados %}
-                        {% if a.materiales_utilizados.startswith('evidencias/') %}
+                        {# ✅ CORREGIDO: detectar si es URL externa o ruta local #}
+                        {% if a.materiales_utilizados.startswith('http') %}
+                            <a href="{{ a.materiales_utilizados }}" target="_blank">Ver Foto</a>
+                        {% elif a.materiales_utilizados.startswith('evidencias/') %}
                             <a href="{{ url_for('static', filename=a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
                         {% else %}
                             {# ✅ Para reportes antiguos: construir ruta usando el tipo del reporte #}
@@ -73,9 +76,12 @@
                         {% set evidencias = a.evidencia_cuadrilla.split(',') %}
                         {% for ev in evidencias %}
                             {% if ev.strip() %}
-                                {% if ev.strip().startswith('evidencias/') %}
-                                    {# Reporte nuevo: ya tiene ruta completa #}
-                                    <a href="{{ url_for('static', filename=ev.strip()) }}" target="_blank">Ver Foto {{ loop.index }}</a>
+                                {% set ev_path = ev.strip() %}
+                                {# ✅ CORREGIDO: detectar si es URL externa #}
+                                {% if ev_path.startswith('http') %}
+                                    <a href="{{ ev_path }}" target="_blank">Ver Foto {{ loop.index }}</a>
+                                {% elif ev_path.startswith('evidencias/') %}
+                                    <a href="{{ url_for('static', filename=ev_path) }}" target="_blank">Ver Foto {{ loop.index }}</a>
                                 {% else %}
                                     {# Reporte antiguo: solo nombre, construir ruta #}
                                     {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
@@ -97,7 +103,7 @@
                                     {% else %}
                                         {% set carpeta = 'general' %}
                                     {% endif %}
-                                    {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/cuadrilla/' ~ ev.strip() %}
+                                    {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/cuadrilla/' ~ ev_path %}
                                     <a href="{{ url_for('static', filename=ruta_completa) }}" target="_blank">Ver Foto {{ loop.index }}</a>
                                 {% endif %}
                                 {% if not loop.last %}<br>{% endif %}
