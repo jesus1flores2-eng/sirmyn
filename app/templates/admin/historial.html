@@ -37,13 +37,13 @@
                 </td>
                 <td>
                     {% if a.materiales_utilizados %}
-                        {# ✅ CORREGIDO: detectar si es URL externa o ruta local #}
-                        {% if a.materiales_utilizados.startswith('http') %}
-                            <a href="{{ a.materiales_utilizados }}" target="_blank">Ver Foto</a>
-                        {% elif a.materiales_utilizados.startswith('evidencias/') %}
-                            <a href="{{ url_for('static', filename=a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
+                        {% set materiales = a.materiales_utilizados %}
+                        {% if materiales.startswith('http') %}
+                            <a href="{{ materiales }}" target="_blank">Ver Foto</a>
+                        {% elif materiales.startswith('evidencias/') %}
+                            <a href="{{ url_for('static', filename=materiales) }}" target="_blank">Ver Foto</a>
                         {% else %}
-                            {# ✅ Para reportes antiguos: construir ruta usando el tipo del reporte #}
+                            {# Reporte antiguo: construir ruta #}
                             {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
                                 {% set carpeta = 'agua_potable' %}
                             {% elif reporte.tipo == 'Aseo público' %}
@@ -63,7 +63,7 @@
                             {% else %}
                                 {% set carpeta = 'general' %}
                             {% endif %}
-                            {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ a.materiales_utilizados %}
+                            {% set ruta_completa = 'evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ materiales %}
                             <a href="{{ url_for('static', filename=ruta_completa) }}" target="_blank">Ver Foto</a>
                         {% endif %}
                     {% else %}
@@ -77,13 +77,12 @@
                         {% for ev in evidencias %}
                             {% if ev.strip() %}
                                 {% set ev_path = ev.strip() %}
-                                {# ✅ CORREGIDO: detectar si es URL externa #}
                                 {% if ev_path.startswith('http') %}
                                     <a href="{{ ev_path }}" target="_blank">Ver Foto {{ loop.index }}</a>
                                 {% elif ev_path.startswith('evidencias/') %}
                                     <a href="{{ url_for('static', filename=ev_path) }}" target="_blank">Ver Foto {{ loop.index }}</a>
                                 {% else %}
-                                    {# Reporte antiguo: solo nombre, construir ruta #}
+                                    {# Reporte antiguo: construir ruta #}
                                     {% if reporte.tipo == 'Agua potable' or reporte.tipo == 'Drenaje' %}
                                         {% set carpeta = 'agua_potable' %}
                                     {% elif reporte.tipo == 'Aseo público' %}
