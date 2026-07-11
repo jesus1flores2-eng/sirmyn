@@ -13,6 +13,7 @@ from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
 from app.telegram.keyboards import obtener_carpeta_departamento
+from app.services.cloudinary_service import subir_archivo  # ⭐ NUEVA IMPORTACIÓN
 from datetime import datetime
 import logging
 import os
@@ -43,7 +44,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
     else:
         carpeta_departamento = "general"
 
-    # Ruta base: app/static/evidencias/{carpeta_departamento}/
+    # Ruta base local (fallback)
     static_folder = app.config.get('STATIC_FOLDER', 'app/static')
     base_path = Path(static_folder) / 'evidencias' / carpeta_departamento
 
@@ -114,12 +115,23 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    # Guardar ruta relativa: evidencias/{area}/cuadrilla/filename
-                    ruta_relativa = f"evidencias/{carpeta_departamento}/cuadrilla/{filename}"
+                    # ⭐ Intentar subir a Cloudinary
+                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/cuadrilla")
+                    if url:
+                        datos['evidencias'].append(url)
+                        logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
+                        # Eliminar archivo local (ya no lo necesitamos)
+                        try:
+                            os.remove(filepath)
+                        except:
+                            pass
+                    else:
+                        # Fallback: guardar localmente
+                        ruta_relativa = f"evidencias/{carpeta_departamento}/cuadrilla/{filename}"
+                        datos['evidencias'].append(ruta_relativa)
+                        logger.warning(f"⚠️ Fallback local: {ruta_relativa}")
+                        # No eliminar el archivo local para que esté disponible
 
-                    if 'evidencias' not in datos:
-                        datos['evidencias'] = []
-                    datos['evidencias'].append(ruta_relativa)
                     user_data[user_id] = datos
 
                     await update.message.reply_text(
@@ -151,8 +163,22 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    ruta_relativa = f"evidencias/{carpeta_departamento}/materiales_utilizados/{filename}"
-                    datos['materiales'] = ruta_relativa
+                    # ⭐ Intentar subir a Cloudinary
+                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/materiales_utilizados")
+                    if url:
+                        datos['materiales'] = url
+                        logger.info(f"✅ Materiales subidos a Cloudinary: {url}")
+                        try:
+                            os.remove(filepath)
+                        except:
+                            pass
+                    else:
+                        # Fallback local
+                        ruta_relativa = f"evidencias/{carpeta_departamento}/materiales_utilizados/{filename}"
+                        datos['materiales'] = ruta_relativa
+                        logger.warning(f"⚠️ Fallback local: {ruta_relativa}")
+                        # No eliminar archivo local
+
                     user_data[user_id] = datos
             except Exception as e:
                 logger.error(f"❌ Error guardando materiales: {e}")
@@ -179,7 +205,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                 )
                 return
 
-            datos['materiales'] = texto
+            datos['materiales'] = texto  # Guardar como texto (sin archivo)
             user_data[user_id] = datos
 
         datos['paso'] = 'comentario'
@@ -251,17 +277,21 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
             with app.app_context():
                 asignacion = Assignment.query.get(datos['asignacion_id'])
                 if asignacion:
+                    # Guardar evidencias (pueden ser URLs de Cloudinary o rutas locales)
                     if datos.get('evidencias'):
                         asignacion.evidencia_cuadrilla = ','.join(datos['evidencias'])
 
+                    # Guardar materiales (pueden ser URL de Cloudinary, ruta local o texto)
                     if isinstance(datos.get('materiales'), str) and datos['materiales'].endswith(('.jpg', '.jpeg', '.png')):
                         asignacion.materiales_utilizados = datos['materiales']
                     else:
                         asignacion.materiales_utilizados = datos.get('materiales', '')
 
+                    # Guardar comentario
                     if datos.get('comentario'):
                         asignacion.observaciones = datos['comentario']
 
+                    # Cambiar estado a "En revisión"
                     estado_revision = Status.query.filter_by(descripcion="En revisión").first()
                     if not estado_revision:
                         estado_revision = Status(descripcion="En revisión")
@@ -304,5 +334,3 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
             for clave in claves:
                 user_data[user_id].pop(clave, None)
         return
-
-

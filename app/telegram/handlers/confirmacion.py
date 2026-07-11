@@ -3,7 +3,9 @@ from telegram.ext import ContextTypes, ConversationHandler
 from app.telegram.states import *
 from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
 from app.services.db_manager import DatabaseManager
-import logging, os
+from app.services.cloudinary_service import subir_archivo  # ⭐ NUEVA IMPORTACIÓN
+import logging
+import os
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -28,10 +30,9 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 # ============================================================
                 # 🎯 OBTENER COORDENADAS (PRIORIDAD: GPS > OSM)
                 # ============================================================
-                latitud = datos.get("latitud")  # Si el usuario usó GPS
+                latitud = datos.get("latitud")
                 longitud = datos.get("longitud")
                 
-                # Si NO hay coordenadas GPS, intentar obtenerlas de OSM
                 if latitud is None or longitud is None:
                     try:
                         from app.services.geocoding import obtener_coordenadas_osm
@@ -72,7 +73,7 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 db.session.commit()
                 
                 # ============================================================
-                # PROCESAR EVIDENCIA
+                # ⭐ PROCESAR EVIDENCIA CON CLOUDINARY (CON FALLBACK LOCAL)
                 # ============================================================
                 if "evidencia_filename" in datos:
                     extension = datos["evidencia_filename"].split(".")[-1]
@@ -86,14 +87,27 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     origen = os.path.join("uploads", datos["evidencia_filename"])
                     destino = os.path.join(carpeta_completa, nuevo_nombre)
                     
-                    try:
-                        os.rename(origen, destino)
-                        nuevo_reporte.evidencia = f"{carpeta_departamento}/{nuevo_nombre}"
-                        db.session.commit()
-                    except Exception as e:
-                        logger.error(f"Error renombrando evidencia: {e}")
-                        nuevo_reporte.evidencia = nuevo_nombre
-                        db.session.commit()
+                    # ⭐ Intentar subir a Cloudinary primero
+                    url = subir_archivo(origen, folder=carpeta_departamento)
+                    if url:
+                        nuevo_reporte.evidencia = url
+                        logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
+                        # Eliminar archivo temporal (ya no lo necesitamos)
+                        try:
+                            os.remove(origen)
+                        except:
+                            pass
+                    else:
+                        # Fallback: almacenamiento local
+                        try:
+                            os.rename(origen, destino)
+                            nuevo_reporte.evidencia = f"{carpeta_departamento}/{nuevo_nombre}"
+                            logger.info(f"✅ Evidencia guardada localmente: {nuevo_reporte.evidencia}")
+                        except Exception as e:
+                            logger.error(f"❌ Error renombrando evidencia: {e}")
+                            nuevo_reporte.evidencia = nuevo_nombre  # Último intento
+                    
+                    db.session.commit()
                 
                 # ============================================================
                 # ASIGNACIÓN INICIAL
@@ -122,7 +136,7 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 )
                 
                 # ============================================================
-                # CONFIRMACIÓN AL USUARIO (CON AVISO LEGAL)
+                # CONFIRMACIÓN AL USUARIO
                 # ============================================================
                 await update.message.reply_text(
                     f"✅ ¡Gracias {datos['nombre']}!\n\n"

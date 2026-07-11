@@ -33,3 +33,5 @@ click==8.3.1
 blinker==1.9.0
 gunicorn==21.2.0
 nest_asyncio==1.6.0
+cloudinary==1.36.0
+
