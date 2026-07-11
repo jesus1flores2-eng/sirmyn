@@ -13,7 +13,19 @@ class Config:
     INSTANCE_DIR = BASE_DIR / 'instance'
     os.makedirs(INSTANCE_DIR, exist_ok=True)
     
-    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "reportes.db"}'
+    # ⭐⭐⭐ CORRECCIÓN DEFINITIVA ⭐⭐⭐
+    # Si DATABASE_URL existe (en Render), usa PostgreSQL.
+    # Si no, usa SQLite (para desarrollo local).
+    DATABASE_URL = os.getenv('DATABASE_URL')
+    if DATABASE_URL:
+        # Render inyecta DATABASE_URL automáticamente
+        SQLALCHEMY_DATABASE_URI = DATABASE_URL
+        print(f"✅ Conectado a PostgreSQL en Render")
+    else:
+        # Fallback a SQLite para desarrollo local
+        SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR / "reportes.db"}'
+        print(f"📁 Usando SQLite local: {INSTANCE_DIR / 'reportes.db'}")
+    
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
