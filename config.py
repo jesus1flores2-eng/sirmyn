@@ -13,7 +13,7 @@ class Config:
     INSTANCE_DIR = BASE_DIR / 'instance'
     os.makedirs(INSTANCE_DIR, exist_ok=True)
     
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{INSTANCE_DIR / "reportes.db"}'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DATABASE_URL') or f'sqlite:///{INSTANCE_DIR / "reportes.db"}'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         'pool_pre_ping': True,
