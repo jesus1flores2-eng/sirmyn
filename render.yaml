@@ -16,9 +16,11 @@ services:
       python -c "from app import create_app; app = create_app(); app.app_context().push(); from app.extensions import db; db.create_all()"
       echo "✅ Tablas creadas correctamente"
       echo "============================================="
-    startCommand: |
-      python cargar_datos_municipio.py
-      gunicorn run:app
+      echo "📥 Cargando datos iniciales (si es necesario)..."
+      python -c "from app import create_app; app = create_app(); app.app_context().push(); import cargar_datos_municipio; cargar_datos_municipio.cargar_datos()"
+      echo "✅ Carga de datos completada"
+      echo "============================================="
+    startCommand: gunicorn run:app
     envVars:
       - key: DATABASE_URL
         fromDatabase:
