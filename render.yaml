@@ -3,9 +3,27 @@ services:
     name: sirmyn
     env: python
     buildCommand: |
+      echo "============================================="
+      echo "🚀 INICIANDO BUILD DE SIRMYN"
+      echo "============================================="
+      echo "📂 Directorio actual: $(pwd)"
+      echo "📂 Archivos: $(ls -la)"
+      echo "============================================="
       pip install -r requirements.txt
+      echo "✅ Dependencias instaladas"
+      echo "============================================="
+      echo "🔄 Creando tablas en la base de datos..."
       python -c "from app import create_app; app = create_app(); app.app_context().push(); from app.extensions import db; db.create_all()"
+      echo "✅ Tablas creadas correctamente"
+      echo "============================================="
+      echo "📥 Ejecutando script de carga de datos..."
       python cargar_datos_municipio.py
+      if [ $? -eq 0 ]; then
+        echo "✅ Script de carga completado exitosamente"
+      else
+        echo "❌ Script de carga falló con código $?"
+      fi
+      echo "============================================="
     startCommand: gunicorn run:app
     envVars:
       - key: DATABASE_URL

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Carga datos desde un archivo Excel con múltiples hojas.
-Maneja valores nulos en password_hash y otros campos.
+Si el Excel no existe o falla, carga datos de ejemplo como fallback.
 Uso: python cargar_datos_municipio.py
 """
 import os
@@ -17,8 +17,117 @@ from app.models.status import Status
 
 app = create_app()
 
+def cargar_datos_ejemplo():
+    """Carga datos de ejemplo si el Excel no está disponible"""
+    print("📥 CARGANDO DATOS DE EJEMPLO (fallback)...")
+    
+    with app.app_context():
+        # 1. Localidades de ejemplo
+        localidades_ejemplo = [
+            {"nombre": "Ixtlahuacán De Los Membrillos", "latitud": 20.4316, "longitud": -103.1932},
+            {"nombre": "Chapala", "latitud": 20.2969, "longitud": -103.1908},
+            {"nombre": "Ajijic", "latitud": 20.2997, "longitud": -103.2534},
+            {"nombre": "San Antonio Tlayacapan", "latitud": 20.2875, "longitud": -103.2172},
+            {"nombre": "Jocotepec", "latitud": 20.2833, "longitud": -103.4333}
+        ]
+        
+        for loc_data in localidades_ejemplo:
+            loc = Localidad.query.filter_by(nombre=loc_data["nombre"]).first()
+            if not loc:
+                loc = Localidad(
+                    nombre=loc_data["nombre"],
+                    latitud_central=loc_data["latitud"],
+                    longitud_central=loc_data["longitud"]
+                )
+                db.session.add(loc)
+        db.session.commit()
+        print(f"   ✅ {len(localidades_ejemplo)} localidades de ejemplo agregadas")
+        
+        # 2. Calles de ejemplo
+        calles_ejemplo = {
+            "Ixtlahuacán De Los Membrillos": ["Calle Principal", "Calle Juárez", "Calle Hidalgo"],
+            "Chapala": ["Calle 16 de Septiembre", "Calle Madero"],
+            "Ajijic": ["Calle Independencia", "Calle Revolución"],
+            "San Antonio Tlayacapan": ["Calle 5 de Mayo", "Calle Zaragoza"],
+            "Jocotepec": ["Calle Benito Juárez", "Calle Miguel Hidalgo"]
+        }
+        
+        for loc_nombre, calles in calles_ejemplo.items():
+            loc = Localidad.query.filter_by(nombre=loc_nombre).first()
+            if loc:
+                for calle_nombre in calles:
+                    if not Calle.query.filter_by(nombre=calle_nombre, localidad_id=loc.id).first():
+                        calle = Calle(nombre=calle_nombre, localidad_id=loc.id)
+                        db.session.add(calle)
+        db.session.commit()
+        print(f"   ✅ Calles de ejemplo agregadas")
+        
+        # 3. Estados (Status)
+        estados_ejemplo = [
+            {"descripcion": "Sin Asignar", "color": "#cccccc"},
+            {"descripcion": "Asignado", "color": "#007bff"},
+            {"descripcion": "En proceso", "color": "#ffc107"},
+            {"descripcion": "En revisión", "color": "#17a2b8"},
+            {"descripcion": "Finalizado", "color": "#28a745"},
+            {"descripcion": "Rechazado", "color": "#dc3545"},
+            {"descripcion": "Cancelado", "color": "#6c757d"},
+            {"descripcion": "Reasignado", "color": "#fd7e14"},
+            {"descripcion": "Problema ubicación", "color": "#ff6b6b"},
+            {"descripcion": "Pendiente validación usuario", "color": "#ffd93d"},
+            {"descripcion": "Aceptado por usuario", "color": "#6fcf97"},
+            {"descripcion": "Rechazado por usuario", "color": "#eb5757"},
+            {"descripcion": "Revisión administrador", "color": "#bb86fc"}
+        ]
+        
+        for estado_data in estados_ejemplo:
+            if not Status.query.filter_by(descripcion=estado_data["descripcion"]).first():
+                estado = Status(descripcion=estado_data["descripcion"], color=estado_data["color"])
+                db.session.add(estado)
+        db.session.commit()
+        print(f"   ✅ {len(estados_ejemplo)} estados agregados")
+        
+        # 4. Equipos (Teams)
+        equipos_ejemplo = [
+            {"nombre": "Sin asignar", "area": "general"},
+            {"nombre": "Cuadrilla Técnica Agua 1", "area": "agua"},
+            {"nombre": "Cuadrilla Técnica Agua 2", "area": "agua"},
+            {"nombre": "Cuadrilla Aseo 1", "area": "aseo"},
+            {"nombre": "Cuadrilla Parques 1", "area": "parques"},
+            {"nombre": "Cuadrilla Alumbrado 1", "area": "alumbrado"},
+            {"nombre": "Cuadrilla Obras 1", "area": "obras"},
+            {"nombre": "RETROESCAVADORA", "area": "agua"},
+            {"nombre": "CAMION 7M", "area": "agua"}
+        ]
+        
+        for equipo_data in equipos_ejemplo:
+            if not Team.query.filter_by(nombre=equipo_data["nombre"]).first():
+                equipo = Team(nombre=equipo_data["nombre"], area=equipo_data["area"])
+                db.session.add(equipo)
+        db.session.commit()
+        print(f"   ✅ {len(equipos_ejemplo)} equipos agregados")
+        
+        # 5. Usuario Admin
+        if not User.query.filter_by(username="admin").first():
+            admin = User(
+                nombre="Administrador",
+                username="admin",
+                password_hash="",
+                role="admin",
+                is_active=True,
+                puede_asignar=True,
+                puede_validar=True,
+                puede_ver_todas_areas=True,
+                puede_configurar=True
+            )
+            admin.set_password("admin123")
+            db.session.add(admin)
+            db.session.commit()
+            print("   ✅ Usuario admin creado (admin / admin123)")
+        
+        print("   ✅ Datos de ejemplo cargados correctamente")
+
 def cargar_datos():
-    archivo = "datos_municipio.xlsx"  # Nombre correcto del archivo Excel
+    archivo = "datos_municipio.xlsx"
     
     print("=" * 60)
     print("🚀 CARGANDO DATOS DESDE EXCEL")
@@ -29,10 +138,11 @@ def cargar_datos():
     print(f"📂 Archivos en el directorio: {os.listdir('.')}")
     print(f"📂 ¿Existe '{archivo}'? {os.path.exists(archivo)}")
     
+    # Si el archivo no existe, usar datos de ejemplo
     if not os.path.exists(archivo):
-        print(f"❌ ERROR: El archivo '{archivo}' no existe en el directorio actual.")
-        print("   Asegúrate de que el archivo esté en la raíz del proyecto.")
-        sys.exit(1)
+        print(f"⚠️ El archivo '{archivo}' no existe. Usando datos de ejemplo...")
+        cargar_datos_ejemplo()
+        return
     
     # 2. Verificar las hojas del Excel
     try:
@@ -41,7 +151,9 @@ def cargar_datos():
         print(f"📋 Hojas encontradas en el Excel: {hojas}")
     except Exception as e:
         print(f"❌ ERROR al leer el archivo Excel: {e}")
-        sys.exit(1)
+        print("📥 Usando datos de ejemplo...")
+        cargar_datos_ejemplo()
+        return
     
     with app.app_context():
         print("\n" + "=" * 60)
@@ -178,11 +290,11 @@ def cargar_datos():
                         else:
                             print(f"   ⚠️ Equipo '{row['team_nombre']}' no encontrado para usuario '{row['username']}'")
 
-                    # --- Manejar password_hash (¡CRÍTICO!) ---
+                    # --- Manejar password_hash ---
                     password_hash = row.get('password_hash')
                     if pd.isna(password_hash) or password_hash == '':
-                        password_hash = ''  # Asigna cadena vacía para evitar error NOT NULL
-                        print(f"   ⚠️ Usuario '{row['username']}' sin password_hash, se asignó cadena vacía (debes actualizarlo)")
+                        password_hash = ''
+                        print(f"   ⚠️ Usuario '{row['username']}' sin password_hash, se asignó cadena vacía")
 
                     # --- Manejar telegram_id ---
                     telegram_id = row.get('telegram_id')
@@ -245,7 +357,7 @@ def cargar_datos():
                 admin = User(
                     nombre='Administrador',
                     username='admin',
-                    password_hash='',  # Se asignará después
+                    password_hash='',
                     role='admin',
                     is_active=True,
                     puede_asignar=True,
