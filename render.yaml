@@ -5,11 +5,12 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python -c "from app import create_app; app = create_app(); app.app_context().push(); from app.extensions import db; db.create_all()"
+      python cargar_datos_municipio.py
     startCommand: gunicorn run:app
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: reportes  # ← CAMBIADO
+          name: reportes
           property: connectionString
       - key: FLASK_SECRET_KEY
         sync: false
@@ -23,7 +24,13 @@ services:
         value: uploads
       - key: STATIC_FOLDER
         value: app/static
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
 
 databases:
-  - name: reportes  # ← CAMBIADO
+  - name: reportes
     plan: free
