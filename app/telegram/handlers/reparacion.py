@@ -305,26 +305,4 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                 user_data[user_id].pop(clave, None)
         return
 
-async def manejar_media_reparacion(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Handler específico para fotos/videos durante el modo reparación.
-    Si el usuario está en modo_reparacion, redirige a manejar_modo_reparacion.
-    Si no, muestra un mensaje informativo.
-    """
-    user_id = update.effective_user.id
 
-    if user_id in user_data and user_data[user_id].get('modo_reparacion'):
-        logger.info(f"📸 [REPARACION] Usuario {user_id} envió foto/video en modo reparación")
-        await manejar_modo_reparacion(update, context, user_id)
-        return
-
-    logger.warning(f"⚠️ [REPARACION] Usuario {user_id} envió foto pero no está en modo reparación")
-    await update.message.reply_text(
-        "📸 *No estás en modo reparación.*\n\n"
-        "Si deseas subir evidencia de reparación:\n"
-        "1. Ve al mensaje original del reporte\n"
-        "2. Presiona el botón *'🔧 Subir evidencia reparación'*\n"
-        "3. Sigue el flujo para enviar fotos/videos\n\n"
-        "Si esto es un error, ignora este mensaje.",
-        parse_mode=ParseMode.MARKDOWN
-    )

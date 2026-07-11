@@ -7,4 +7,4 @@ venv/
 *.pyc
 *.db
 *.sqlite
-.python-version
+
