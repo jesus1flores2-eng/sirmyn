@@ -15,7 +15,8 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 
-app = create_app()
+# Flag para evitar ejecución múltiple
+DATOS_CARGADOS = False
 
 def cargar_datos_ejemplo():
     """Carga datos de ejemplo si el Excel no está disponible"""
@@ -125,8 +126,16 @@ def cargar_datos_ejemplo():
             print("   ✅ Usuario admin creado (admin / admin123)")
         
         print("   ✅ Datos de ejemplo cargados correctamente")
+        return True
 
 def cargar_datos():
+    global DATOS_CARGADOS
+    
+    # Evitar ejecución múltiple
+    if DATOS_CARGADOS:
+        print("⚠️ Los datos ya fueron cargados, omitiendo...")
+        return
+    
     archivo = "datos_municipio.xlsx"
     
     print("=" * 60)
@@ -142,6 +151,7 @@ def cargar_datos():
     if not os.path.exists(archivo):
         print(f"⚠️ El archivo '{archivo}' no existe. Usando datos de ejemplo...")
         cargar_datos_ejemplo()
+        DATOS_CARGADOS = True
         return
     
     # 2. Verificar las hojas del Excel
@@ -153,6 +163,7 @@ def cargar_datos():
         print(f"❌ ERROR al leer el archivo Excel: {e}")
         print("📥 Usando datos de ejemplo...")
         cargar_datos_ejemplo()
+        DATOS_CARGADOS = True
         return
     
     with app.app_context():
@@ -384,6 +395,8 @@ def cargar_datos():
         print(f"   • Estados: {Status.query.count()}")
         print(f"   • Equipos: {Team.query.count()}")
         print(f"   • Usuarios: {User.query.count()}")
+        
+        DATOS_CARGADOS = True
 
 if __name__ == "__main__":
     cargar_datos()
