@@ -15,6 +15,9 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 
+# ⭐ CREAR LA APP AQUÍ, FUERA DE CUALQUIER FUNCIÓN
+app = create_app()
+
 # Flag para evitar ejecución múltiple
 DATOS_CARGADOS = False
 
