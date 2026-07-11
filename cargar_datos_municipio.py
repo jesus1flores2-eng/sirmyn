@@ -16,7 +16,7 @@ from app.models.status import Status
 app = create_app()
 
 def cargar_datos():
-    archivo = "plantilla_municipio.xlsx"  # Cambia por el nombre de tu archivo
+    archivo = "datos_municipio.xlsx"  # Cambia por el nombre de tu archivo
     
     with app.app_context():
         print("🚀 CARGANDO DATOS DESDE EXCEL...")
