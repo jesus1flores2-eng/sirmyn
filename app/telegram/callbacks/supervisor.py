@@ -357,11 +357,9 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
 # SUPERVISOR CONFIRMA RECEPCIÓN DE SOLICITUD DE APOYO
 # ============================================================
 
-async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Maneja cuando el supervisor presiona "✅ Confirmar recepción" en una solicitud de apoyo.
-    Notifica a la cuadrilla que el supervisor ya está enterado.
-    VERSIÓN CORREGIDA - usa context.bot correctamente.
     """
     query = update.callback_query
     try:
@@ -370,7 +368,7 @@ async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAU
         pass
 
     callback_data = query.data
-    if not callback_data.startswith('super_confirmar_apoyo_'):
+    if not callback_data.startswith('apoyo_confirmar_'):
         return
 
     reporte_id = int(callback_data.split('_')[-1])
@@ -461,7 +459,7 @@ async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAU
             await query.answer(f"✅ Confirmación enviada a {notificados} miembros de la cuadrilla", show_alert=False)
 
     except Exception as e:
-        logger.error(f"❌ Error en supervisor_confirmar_apoyo: {e}")
+        logger.error(f"❌ Error en apoyo_confirmar_handler: {e}")
         import traceback
         logger.error(traceback.format_exc())
         await query.answer("❌ Error al procesar", show_alert=True)

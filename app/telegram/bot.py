@@ -24,7 +24,7 @@ from app.telegram.callbacks.general import button_callback_handler
 from app.telegram.callbacks.supervisor import (
     supervisor_callback_handler,
     rechazo_opciones_handler,
-    supervisor_confirmar_apoyo  # ⭐ NUEVA IMPORTACIÓN
+    apoyo_confirmar_handler
 )
 from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
@@ -196,7 +196,7 @@ def build_telegram_app(token):
     app.add_handler(CallbackQueryHandler(supervisor_callback_handler, pattern="^super_"))
     app.add_handler(CallbackQueryHandler(rechazo_opciones_handler, pattern="^rechazar_"))
     # ⭐ NUEVO HANDLER PARA CONFIRMAR RECEPCIÓN DE APOYO
-    app.add_handler(CallbackQueryHandler(supervisor_confirmar_apoyo, pattern="^super_confirmar_apoyo_"))
+    app.add_handler(CallbackQueryHandler(apoyo_confirmar_handler, pattern="^apoyo_confirmar_"))
     
     # 4.2 Callbacks de USUARIO (validación final)
     app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_"))

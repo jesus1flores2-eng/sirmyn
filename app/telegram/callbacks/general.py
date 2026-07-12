@@ -909,7 +909,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
             keyboard = [[
-                InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"super_confirmar_apoyo_{reporte_id}")
+                InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"apoyo_confirmar_{reporte_id}")
             ]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
