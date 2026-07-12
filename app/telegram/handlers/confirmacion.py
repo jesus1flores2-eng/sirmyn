@@ -58,7 +58,7 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     tipo=datos["tipo"],
                     subtipo=datos.get("subtipo", ""),
                     numero=datos["numero"],
-                    entre_calles=datos["entre_calles"],
+                    entre_calles=datos.get("entre_calles", ""),
                     descripcion_problema=datos["descripcion"],
                     evidencia=datos.get("evidencia", None),
                     numero_cuenta=datos.get("cuenta"),
