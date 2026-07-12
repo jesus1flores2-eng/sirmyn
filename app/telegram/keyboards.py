@@ -37,13 +37,31 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             from app.models.report import Report, Assignment
             from app.models.user import User
             from app.models.team import Team
+            from app.models.status import Status
             
             reporte = Report.query.get(reporte_id)
             if not reporte:
                 return InlineKeyboardMarkup([[]])
             
+            # ⭐ DETECTAR ESTADO REAL DE LA ASIGNACIÓN
+            asignacion_actual = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+            
+            estado_actual = None
+            if asignacion_actual and asignacion_actual.status:
+                estado_actual = asignacion_actual.status.descripcion
+            
+            # ⭐ SI EL ESTADO ES "En proceso", confirmado = True
+            if estado_actual == "En proceso":
+                confirmado = True
+            # ⭐ SI EL ESTADO ES "Problema ubicación", problema_reportado = True
+            elif estado_actual == "Problema ubicación":
+                problema_reportado = True
+            
             keyboard = []
             
+            # ========== BOTONES PARA DIRECTOR ==========
             if es_director:
                 fila1 = [
                     InlineKeyboardButton(
@@ -52,17 +70,15 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                     )
                 ]
                 
+                # ⭐ Ver evidencia (SIEMPRE si existe, sin verificar archivo local)
                 if reporte.evidencia:
-                    upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
-                    evidencia_path = os.path.join(upload_folder, reporte.evidencia)
-                    if os.path.exists(evidencia_path):
-                        icono = "🖼️" if reporte.evidencia.lower().endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')) else "🎬"
-                        fila1.append(
-                            InlineKeyboardButton(
-                                f"{icono} Ver Evidencia",
-                                callback_data=f"dir_evidencia_{reporte_id}"
-                            )
+                    # Si es URL de Cloudinary o ruta local, siempre mostrar
+                    fila1.append(
+                        InlineKeyboardButton(
+                            "📎 Ver Evidencia",
+                            callback_data=f"dir_evidencia_{reporte_id}"
                         )
+                    )
                 
                 keyboard.append(fila1)
                 keyboard.append([
@@ -73,7 +89,8 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                 ])
                 return InlineKeyboardMarkup(keyboard)
             
-            # Botones para cuadrilla
+            # ========== BOTONES PARA CUADRILLA ==========
+            # FILA 1: Confirmar / Problema
             if confirmado:
                 fila1 = [
                     InlineKeyboardButton("✅ Confirmado ✓", callback_data="confirmado_ya"),
@@ -92,6 +109,7 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             keyboard.append(fila1)
             
+            # FILA 2: Mapa + Evidencia (SIEMPRE si existe)
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 texto_mapa = "📍 Ubicación Exacta (GPS)"
@@ -104,18 +122,27 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             fila2 = [InlineKeyboardButton(texto_mapa, callback_data=f"mapa_{reporte_id}")]
             
+            # ⭐ Ver evidencia (SIEMPRE si existe, sin verificar archivo local)
             if reporte.evidencia:
-                upload_folder = app.config.get('UPLOAD_FOLDER', 'uploads')
-                evidencia_path = os.path.join(upload_folder, reporte.evidencia)
-                if os.path.exists(evidencia_path):
-                    icono = "🖼️" if reporte.evidencia.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) else "🎬"
-                    fila2.append(
-                        InlineKeyboardButton(f"{icono} Ver evidencia", callback_data=f"evidencia_{reporte_id}")
-                    )
+                # Detectar si es Cloudinary o local
+                if reporte.evidencia.startswith('http'):
+                    icono = "☁️"
+                else:
+                    ext = reporte.evidencia.split('.')[-1].lower() if '.' in reporte.evidencia else ''
+                    if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']:
+                        icono = "🖼️"
+                    elif ext in ['mp4', 'mov', 'avi', 'mkv']:
+                        icono = "🎬"
+                    else:
+                        icono = "📎"
+                
+                fila2.append(
+                    InlineKeyboardButton(f"{icono} Ver evidencia", callback_data=f"evidencia_{reporte_id}")
+                )
             
             keyboard.append(fila2)
             
-            # Botón de reparación
+            # FILA 3: Botón de reparación (si la cuadrilla está asignada Y el estado NO es finalizado)
             if context is not None:
                 user_id = None
                 if hasattr(context, 'user_data') and context.user_data:
@@ -130,14 +157,16 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                     if asignacion and asignacion.team_id:
                         usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
                         if usuario_actual and usuario_actual.team_id == asignacion.team_id:
-                            keyboard.append([
-                                InlineKeyboardButton(
-                                    "🔧 Subir evidencia reparación",
-                                    callback_data=f"reparacion_{reporte_id}"
-                                )
-                            ])
+                            # ⭐ SOLO mostrar si el estado NO es "Finalizado" o "Aceptado por usuario"
+                            if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "🔧 Subir evidencia reparación",
+                                        callback_data=f"reparacion_{reporte_id}"
+                                    )
+                                ])
             
-            # Solicitudes de apoyo
+            # FILA 4: Solicitudes de apoyo (solo si la cuadrilla está asignada)
             if context is not None:
                 user_id = None
                 if hasattr(context, 'user_data') and context.user_data:
@@ -152,22 +181,24 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                     if asignacion and asignacion.team_id:
                         usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
                         if usuario_actual and usuario_actual.team_id == asignacion.team_id:
-                            keyboard.append([
-                                InlineKeyboardButton(
-                                    "🛠️ Solicitar retroexcavadora",
-                                    callback_data=f"solicitar_retro_{reporte_id}"
-                                ),
-                                InlineKeyboardButton(
-                                    "🚛 Solicitar camión de material",
-                                    callback_data=f"solicitar_camion_{reporte_id}"
-                                )
-                            ])
-                            keyboard.append([
-                                InlineKeyboardButton(
-                                    "👷 Solicitar apoyo de otra cuadrilla",
-                                    callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
-                                )
-                            ])
+                            # ⭐ SOLO mostrar si el estado NO es "Finalizado"
+                            if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "🛠️ Solicitar retroexcavadora",
+                                        callback_data=f"solicitar_retro_{reporte_id}"
+                                    ),
+                                    InlineKeyboardButton(
+                                        "🚛 Solicitar camión de material",
+                                        callback_data=f"solicitar_camion_{reporte_id}"
+                                    )
+                                ])
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "👷 Solicitar apoyo de otra cuadrilla",
+                                        callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
+                                    )
+                                ])
             
             return InlineKeyboardMarkup(keyboard)
             

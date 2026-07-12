@@ -88,64 +88,79 @@ async def elegir_ubicacion_handler(update: Update, context: ContextTypes.DEFAULT
     return ELEGIR_UBICACION
 
 async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Maneja la ubicación GPS enviada durante la creación de un reporte"""
+    """Maneja la ubicación GPS enviada durante la creación de un reporte - CORREGIDO"""
     print("🚨🚨🚨 UBICACION_GPS_HANDLER EJECUTADO 🚨🚨🚨")
     try:
         user_id = update.effective_user.id
         location = update.message.location
         print(f"📍 Lat: {location.latitude}, Lon: {location.longitude}")
         
+        # ⭐ SIEMPRE guardar coordenadas GPS
         user_data[user_id]["latitud"] = location.latitude
         user_data[user_id]["longitud"] = location.longitude
+        user_data[user_id]["ubicacion_gps"] = True
         
+        # Intentar obtener dirección por reverse geocoding (solo para referencia)
         from app.services.geocoding import obtener_direccion_osm, buscar_localidad_flexible, buscar_calle_flexible
         
-        direccion = obtener_direccion_osm(location.latitude, location.longitude)
+        localidad_detectada = None
+        calle_detectada = None
         
+        direccion = obtener_direccion_osm(location.latitude, location.longitude)
         if direccion and direccion.get('road') and direccion.get('localidad'):
             localidad_detectada = direccion['localidad']
             calle_detectada = direccion['road']
         else:
-            localidad_detectada = "Ixtlahuacán De Los Membrillos"
-            calle_detectada = "Calle Principal"
+            # Si no se detecta dirección, usar valores por defecto
+            print("⚠️ No se pudo detectar dirección, usando valores predeterminados")
         
-        resultado_localidad = buscar_localidad_flexible(localidad_detectada)
-        if resultado_localidad:
-            loc_id, loc_nombre = resultado_localidad
-            user_data[user_id]["localidad_id"] = loc_id
-            user_data[user_id]["localidad_nombre"] = loc_nombre
-            
-            resultado_calle = buscar_calle_flexible(calle_detectada, loc_id)
-            if resultado_calle:
-                calle_id, calle_nombre = resultado_calle
-                user_data[user_id]["calle_id"] = calle_id
-                user_data[user_id]["calle_nombre"] = calle_nombre
-                await update.message.reply_text(
-                    f"✅ *Ubicación confirmada*\n\n"
-                    f"📍 *Localidad:* {loc_nombre}\n"
-                    f"🛣️ *Calle:* {calle_nombre}\n\n"
-                    "📝 **Escribe el número exterior o referencia:**\n"
-                    "(Ej: 123, Casa azul, S/N)",
-                    parse_mode="Markdown",
-                    reply_markup=ReplyKeyboardRemove()
-                )
-                return NUMERO
+        # ⭐ Buscar localidad en BD (si se detectó)
+        if localidad_detectada:
+            resultado_localidad = buscar_localidad_flexible(localidad_detectada)
+            if resultado_localidad:
+                loc_id, loc_nombre = resultado_localidad
+                user_data[user_id]["localidad_id"] = loc_id
+                user_data[user_id]["localidad_nombre"] = loc_nombre
+                
+                # Buscar calle (si se detectó y la localidad existe)
+                if calle_detectada:
+                    resultado_calle = buscar_calle_flexible(calle_detectada, loc_id)
+                    if resultado_calle:
+                        calle_id, calle_nombre = resultado_calle
+                        user_data[user_id]["calle_id"] = calle_id
+                        user_data[user_id]["calle_nombre"] = calle_nombre
+        
+        # ⭐ SI no se encontró localidad o calle, usar valores predeterminados
+        if not user_data[user_id].get("localidad_nombre"):
+            user_data[user_id]["localidad_nombre"] = "Ubicación GPS"
+            # Buscar una localidad por defecto o usar None
+            localidad_defecto = Localidad.query.first() if Localidad.query.count() > 0 else None
+            if localidad_defecto:
+                user_data[user_id]["localidad_id"] = localidad_defecto.id
             else:
-                await update.message.reply_text(
-                    f"⚠️ No encontré la calle '{calle_detectada}'.\n\n"
-                    "Por favor, escribe la *calle* manualmente:",
-                    parse_mode="Markdown",
-                    reply_markup=ReplyKeyboardRemove()
-                )
-                return CALLE
-        else:
-            await update.message.reply_text(
-                f"⚠️ No encontré la localidad '{localidad_detectada}'.\n\n"
-                "Por favor, escribe la *localidad/colonia* manualmente:",
-                parse_mode="Markdown",
-                reply_markup=ReplyKeyboardRemove()
-            )
-            return LOCALIDAD
+                user_data[user_id]["localidad_id"] = None
+        
+        if not user_data[user_id].get("calle_nombre"):
+            user_data[user_id]["calle_nombre"] = "Calle GPS"
+            user_data[user_id]["calle_id"] = None
+        
+        # ⭐ Mostrar confirmación y pedir número (sin pedir localidad o calle)
+        localidad_mostrar = user_data[user_id].get("localidad_nombre", "Ubicación GPS")
+        calle_mostrar = user_data[user_id].get("calle_nombre", "Calle GPS")
+        
+        await update.message.reply_text(
+            f"✅ *Ubicación GPS recibida*\n\n"
+            f"📍 *Coordenadas:*\n"
+            f"Latitud: {location.latitude}\n"
+            f"Longitud: {location.longitude}\n"
+            f"📍 *Localidad:* {localidad_mostrar}\n"
+            f"🛣️ *Calle:* {calle_mostrar}\n\n"
+            "📝 **Escribe el número exterior o referencia:**\n"
+            "(Ej: 123, Casa azul, S/N)",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return NUMERO
             
     except Exception as e:
         print(f"❌ ERROR en ubicacion_gps_handler: {e}")
