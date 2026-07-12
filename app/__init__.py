@@ -24,6 +24,11 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
+    # ⭐⭐⭐ CONFIGURAR DatabaseManager AQUÍ ⭐⭐⭐
+    from app.services.db_manager import DatabaseManager
+    DatabaseManager.set_app(app)
+    print("✅ DatabaseManager configurado con la app")
+
     # Crear carpetas
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     evidencias_dir = os.path.join(app.root_path, 'static', 'evidencias')
@@ -66,8 +71,6 @@ def create_app():
             return User.query.get(int(user_id))
         db.create_all()
         print("✅ Base de datos lista")
-
-    # ⭐⭐⭐ COMANDOS CLI OPCIONALES (eliminados para limpieza) ⭐⭐⭐
 
     print("\n" + "="*60)
     print("🚀 SISTEMA SIRMYN INICIADO")
