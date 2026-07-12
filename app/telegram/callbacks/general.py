@@ -73,7 +73,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
-    # DETECCIÓN PARA ASIGNAR APOYO (NUEVO)
+    # DETECCIÓN PARA ASIGNAR APOYO
     # ============================================================
     if callback_data.startswith('apoyo_asignar_'):
         reporte_id = int(callback_data.split('_')[-1])
@@ -88,8 +88,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     if callback_data.startswith('apoyo_confirmar_'):
-        # ⭐ Este callback debe ir a supervisor.py
-        # Pero para evitar conflicto, lo dejamos pasar
         logger.info(f"⏩ Callback {callback_data} manejado por supervisor.py")
         return
 
@@ -974,7 +972,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
 
 
 # ============================================================
-# MOSTRAR CUADRILLAS PARA APOYO (NUEVO)
+# MOSTRAR CUADRILLAS PARA APOYO
 # ============================================================
 
 async def manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id):
@@ -1222,6 +1220,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
     except Exception as e:
         logger.error(f"❌ Error en manejar_asignar_apoyo: {e}")
         await query.edit_message_text("❌ Error al asignar apoyo.")
+
 
 # ============================================================
 # VOLVER AL REPORTE ORIGINAL

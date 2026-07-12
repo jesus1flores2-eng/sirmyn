@@ -1,4 +1,3 @@
-# app/telegram/callbacks/supervisor.py
 """
 Maneja los callbacks del supervisor de agua (validación de reparaciones)
 """
@@ -452,11 +451,18 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
 
+            # ⭐ CONSTRUIR MENSAJE CON GPS
+            gps_texto = ""
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                gps_texto = f"\n📍 *Ubicación exacta:* [Ver en Google Maps]({maps_url})"
+
             mensaje_cuadrilla = (
                 f"👷 *SUPERVISOR CONFIRMADO - Solicitud de Apoyo*\n\n"
                 f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
-                f"📍 *Ubicación:* {direccion}\n"
-                f"👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
+                f"📍 *Ubicación:* {direccion}"
+                f"{gps_texto}"
+                f"\n\n👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
                 f"*📋 El supervisor asignará una cuadrilla de apoyo próximamente.*"
             )
 
@@ -469,7 +475,7 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
                             chat_id=int(usuario.telegram_id),
                             text=mensaje_cuadrilla,
                             parse_mode=ParseMode.MARKDOWN,
-                            disable_web_page_preview=True
+                            disable_web_page_preview=False
                         )
                         notificados += 1
                         logger.info(f"✅ Notificación enviada a {usuario.nombre} (cuadrilla)")
