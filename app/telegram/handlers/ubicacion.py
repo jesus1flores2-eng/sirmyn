@@ -44,7 +44,13 @@ async def elegir_ubicacion_handler(update: Update, context: ContextTypes.DEFAULT
     
     if texto_original.lower() in ["❌ cancelar", "cancelar", "cancel"] or "❌" in texto_original:
         await update.message.reply_text(
-            "Operación cancelada. Usa /start para comenzar de nuevo.",
+            "💙 *Nos da tristeza que no hayas completado tu reporte.*\n\n"
+            "📌 *Recuerda que puedes:*\n"
+            "• Usar /start cuando estés listo para comenzar de nuevo\n"
+            "• Escribir tu dirección manualmente si el GPS no funciona\n"
+            "• Contactar al administrador si necesitas ayuda\n\n"
+            "🌐 *Estamos aquí para servirte. ¡Vuelve pronto!*",
+            parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )
         limpiar_estado(user_id)
@@ -156,8 +162,20 @@ async def localidad_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     entrada = update.message.text.strip()
     
+    # ⭐ LIMPIAR SUGERENCIAS ANTERIORES (para que la segunda búsqueda funcione)
+    user_data[user_id].pop("sugerencias_localidad", None)
+    
     if entrada.lower() == "cancelar":
-        await update.message.reply_text("Operación cancelada.", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text(
+            "💙 *Nos da tristeza que no hayas completado tu reporte.*\n\n"
+            "📌 *Recuerda que puedes:*\n"
+            "• Usar /start cuando estés listo para comenzar de nuevo\n"
+            "• Escribir tu dirección manualmente si el GPS no funciona\n"
+            "• Contactar al administrador si necesitas ayuda\n\n"
+            "🌐 *Estamos aquí para servirte. ¡Vuelve pronto!*",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         limpiar_estado(user_id)
         return ConversationHandler.END
     
@@ -177,6 +195,7 @@ async def localidad_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for i, sug in enumerate(sugerencias[:5], 1):
             keyboard.append([f"{i}. {sug['nombre']}"])
         keyboard.append(["✏️ Escribir de nuevo"])
+        keyboard.append(["📋 Ver lista completa"])
         keyboard.append(["❌ Cancelar"])
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         
@@ -188,7 +207,28 @@ async def localidad_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(mensaje, reply_markup=reply_markup)
         return LOCALIDAD_SUGERENCIAS
     else:
-        await update.message.reply_text("❌ No encontré coincidencias. Intenta de nuevo:")
+        # ⭐ MOSTRAR EJEMPLOS REALES cuando no encuentre coincidencias
+        ejemplos = [nombre for _, nombre in candidatos[:8]]
+        mensaje = (
+            f"❌ No encontré coincidencias para '*{entrada}*'.\n\n"
+            f"💡 *Ejemplos de localidades disponibles:*\n"
+        )
+        for i, nombre in enumerate(ejemplos, 1):
+            mensaje += f"{i}. {nombre}\n"
+        mensaje += (
+            f"\n📌 *Puedes:*\n"
+            f"• Escribir el nombre completo de la localidad\n"
+            f"• Usar solo la primera palabra (ej: 'Ixtlahuacán')\n"
+            f"• Escribir '📋 Ver lista completa' para ver todas\n"
+            f"• Escribir 'cancelar' para salir\n\n"
+            f"*Escribe la localidad/colonia:*"
+        )
+        
+        await update.message.reply_text(
+            mensaje,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         return LOCALIDAD
 
 async def localidad_sugerencias_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -196,12 +236,45 @@ async def localidad_sugerencias_handler(update: Update, context: ContextTypes.DE
     texto = update.message.text.strip()
     
     if texto == "❌ Cancelar" or "cancelar" in texto.lower():
-        await update.message.reply_text("Operación cancelada.", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text(
+            "💙 *Nos da tristeza que no hayas completado tu reporte.*\n\n"
+            "📌 *Recuerda que puedes:*\n"
+            "• Usar /start cuando estés listo para comenzar de nuevo\n\n"
+            "🌐 *Estamos aquí para servirte. ¡Vuelve pronto!*",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         limpiar_estado(user_id)
         return ConversationHandler.END
     
-    if "escribir" in texto.lower():
-        await update.message.reply_text("📍 Escribe la *localidad/colonia*:", parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
+    # ⭐ NUEVA OPCIÓN: Ver lista completa
+    if "lista completa" in texto.lower() or "📋" in texto:
+        candidatos = obtener_localidades_con_fallback()
+        if candidatos:
+            mensaje = "📋 *LISTA COMPLETA DE LOCALIDADES:*\n\n"
+            for i, (_, nombre) in enumerate(candidatos, 1):
+                mensaje += f"{i}. {nombre}\n"
+            mensaje += "\n*Escribe el nombre exacto de la localidad:*"
+            
+            await update.message.reply_text(
+                mensaje,
+                parse_mode="Markdown",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return LOCALIDAD
+        else:
+            await update.message.reply_text(
+                "⚠️ No hay localidades registradas.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return LOCALIDAD
+    
+    if "escribir" in texto.lower() or "✏️" in texto:
+        await update.message.reply_text(
+            "📍 Escribe la *localidad/colonia* (o las primeras letras):",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         return LOCALIDAD
     
     numeros = re.findall(r'\d+', texto)
@@ -220,21 +293,37 @@ async def localidad_sugerencias_handler(update: Update, context: ContextTypes.DE
             )
             return CALLE
     
-    await update.message.reply_text("No pude identificar la localidad. Intenta de nuevo:")
+    await update.message.reply_text(
+        "No pude identificar la localidad. Intenta de nuevo o escribe 'cancelar'.",
+        reply_markup=ReplyKeyboardRemove()
+    )
     return LOCALIDAD_SUGERENCIAS
 
 async def calle_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     entrada = update.message.text.strip()
     
+    # ⭐ LIMPIAR SUGERENCIAS ANTERIORES (para que la segunda búsqueda funcione)
+    user_data[user_id].pop("sugerencias_calle", None)
+    
     if entrada.lower() == "cancelar":
-        await update.message.reply_text("Operación cancelada.", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text(
+            "💙 *Nos da tristeza que no hayas completado tu reporte.*\n\n"
+            "📌 *Recuerda que puedes:*\n"
+            "• Usar /start cuando estés listo para comenzar de nuevo\n\n"
+            "🌐 *Estamos aquí para servirte. ¡Vuelve pronto!*",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         limpiar_estado(user_id)
         return ConversationHandler.END
     
     loc_id = user_data[user_id].get("localidad_id")
     if not loc_id:
-        await update.message.reply_text("Primero selecciona una localidad.")
+        await update.message.reply_text(
+            "Primero selecciona una localidad. Escribe la *localidad/colonia*:",
+            parse_mode="Markdown"
+        )
         return LOCALIDAD
     
     candidatos = obtener_calles_con_fallback(loc_id)
@@ -253,6 +342,7 @@ async def calle_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         for i, sug in enumerate(sugerencias[:5], 1):
             keyboard.append([f"{i}. {sug['nombre']}"])
         keyboard.append(["✏️ Escribir de nuevo"])
+        keyboard.append(["📋 Ver lista completa"])
         keyboard.append(["❌ Cancelar"])
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         
@@ -264,7 +354,27 @@ async def calle_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(mensaje, reply_markup=reply_markup)
         return CALLE_SUGERENCIAS
     else:
-        await update.message.reply_text("❌ No encontré coincidencias. Intenta de nuevo:")
+        # ⭐ MOSTRAR EJEMPLOS REALES de calles de esta localidad
+        ejemplos = [nombre for _, nombre in candidatos[:8]]
+        mensaje = (
+            f"❌ No encontré coincidencias para '*{entrada}*'.\n\n"
+            f"💡 *Ejemplos de calles en {user_data[user_id].get('localidad_nombre', 'esta localidad')}:*\n"
+        )
+        for i, nombre in enumerate(ejemplos, 1):
+            mensaje += f"{i}. {nombre}\n"
+        mensaje += (
+            f"\n📌 *Puedes:*\n"
+            f"• Escribir el nombre completo de la calle\n"
+            f"• Escribir '📋 Ver lista completa' para ver todas\n"
+            f"• Escribir 'cancelar' para salir\n\n"
+            f"*Escribe la calle:*"
+        )
+        
+        await update.message.reply_text(
+            mensaje,
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         return CALLE
 
 async def calle_sugerencias_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -272,12 +382,53 @@ async def calle_sugerencias_handler(update: Update, context: ContextTypes.DEFAUL
     texto = update.message.text.strip()
     
     if texto == "❌ Cancelar" or "cancelar" in texto.lower():
-        await update.message.reply_text("Operación cancelada.", reply_markup=ReplyKeyboardRemove())
+        await update.message.reply_text(
+            "💙 *Nos da tristeza que no hayas completado tu reporte.*\n\n"
+            "📌 *Recuerda que puedes:*\n"
+            "• Usar /start cuando estés listo para comenzar de nuevo\n\n"
+            "🌐 *Estamos aquí para servirte. ¡Vuelve pronto!*",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         limpiar_estado(user_id)
         return ConversationHandler.END
     
-    if "escribir" in texto.lower():
-        await update.message.reply_text("Escribe la *calle*:", parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
+    # ⭐ NUEVA OPCIÓN: Ver lista completa de calles
+    if "lista completa" in texto.lower() or "📋" in texto:
+        loc_id = user_data[user_id].get("localidad_id")
+        if loc_id:
+            candidatos = obtener_calles_con_fallback(loc_id)
+            if candidatos:
+                mensaje = f"📋 *LISTA COMPLETA DE CALLES en {user_data[user_id].get('localidad_nombre', 'esta localidad')}:*\n\n"
+                for i, (_, nombre) in enumerate(candidatos, 1):
+                    mensaje += f"{i}. {nombre}\n"
+                mensaje += "\n*Escribe el nombre exacto de la calle:*"
+                
+                await update.message.reply_text(
+                    mensaje,
+                    parse_mode="Markdown",
+                    reply_markup=ReplyKeyboardRemove()
+                )
+                return CALLE
+            else:
+                await update.message.reply_text(
+                    "⚠️ No hay calles registradas para esta localidad.",
+                    reply_markup=ReplyKeyboardRemove()
+                )
+                return CALLE
+        else:
+            await update.message.reply_text(
+                "Primero selecciona una localidad.",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return LOCALIDAD
+    
+    if "escribir" in texto.lower() or "✏️" in texto:
+        await update.message.reply_text(
+            "Escribe la *calle* (o las primeras letras):",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         return CALLE
     
     numeros = re.findall(r'\d+', texto)
@@ -296,7 +447,10 @@ async def calle_sugerencias_handler(update: Update, context: ContextTypes.DEFAUL
             )
             return NUMERO
     
-    await update.message.reply_text("No pude identificar la calle. Intenta de nuevo:")
+    await update.message.reply_text(
+        "No pude identificar la calle. Intenta de nuevo o escribe 'cancelar'.",
+        reply_markup=ReplyKeyboardRemove()
+    )
     return CALLE_SUGERENCIAS
 
 # ============================================================================
