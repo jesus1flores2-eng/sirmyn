@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.services.db_manager import DatabaseManager
 from app.telegram.keyboards import construir_botones_reporte
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -271,6 +271,13 @@ async def construir_mensaje_completo(reporte, localidad, calle):
         enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
         mensaje += f"📎 *Evidencia:* {enlace}\n\n"
     
+    # ============================================================
+    # MAPA (si hay coordenadas)
+    # ============================================================
+    if reporte.latitud and reporte.longitud:
+        maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+        mensaje += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
+    
     mensaje += (
         f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M')}\n\n"
         f"*👷 ACCIONES RÁPIDAS:*"
@@ -280,11 +287,16 @@ async def construir_mensaje_completo(reporte, localidad, calle):
 
 
 # ============================================================
-# 5. NOTIFICAR ASIGNACIÓN A CUADRILLA
+# 5. NOTIFICAR ASIGNACIÓN A CUADRILLA (MODIFICADA PARA PRESIDENCIA)
 # ============================================================
-async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: int):
+async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: int, es_presidencial: bool = False):
     """
     Notifica a una cuadrilla que se le ha asignado un reporte.
+    
+    Args:
+        reporte_id: ID del reporte
+        user_id_asignado: ID del usuario de la cuadrilla
+        es_presidencial: Si la asignación fue hecha por el presidente
     """
     try:
         from app.models.report import Report, Assignment, Localidad, Calle
@@ -313,21 +325,48 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
         
         status = Status.query.get(asignacion.status_id) if asignacion else None
         
-        mensaje = (
-            f"🚨 *NUEVO REPORTE ASIGNADO*\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"📋 *Folio:* #{reporte.id}\n"
-            f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
-            f"{localidad.nombre if localidad else 'N/D'}\n"
-            f"📞 *Reportante:* {reporte.reportante}\n"
-            f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
-            f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n"
-            f"🏷️ *Estatus:* {status.descripcion if status else 'Asignado'}\n"
-            f"👷 *Asignado a:* {usuario.nombre}\n"
-            f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
-            f"*📋 Acciones rápidas:*"
-        )
+        # ============================================================
+        # CONSTRUIR MENSAJE SEGÚN TIPO DE ASIGNACIÓN
+        # ============================================================
+        if es_presidencial:
+            # ⭐ MENSAJE PRESIDENCIAL (URGENTE)
+            mensaje = (
+                f"🚨 *REPORTE ASIGNADO POR PRESIDENCIA - URGENTE*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"📋 *Folio:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
+                f"{localidad.nombre if localidad else 'N/D'}\n"
+                f"📞 *Reportante:* {reporte.reportante}\n"
+                f"📱 *Teléfono:* {reporte.telefono}\n"
+                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 *Descripción:* {reporte.descripcion_problema[:200]}...\n"
+                f"👷 *Asignado a:* {usuario.nombre}\n"
+                f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
+                f"*🔴 ASIGNACIÓN PRIORITARIA*\n"
+                f"Este reporte ha sido asignado directamente por la Presidencia.\n"
+                f"Motivo: Reporte sin atender por más de 48 horas.\n\n"
+                f"*📋 Acciones rápidas:*"
+            )
+        else:
+            # ⭐ MENSAJE NORMAL
+            mensaje = (
+                f"🚨 *NUEVO REPORTE ASIGNADO*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"📋 *Folio:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
+                f"{localidad.nombre if localidad else 'N/D'}\n"
+                f"📞 *Reportante:* {reporte.reportante}\n"
+                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n"
+                f"🏷️ *Estatus:* {status.descripcion if status else 'Asignado'}\n"
+                f"👷 *Asignado a:* {usuario.nombre}\n"
+                f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
+                f"*📋 Acciones rápidas:*"
+            )
         
+        # ============================================================
+        # BOTONES (los mismos para ambos casos)
+        # ============================================================
         reply_markup = construir_botones_reporte(reporte_id, user_id=usuario.telegram_id)
         
         bot_app = get_telegram_app()
@@ -343,7 +382,7 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
             disable_web_page_preview=False
         )
         
-        logger.info(f"✅ Notificación enviada a {usuario.nombre} (ID: {usuario.telegram_id})")
+        logger.info(f"✅ Notificación {'PRESIDENCIAL' if es_presidencial else ''} enviada a {usuario.nombre}")
         return True
         
     except Exception as e:
@@ -352,7 +391,179 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
 
 
 # ============================================================
-# 6. NOTIFICAR SUPERVISOR REVISIÓN (CON EVIDENCIAS ENLACES)
+# 6. NOTIFICAR DIRECTOR SOBRE ASIGNACIÓN PRESIDENCIAL
+# ============================================================
+async def notificar_director_asignacion_presidencial(reporte_id: int, cuadrilla_nombre: str):
+    """
+    Notifica al director del área que el presidente asignó un reporte urgente.
+    """
+    try:
+        from app.models.report import Report
+        from app.models.user import User
+        from app.routes.telegram_routes import get_telegram_app
+        
+        reporte = Report.query.get(reporte_id)
+        if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
+            return False
+        
+        # Determinar director según tipo de reporte
+        if reporte.tipo in ["Agua potable", "Drenaje"]:
+            director = User.query.filter_by(
+                area='agua',
+                rol_especifico='director',
+                is_active=True
+            ).first()
+        else:
+            mapeo = {
+                "Aseo público": "aseo",
+                "Alumbrado público": "alumbrado",
+                "Parques y jardines": "parques",
+                "Ecología": "ecologia",
+                "Seguridad pública": "seguridad",
+                "Obras públicas": "obras",
+                "Bomberos": "bomberos"
+            }
+            area = mapeo.get(reporte.tipo)
+            if area:
+                director = User.query.filter_by(
+                    area=area,
+                    rol_especifico='director',
+                    is_active=True
+                ).first()
+            else:
+                director = None
+        
+        if not director or not director.telegram_id:
+            logger.warning(f"⚠️ No se encontró director para notificar asignación presidencial")
+            return False
+        
+        bot_app = get_telegram_app()
+        if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
+            return False
+        
+        # Calcular horas transcurridas
+        horas = int((datetime.now() - reporte.timestamp).total_seconds() / 3600)
+        
+        mensaje = (
+            f"📋 *NOTIFICACIÓN - ASIGNACIÓN PRESIDENCIAL*\n\n"
+            f"El Presidente ha asignado el reporte *#{reporte.id}* a la cuadrilla *{cuadrilla_nombre}*.\n\n"
+            f"📋 *Reporte:* {reporte.tipo} - {reporte.subtipo}\n"
+            f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
+            f"📅 *Reportado hace:* {horas} horas\n\n"
+            f"*Motivo:* Reporte sin atender por más de 48 horas.\n\n"
+            f"Por favor, den seguimiento a esta asignación."
+        )
+        
+        await bot_app.bot.send_message(
+            chat_id=int(director.telegram_id),
+            text=mensaje,
+            parse_mode=ParseMode.MARKDOWN
+        )
+        
+        logger.info(f"✅ Director {director.nombre} notificado sobre asignación presidencial")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error notificando director sobre asignación presidencial: {e}", exc_info=True)
+        return False
+
+
+# ============================================================
+# 7. NOTIFICAR PRESIDENTE SOBRE REPORTE URGENTE (NUEVA)
+# ============================================================
+async def notificar_presidente_urgente(reporte_id: int):
+    """
+    Notifica al presidente sobre un reporte que lleva más de 48 horas sin asignar.
+    """
+    try:
+        from app.models.report import Report, Localidad, Calle
+        from app.models.user import User
+        from app.routes.telegram_routes import get_telegram_app
+        
+        reporte = Report.query.get(reporte_id)
+        if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
+            return False
+        
+        # Marcar como notificado para evitar duplicados
+        reporte.notificado_presidente = True
+        db.session.commit()
+        
+        presidente = User.query.filter_by(
+            rol_especifico='presidente',
+            is_active=True
+        ).first()
+        
+        if not presidente or not presidente.telegram_id:
+            logger.warning("⚠️ Presidente no configurado o sin Telegram")
+            return False
+        
+        localidad = Localidad.query.get(reporte.localidad_id)
+        calle = Calle.query.get(reporte.calle_id)
+        
+        # Calcular horas transcurridas
+        horas = int((datetime.now() - reporte.timestamp).total_seconds() / 3600)
+        
+        # ============================================================
+        # CONSTRUIR MENSAJE COMPLETO PARA PRESIDENTE
+        # ============================================================
+        mensaje = (
+            f"🚨 *ALERTA URGENTE - REPORTE SIN ATENDER*\n\n"
+            f"📋 *Folio:* #{reporte.id}\n"
+            f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
+            f"{localidad.nombre if localidad else 'N/D'}\n"
+            f"👤 *Reportante:* {reporte.reportante}\n"
+            f"📱 *Teléfono:* {reporte.telefono}\n"
+            f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+            f"📅 *Reportado:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M')} (hace {horas} horas)\n\n"
+            f"📄 *Descripción:*\n{reporte.descripcion_problema[:300]}{'...' if len(reporte.descripcion_problema) > 300 else ''}\n\n"
+        )
+        
+        # Evidencia
+        if reporte.evidencia:
+            enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+            mensaje += f"📎 *Evidencia:* {enlace}\n\n"
+        
+        # Mapa
+        if reporte.latitud and reporte.longitud:
+            maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+            mensaje += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
+        
+        mensaje += (
+            f"*⚠️ ESTE REPORTE NO HA SIDO ASIGNADO*\n\n"
+            f"*📋 ACCIONES:*"
+        )
+        
+        keyboard = [[
+            InlineKeyboardButton("👷 Asignar a cuadrilla URGENTE", callback_data=f"pres_asignar_urgente_{reporte.id}")
+        ]]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        bot_app = get_telegram_app()
+        if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
+            return False
+        
+        await bot_app.bot.send_message(
+            chat_id=int(presidente.telegram_id),
+            text=mensaje,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=reply_markup,
+            disable_web_page_preview=True
+        )
+        
+        logger.info(f"✅ Notificación urgente enviada al presidente para reporte #{reporte_id}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error en notificar_presidente_urgente: {e}", exc_info=True)
+        return False
+
+
+# ============================================================
+# 8. NOTIFICAR SUPERVISOR REVISIÓN
 # ============================================================
 async def notificar_supervisor_revision(reporte_id: int, team_id: int):
     """
@@ -409,7 +620,6 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
                 evidencia = evidencia.strip()
                 if evidencia:
                     enlace, _ = construir_enlace_evidencia(evidencia, f"evidencia_{i}")
-                    # Detectar tipo de archivo para el icono
                     ext = evidencia.split('.')[-1].lower() if '.' in evidencia else ''
                     icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "🎬" if ext in ['mp4', 'mov', 'avi', 'mkv'] else "📎"
                     evidencias_texto += f"• {icono} {enlace}\n"
@@ -421,14 +631,11 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
         if asignacion.materiales_utilizados:
             materiales = asignacion.materiales_utilizados.strip()
             if '.' in materiales or '/' in materiales:
-                # Es un archivo
                 enlace, _ = construir_enlace_evidencia(materiales, "material")
-                # Detectar tipo
                 ext = materiales.split('.')[-1].lower() if '.' in materiales else ''
                 icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "📎"
                 materiales_texto = f"{icono} {enlace}"
             else:
-                # Es texto
                 materiales_texto = f"📝 {materiales}"
         
         # ============================================================
@@ -493,7 +700,7 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
 
 
 # ============================================================
-# 7. NOTIFICAR DIRECTOR DE ÁREA NO-AGUA PARA VALIDACIÓN
+# 9. NOTIFICAR DIRECTOR DE ÁREA NO-AGUA PARA VALIDACIÓN
 # ============================================================
 async def notificar_director_validacion(reporte_id: int, team_id: int):
     """
@@ -617,7 +824,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
 
 
 # ============================================================
-# 8. FUNCIONES ADICIONALES (presidente, admin, etc.)
+# 10. FUNCIONES ADICIONALES (presidente, admin, etc.)
 # ============================================================
 
 async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_reporte"):
@@ -700,13 +907,15 @@ async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_rep
 
 async def notificar_admin_vinculacion_original(usuario, telegram_user_id, telegram_username, context):
     try:
-        from flask import current_app
+        import os
         from app.routes.telegram_routes import get_telegram_app
         
-        admin_id = current_app.config.get('TELEGRAM_ADMIN_ID')
+        admin_id = os.getenv('TELEGRAM_ADMIN_ID')
         if not admin_id:
-            logger.warning("⚠️ TELEGRAM_ADMIN_ID no configurado")
+            logger.warning("⚠️ TELEGRAM_ADMIN_ID no configurado en variables de entorno")
             return False
+        
+        admin_id = int(admin_id)
         
         mensaje = (
             f"📎 nueva vinculacion telegram\n"
@@ -721,7 +930,7 @@ async def notificar_admin_vinculacion_original(usuario, telegram_user_id, telegr
         bot_app = get_telegram_app()
         if bot_app and bot_app.bot:
             await bot_app.bot.send_message(
-                chat_id=int(admin_id),
+                chat_id=admin_id,
                 text=mensaje
             )
             logger.info(f"📤 Notificación de vinculación enviada al admin {admin_id}")
@@ -735,14 +944,14 @@ async def notificar_admin_vinculacion_original(usuario, telegram_user_id, telegr
         return False
 
 
-def notificar_asignacion_sync(reporte_id: int, user_id: int):
+def notificar_asignacion_sync(reporte_id: int, user_id: int, es_presidencial: bool = False):
     """Versión síncrona para notificar asignaciones (para admin.py)"""
     try:
         import asyncio
         from app.routes.telegram_routes import get_telegram_app
         
         async def ejecutar():
-            return await notificar_asignacion_a_cuadrilla(reporte_id, user_id)
+            return await notificar_asignacion_a_cuadrilla(reporte_id, user_id, es_presidencial)
         
         bot_app = get_telegram_app()
         if bot_app and bot_app.bot:
@@ -767,7 +976,7 @@ def notificar_asignacion_sync(reporte_id: int, user_id: int):
 
 
 # ============================================================
-# 9. NOTIFICAR USUARIO REPORTANTE PARA VALIDACIÓN FINAL
+# 11. NOTIFICAR USUARIO REPORTANTE PARA VALIDACIÓN FINAL
 # ============================================================
 async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido: str = "Sistema"):
     """Notifica al usuario reportante que su reporte ha sido atendido y pide validación final."""
@@ -839,7 +1048,7 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
 
 
 # ============================================================
-# 10. NOTIFICAR RECHAZO DEL USUARIO AL RESPONSABLE
+# 12. NOTIFICAR RECHAZO DEL USUARIO AL RESPONSABLE
 # ============================================================
 async def notificar_rechazo_usuario(reporte_id: int, usuario_id: int):
     """Notifica al responsable (Jefe Técnico o Director) que el usuario rechazó la reparación."""

@@ -48,9 +48,11 @@ class Report(db.Model):
     evidencia = db.Column(db.String(255))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     numero_cuenta = db.Column(db.String(50))
-    plataforma = db.Column(db.String(20), default='telegram')  # NUEVO: telegram, whatsapp, ventanilla
-    latitud = db.Column(db.Float, nullable=True)      # ← NUEVO
-    longitud = db.Column(db.Float, nullable=True)     # ← NUEVO
+    plataforma = db.Column(db.String(20), default='telegram')
+    latitud = db.Column(db.Float, nullable=True)
+    longitud = db.Column(db.Float, nullable=True)
+    # ⭐ NUEVO CAMPO PARA EVITAR NOTIFICACIONES DUPLICADAS AL PRESIDENTE
+    notificado_presidente = db.Column(db.Boolean, default=False)
 
     # Relaciones a tablas maestras
     calle_id = db.Column(db.Integer, db.ForeignKey('calles.id'), nullable=False)
@@ -80,7 +82,8 @@ class Report(db.Model):
             'calle_id': self.calle_id,
             'localidad_id': self.localidad_id,
             'calle': self.calle.nombre if self.calle else None,
-            'localidad': self.localidad.nombre if self.localidad else None
+            'localidad': self.localidad.nombre if self.localidad else None,
+            'notificado_presidente': self.notificado_presidente
         }
 
     @classmethod
@@ -147,5 +150,3 @@ class Assignment(db.Model):
             'team': self.team.nombre if self.team else None,
             'status': self.status.descripcion if self.status else None
         }
-
-

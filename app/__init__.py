@@ -71,6 +71,12 @@ def create_app():
             return User.query.get(int(user_id))
         db.create_all()
         print("✅ Base de datos lista")
+        
+    # Iniciar scheduler para tareas programadas
+    from app.scheduler import iniciar_scheduler
+    scheduler = iniciar_scheduler()
+    if scheduler:
+       app.scheduler = scheduler
 
     print("\n" + "="*60)
     print("🚀 SISTEMA SIRMYN INICIADO")
