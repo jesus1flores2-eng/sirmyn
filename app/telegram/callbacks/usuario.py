@@ -1,3 +1,4 @@
+# app/telegram/callbacks/usuario.py
 """
 Maneja la validación final del usuario (aceptar/rechazar reparación)
 """

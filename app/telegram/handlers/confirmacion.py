@@ -1,9 +1,10 @@
+#app/telegram/handlers/confirmacion.py
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
 from app.telegram.states import *
 from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
 from app.services.db_manager import DatabaseManager
-from app.services.cloudinary_service import subir_archivo  # ⭐ NUEVA IMPORTACIÓN
+from app.services.cloudinary_service import subir_archivo
 import logging
 import os
 from datetime import datetime
@@ -87,8 +88,9 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     origen = os.path.join("uploads", datos["evidencia_filename"])
                     destino = os.path.join(carpeta_completa, nuevo_nombre)
                     
-                    # ⭐ Intentar subir a Cloudinary primero
-                    url = subir_archivo(origen, folder=carpeta_departamento)
+                    # ⭐ Intentar subir a Cloudinary con public_id personalizado
+                    public_id = f"reporte_{nuevo_reporte.id}"
+                    url = subir_archivo(origen, folder=carpeta_departamento, public_id=public_id)
                     if url:
                         nuevo_reporte.evidencia = url
                         logger.info(f"✅ Evidencia subida a Cloudinary: {url}")

@@ -74,28 +74,14 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             # ========== BOTONES PARA DIRECTOR ==========
             if es_director:
-                fila1 = [
-                    InlineKeyboardButton(
-                        "👷 Asignar a Cuadrilla",
-                        callback_data=f"dir_asignar_{reporte_id}"
-                    )
-                ]
-                
-                if reporte.evidencia:
-                    fila1.append(
+                keyboard = [
+                    [
                         InlineKeyboardButton(
-                            "📎 Ver Evidencia",
-                            callback_data=f"dir_evidencia_{reporte_id}"
+                            "👷 Asignar a Cuadrilla",
+                            callback_data=f"dir_asignar_{reporte_id}"
                         )
-                    )
-                
-                keyboard.append(fila1)
-                keyboard.append([
-                    InlineKeyboardButton(
-                        "📋 Ver Detalles Completos",
-                        callback_data=f"dir_detalle_{reporte_id}"
-                    )
-                ])
+                    ]
+                ]
                 return InlineKeyboardMarkup(keyboard)
             
             # ========== BOTONES PARA CUADRILLA ==========

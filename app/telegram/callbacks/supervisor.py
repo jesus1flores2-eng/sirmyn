@@ -1,3 +1,4 @@
+# app/telegram/callbacks/supervisor.py
 """
 Maneja los callbacks del supervisor de agua (validación de reparaciones)
 """

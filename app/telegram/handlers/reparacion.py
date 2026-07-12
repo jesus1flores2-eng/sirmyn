@@ -1,3 +1,4 @@
+#app/telegram/handlers/reparacion.py
 """
 Maneja el flujo de subida de evidencia de reparación por parte de la cuadrilla
 """
@@ -131,8 +132,9 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    # Intentar subir a Cloudinary
-                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/cuadrilla")
+                    # ⭐ Intentar subir a Cloudinary con public_id personalizado
+                    public_id = f"reparacion_{datos['reporte_id']}"
+                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/cuadrilla", public_id=public_id)
                     if url:
                         datos['evidencias'].append(url)
                         logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
@@ -177,7 +179,9 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/materiales_utilizados")
+                    # ⭐ Intentar subir a Cloudinary con public_id personalizado
+                    public_id = f"material_{datos['reporte_id']}"
+                    url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/materiales_utilizados", public_id=public_id)
                     if url:
                         datos['materiales'] = url
                         logger.info(f"✅ Materiales subidos a Cloudinary: {url}")

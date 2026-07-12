@@ -10,24 +10,28 @@ def init_cloudinary():
         api_secret=os.getenv('CLOUDINARY_API_SECRET')
     )
 
-def subir_archivo(file_path, folder="reportes"):
+def subir_archivo(file_path, folder="reportes", public_id=None):
     """
     Sube un archivo a Cloudinary y retorna la URL pública.
     
     Args:
         file_path (str): Ruta local del archivo.
         folder (str): Carpeta en Cloudinary (ej: 'reportes', 'cuadrilla', 'materiales').
+        public_id (str, optional): Nombre personalizado del archivo en Cloudinary.
     
     Returns:
         str: URL pública del archivo, o None si falla.
     """
     try:
         init_cloudinary()
-        result = cloudinary.uploader.upload(
-            file_path,
-            folder=f"sirmyn/{folder}",
-            resource_type="auto"  # Detecta si es imagen o video
-        )
+        upload_options = {
+            "folder": f"sirmyn/{folder}",
+            "resource_type": "auto"
+        }
+        if public_id:
+            upload_options["public_id"] = public_id
+        
+        result = cloudinary.uploader.upload(file_path, **upload_options)
         return result['secure_url']
     except Exception as e:
         print(f"❌ Error subiendo a Cloudinary: {e}")
