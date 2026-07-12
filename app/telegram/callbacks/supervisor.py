@@ -30,6 +30,11 @@ async def supervisor_callback_handler(update: Update, context: ContextTypes.DEFA
     if not callback_data.startswith('super_'):
         return
     
+    # ⭐ IGNORAR callbacks que no sean validar o rechazar
+    if not callback_data.startswith(('super_validar_', 'super_rechazar_')):
+        logger.info(f"⏩ Callback {callback_data} ignorado por supervisor_callback_handler (va a otro handler)")
+        return
+    
     partes = callback_data.split('_')
     if len(partes) < 3:
         await query.answer("❌ Formato inválido", show_alert=True)
@@ -346,7 +351,8 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
     except Exception as e:
         logger.error(f"❌ Error en reasignación: {e}")
         return False
-        
+
+
 # ============================================================
 # SUPERVISOR CONFIRMA QUE ESTÁ ENTERADO DE LA SOLICITUD DE APOYO
 # ============================================================
@@ -376,6 +382,7 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
             from app.models.user import User
             from app.models.team import Team
             from app.routes.telegram_routes import get_telegram_app
+            from datetime import datetime
 
             # Obtener el supervisor
             supervisor = User.query.filter_by(telegram_id=str(supervisor_telegram_id)).first()
@@ -423,8 +430,7 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
                 f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
-                f"*📋 El supervisor coordinará el apoyo.*\n"
-                f"*Se te notificará cuando se asigne una cuadrilla adicional.*"
+                f"*📋 El supervisor coordinará el apoyo.*"
             )
 
             bot_app = get_telegram_app()
@@ -448,4 +454,6 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
 
     except Exception as e:
         logger.error(f"❌ Error en supervisor_enterado_apoyo: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
         await query.answer("❌ Error al procesar", show_alert=True)
