@@ -23,7 +23,11 @@ from app.telegram.callbacks.director import director_callback_handler
 from app.telegram.callbacks.dashboard import dashboard_callback_handler
 from app.telegram.callbacks.general import button_callback_handler
 # Nuevos imports para handlers de rechazo, encuesta, supervisor, usuario
-from app.telegram.callbacks.supervisor import supervisor_callback_handler, rechazo_opciones_handler
+from app.telegram.callbacks.supervisor import (
+    supervisor_callback_handler,
+    rechazo_opciones_handler,
+    supervisor_enterado_apoyo  # ⭐ AGREGADO
+)
 from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
 from app.telegram.callbacks.rechazo import (
@@ -34,6 +38,7 @@ from app.telegram.handlers.reparacion import manejar_modo_reparacion
 import logging
 
 logger = logging.getLogger(__name__)
+
 
 def build_telegram_app(token):
     """Construye la aplicación de Telegram para webhooks"""
