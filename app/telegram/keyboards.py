@@ -30,7 +30,18 @@ def obtener_carpeta_departamento(tipo_reporte: str) -> str:
     }
     return mapeo.get(tipo_reporte, "general")
 
-def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=False, es_director=False, context=None):
+def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=False, es_director=False, context=None, user_id=None):
+    """
+    Construye los botones para el mensaje de reporte.
+    
+    Args:
+        reporte_id: ID del reporte
+        confirmado: Si ya fue confirmado por la cuadrilla
+        problema_reportado: Si ya se reportó problema de ubicación
+        es_director: Si es para vista de director
+        context: Contexto de Telegram (para obtener user_id desde el callback)
+        user_id: ID del usuario de Telegram (para verificar asignación)
+    """
     try:
         app = DatabaseManager.get_app()
         with app.app_context():
@@ -70,9 +81,7 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                     )
                 ]
                 
-                # ⭐ Ver evidencia (SIEMPRE si existe, sin verificar archivo local)
                 if reporte.evidencia:
-                    # Si es URL de Cloudinary o ruta local, siempre mostrar
                     fila1.append(
                         InlineKeyboardButton(
                             "📎 Ver Evidencia",
@@ -109,22 +118,18 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             
             keyboard.append(fila1)
             
-            # FILA 2: Mapa + Evidencia (SIEMPRE si existe)
+            # FILA 2: Mapa + Evidencia
             if reporte.latitud and reporte.longitud:
-                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 texto_mapa = "📍 Ubicación Exacta (GPS)"
             else:
                 calle_nombre = reporte.calle.nombre if reporte.calle else ''
                 localidad_nombre = reporte.localidad.nombre if reporte.localidad else ''
                 direccion = f"{calle_nombre} {reporte.numero}, {localidad_nombre}"
-                maps_url = f"https://www.google.com/maps/search/?api=1&query={direccion.replace(' ', '+')}"
                 texto_mapa = "🗺️ Ver en mapa"
             
             fila2 = [InlineKeyboardButton(texto_mapa, callback_data=f"mapa_{reporte_id}")]
             
-            # ⭐ Ver evidencia (SIEMPRE si existe, sin verificar archivo local)
             if reporte.evidencia:
-                # Detectar si es Cloudinary o local
                 if reporte.evidencia.startswith('http'):
                     icono = "☁️"
                 else:
@@ -135,70 +140,60 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
                         icono = "🎬"
                     else:
                         icono = "📎"
-                
                 fila2.append(
                     InlineKeyboardButton(f"{icono} Ver evidencia", callback_data=f"evidencia_{reporte_id}")
                 )
             
             keyboard.append(fila2)
             
-            # FILA 3: Botón de reparación (si la cuadrilla está asignada Y el estado NO es finalizado)
-            if context is not None:
-                user_id = None
-                if hasattr(context, 'user_data') and context.user_data:
-                    user_id = context.user_data.get('user_id')
-                elif hasattr(context, '_user_id'):
-                    user_id = context._user_id
-                
-                if user_id:
-                    asignacion = Assignment.query.filter_by(
-                        report_id=reporte_id
-                    ).order_by(Assignment.timestamp.desc()).first()
-                    if asignacion and asignacion.team_id:
-                        usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
-                        if usuario_actual and usuario_actual.team_id == asignacion.team_id:
-                            # ⭐ SOLO mostrar si el estado NO es "Finalizado" o "Aceptado por usuario"
-                            if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
-                                keyboard.append([
-                                    InlineKeyboardButton(
-                                        "🔧 Subir evidencia reparación",
-                                        callback_data=f"reparacion_{reporte_id}"
-                                    )
-                                ])
+            # ============================================================
+            # ⭐ BOTONES DE REPARACIÓN Y APOYO (USANDO user_id O context)
+            # ============================================================
             
-            # FILA 4: Solicitudes de apoyo (solo si la cuadrilla está asignada)
-            if context is not None:
-                user_id = None
+            # Determinar user_id (prioridad: user_id > context)
+            user_id_efectivo = user_id
+            if user_id_efectivo is None and context is not None:
                 if hasattr(context, 'user_data') and context.user_data:
-                    user_id = context.user_data.get('user_id')
+                    user_id_efectivo = context.user_data.get('user_id')
                 elif hasattr(context, '_user_id'):
-                    user_id = context._user_id
+                    user_id_efectivo = context._user_id
+            
+            if user_id_efectivo:
+                asignacion = Assignment.query.filter_by(
+                    report_id=reporte_id
+                ).order_by(Assignment.timestamp.desc()).first()
                 
-                if user_id:
-                    asignacion = Assignment.query.filter_by(
-                        report_id=reporte_id
-                    ).order_by(Assignment.timestamp.desc()).first()
-                    if asignacion and asignacion.team_id:
-                        usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
-                        if usuario_actual and usuario_actual.team_id == asignacion.team_id:
-                            # ⭐ SOLO mostrar si el estado NO es "Finalizado"
-                            if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
-                                keyboard.append([
-                                    InlineKeyboardButton(
-                                        "🛠️ Solicitar retroexcavadora",
-                                        callback_data=f"solicitar_retro_{reporte_id}"
-                                    ),
-                                    InlineKeyboardButton(
-                                        "🚛 Solicitar camión de material",
-                                        callback_data=f"solicitar_camion_{reporte_id}"
-                                    )
-                                ])
-                                keyboard.append([
-                                    InlineKeyboardButton(
-                                        "👷 Solicitar apoyo de otra cuadrilla",
-                                        callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
-                                    )
-                                ])
+                if asignacion and asignacion.team_id:
+                    usuario_actual = User.query.filter_by(telegram_id=str(user_id_efectivo)).first()
+                    
+                    if usuario_actual and usuario_actual.team_id == asignacion.team_id:
+                        # ⭐ SOLO mostrar si el estado NO es "Finalizado" o "Aceptado por usuario"
+                        if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
+                            # FILA 3: Subir evidencia reparación
+                            keyboard.append([
+                                InlineKeyboardButton(
+                                    "🔧 Subir evidencia reparación",
+                                    callback_data=f"reparacion_{reporte_id}"
+                                )
+                            ])
+                            
+                            # FILA 4: Solicitudes de apoyo
+                            keyboard.append([
+                                InlineKeyboardButton(
+                                    "🛠️ Solicitar retroexcavadora",
+                                    callback_data=f"solicitar_retro_{reporte_id}"
+                                ),
+                                InlineKeyboardButton(
+                                    "🚛 Solicitar camión de material",
+                                    callback_data=f"solicitar_camion_{reporte_id}"
+                                )
+                            ])
+                            keyboard.append([
+                                InlineKeyboardButton(
+                                    "👷 Solicitar apoyo de otra cuadrilla",
+                                    callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
+                                )
+                            ])
             
             return InlineKeyboardMarkup(keyboard)
             

@@ -315,7 +315,7 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
             f"*📋 Acciones rápidas:*"
         )
         
-        reply_markup = construir_botones_reporte(reporte_id)
+        reply_markup = construir_botones_reporte(reporte_id, user_id=usuario.telegram_id)
         
         bot_app = get_telegram_app()
         if not bot_app or not bot_app.bot:
