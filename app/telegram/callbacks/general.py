@@ -73,6 +73,27 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
+    # DETECCIÓN PARA ASIGNAR APOYO (NUEVO)
+    # ============================================================
+    if callback_data.startswith('apoyo_asignar_'):
+        reporte_id = int(callback_data.split('_')[-1])
+        await manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id)
+        return
+
+    if callback_data.startswith('apoyo_asignarc_'):
+        partes = callback_data.split('_')
+        reporte_id = int(partes[2])
+        cuadrilla_id = int(partes[3])
+        await manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id)
+        return
+
+    if callback_data.startswith('apoyo_confirmar_'):
+        # ⭐ Este callback debe ir a supervisor.py
+        # Pero para evitar conflicto, lo dejamos pasar
+        logger.info(f"⏩ Callback {callback_data} manejado por supervisor.py")
+        return
+
+    # ============================================================
     # DETECCIÓN PARA VOLVER AL REPORTE
     # ============================================================
     if callback_data.startswith('volver_reporte_'):
@@ -813,13 +834,13 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
 
 
 # ============================================================
-# SOLICITAR APOYO DE OTRA CUADRILLA
+# SOLICITAR APOYO DE OTRA CUADRILLA (CON ASIGNACIÓN)
 # ============================================================
 
 async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
     """
     Envía solicitud de apoyo a los supervisores/directores del área.
-    Incluye botón "✅ Confirmar recepción" para que el supervisor confirme.
+    Incluye botón "👷 Asignar cuadrilla de apoyo" y "✅ Confirmar recepción".
     """
     try:
         app = DatabaseManager.get_app()
@@ -848,7 +869,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 await query.answer("❌ Cuadrilla no encontrada.", show_alert=True)
                 return
 
-            # Obtener el nombre del solicitante desde la BD
+            # Obtener el nombre del solicitante
             usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
@@ -901,16 +922,22 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
                 f"*🚨 Se solicita apoyo de otra cuadrilla para atender este reporte.*\n"
                 f"*🔧 Motivo:* La cuadrilla actual requiere refuerzos o personal adicional.\n\n"
-                f"*📋 Acción requerida:* Asignar una cuadrilla adicional a este reporte."
+                f"*📋 ACCIONES:*"
             )
 
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
-            keyboard = [[
-                InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"apoyo_confirmar_{reporte_id}")
-            ]]
+            # ⭐ DOS BOTONES: Asignar apoyo + Confirmar recepción
+            keyboard = [
+                [
+                    InlineKeyboardButton("👷 Asignar cuadrilla de apoyo", callback_data=f"apoyo_asignar_{reporte_id}")
+                ],
+                [
+                    InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"apoyo_confirmar_{reporte_id}")
+                ]
+            ]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
             bot_app = get_telegram_app()
@@ -934,7 +961,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 f"✅ *Solicitud de apoyo enviada*\n\n"
                 f"Se ha notificado a {enviados} supervisor(es) del área.\n"
                 f"📍 Ubicación: {direccion}\n\n"
-                f"*Se te notificará cuando un supervisor confirme estar enterado.*",
+                f"*Se te notificará cuando un supervisor asigne o confirme el apoyo.*",
                 parse_mode=ParseMode.MARKDOWN
             )
 
@@ -944,6 +971,240 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
     except Exception as e:
         logger.error(f"❌ Error en manejar_solicitar_apoyo_cuadrilla: {e}")
         await query.answer("❌ Error al enviar solicitud", show_alert=True)
+
+
+# ============================================================
+# MOSTRAR CUADRILLAS PARA APOYO (NUEVO)
+# ============================================================
+
+async def manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id):
+    """Muestra las cuadrillas disponibles para asignar como apoyo"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.team import Team
+            from app.models.user import User
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.edit_message_text("❌ Reporte no encontrado.")
+                return
+
+            # Obtener la cuadrilla actual (para no mostrarla)
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            cuadrilla_actual_id = asignacion.team_id if asignacion else None
+
+            # Obtener cuadrillas del mismo área excepto la actual y "Sin asignar"
+            mapeo_tipo_a_area = {
+                "Agua potable": "agua",
+                "Drenaje": "agua",
+                "Aseo público": "aseo",
+                "Alumbrado público": "alumbrado",
+                "Parques y jardines": "parques",
+                "Ecología": "ecologia",
+                "Seguridad pública": "seguridad",
+                "Obras públicas": "obras",
+                "Bomberos": "bomberos"
+            }
+            area_buscar = mapeo_tipo_a_area.get(reporte.tipo, "general")
+
+            cuadrillas = Team.query.filter(
+                Team.area == area_buscar,
+                Team.nombre != "Sin asignar",
+                Team.id != cuadrilla_actual_id
+            ).order_by(Team.nombre).all()
+
+            # Si no hay cuadrillas del área, mostrar todas excepto "Sin asignar" y la actual
+            if not cuadrillas:
+                cuadrillas = Team.query.filter(
+                    Team.nombre != "Sin asignar",
+                    Team.id != cuadrilla_actual_id
+                ).order_by(Team.nombre).all()
+
+            if not cuadrillas:
+                await query.edit_message_text(
+                    f"❌ *No hay cuadrillas disponibles para apoyo*\n\n"
+                    f"No se encontraron otras cuadrillas en el área.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            # Crear teclado con cuadrillas
+            keyboard = []
+            for cuadrilla in cuadrillas:
+                usuarios_count = User.query.filter_by(team_id=cuadrilla.id).count()
+                texto_boton = f"👷 {cuadrilla.nombre}"
+                if usuarios_count > 0:
+                    texto_boton += f" ({usuarios_count})"
+                keyboard.append([
+                    InlineKeyboardButton(
+                        texto_boton,
+                        callback_data=f"apoyo_asignarc_{reporte_id}_{cuadrilla.id}"
+                    )
+                ])
+
+            keyboard.append([
+                InlineKeyboardButton("↩️ Cancelar", callback_data=f"volver_reporte_{reporte_id}")
+            ])
+
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+
+            mensaje = (
+                f"👷 *ASIGNAR CUADRILLA DE APOYO*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n\n"
+                f"*Selecciona la cuadrilla de apoyo:*"
+            )
+
+            await query.edit_message_text(
+                text=mensaje,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
+            )
+
+            logger.info(f"✅ Mostrando {len(cuadrillas)} cuadrillas para apoyo en reporte {reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_mostrar_cuadrillas_apoyo: {e}")
+        await query.edit_message_text("❌ Error al cargar cuadrillas.")
+
+
+# ============================================================
+# ASIGNAR CUADRILLA DE APOYO (NUEVO)
+# ============================================================
+
+async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
+    """Asigna una cuadrilla de apoyo al reporte"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.user import User
+            from app.models.team import Team
+            from app.models.status import Status
+            from app.extensions import db
+            from app.services.notification_service import notificar_jefe_area_apoyo
+
+            reporte = Report.query.get(reporte_id)
+            cuadrilla_apoyo = Team.query.get(cuadrilla_id)
+
+            if not reporte or not cuadrilla_apoyo:
+                await query.edit_message_text("❌ Datos no válidos.")
+                return
+
+            # Obtener la cuadrilla actual
+            asignacion_actual = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            cuadrilla_actual = Team.query.get(asignacion_actual.team_id) if asignacion_actual else None
+            nombre_cuadrilla_actual = cuadrilla_actual.nombre if cuadrilla_actual else "Cuadrilla desconocida"
+
+            # Obtener el supervisor que asigna
+            supervisor = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            nombre_supervisor = supervisor.nombre if supervisor else "Supervisor"
+
+            # Obtener estado "Asignado"
+            status_asignado = Status.query.filter_by(descripcion="Asignado").first()
+            if not status_asignado:
+                status_asignado = Status(descripcion="Asignado")
+                db.session.add(status_asignado)
+                db.session.commit()
+
+            # Crear asignación para la cuadrilla de apoyo
+            nueva_asignacion = Assignment(
+                report_id=reporte_id,
+                team_id=cuadrilla_id,
+                status_id=status_asignado.id,
+                timestamp=datetime.utcnow(),
+                observaciones=f"Cuadrilla de apoyo asignada por {nombre_supervisor} para ayudar a {nombre_cuadrilla_actual}"
+            )
+            db.session.add(nueva_asignacion)
+            db.session.commit()
+
+            # ============================================================
+            # NOTIFICACIONES
+            # ============================================================
+
+            bot = context.bot
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
+
+            # 1. NOTIFICAR A LA CUADRILLA ORIGINAL
+            usuarios_original = User.query.filter_by(team_id=asignacion_actual.team_id, is_active=True).all()
+            for usuario in usuarios_original:
+                if usuario.telegram_id:
+                    try:
+                        await bot.send_message(
+                            chat_id=int(usuario.telegram_id),
+                            text=f"👷 *APOYO ASIGNADO - Reporte #{reporte.id}*\n\n"
+                                 f"Se ha asignado la cuadrilla *{cuadrilla_apoyo.nombre}* como apoyo.\n\n"
+                                 f"📍 *Ubicación:* {direccion}\n"
+                                 f"🤝 *Trabajarán juntos para resolver el reporte.*",
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                    except Exception as e:
+                        logger.error(f"❌ Error notificando a cuadrilla original: {e}")
+
+            # 2. NOTIFICAR A LA CUADRILLA DE APOYO
+            usuarios_apoyo = User.query.filter_by(team_id=cuadrilla_id, is_active=True).all()
+            for usuario in usuarios_apoyo:
+                if usuario.telegram_id:
+                    try:
+                        await bot.send_message(
+                            chat_id=int(usuario.telegram_id),
+                            text=f"👷 *HAS SIDO ASIGNADO COMO APOYO*\n\n"
+                                 f"📋 *Reporte:* #{reporte.id}\n"
+                                 f"📍 *Ubicación:* {direccion}\n"
+                                 f"🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}\n"
+                                 f"🤝 *Cuadrilla principal:* {nombre_cuadrilla_actual}\n\n"
+                                 f"*🚨 Apoya a la cuadrilla principal en este reporte.*",
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                    except Exception as e:
+                        logger.error(f"❌ Error notificando a cuadrilla de apoyo: {e}")
+
+            # 3. NOTIFICAR AL JEFE DE ÁREA TÉCNICA (INFORMATIVO)
+            await notificar_jefe_area_apoyo(
+                reporte_id=reporte.id,
+                cuadrilla_principal=nombre_cuadrilla_actual,
+                cuadrilla_apoyo=cuadrilla_apoyo.nombre,
+                supervisor=nombre_supervisor
+            )
+
+            # 4. CONFIRMAR AL SUPERVISOR
+            mensaje_confirmacion = (
+                f"✅ *APOYO ASIGNADO CORRECTAMENTE*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"👷 *Cuadrilla principal:* {nombre_cuadrilla_actual}\n"
+                f"👷 *Cuadrilla de apoyo:* {cuadrilla_apoyo.nombre}\n"
+                f"📍 *Ubicación:* {direccion}\n\n"
+                f"*Notificaciones enviadas:*\n"
+                f"• ✅ Cuadrilla original\n"
+                f"• ✅ Cuadrilla de apoyo\n"
+                f"• ✅ Jefe de área técnica\n\n"
+                f"*Asignado por:* {nombre_supervisor}\n"
+                f"*Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+            )
+
+            await query.edit_message_text(
+                text=mensaje_confirmacion,
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            logger.info(f"✅ Supervisor {nombre_supervisor} asignó apoyo al reporte #{reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_asignar_apoyo: {e}")
+        await query.edit_message_text("❌ Error al asignar apoyo.")
 
 
 # ============================================================
