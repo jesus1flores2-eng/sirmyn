@@ -73,7 +73,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
-    # DETECCIÓN PARA ASIGNAR APOYO
+    # DETECCIÓN PARA ASIGNAR APOYO (NUEVO)
     # ============================================================
     if callback_data.startswith('apoyo_asignar_'):
         reporte_id = int(callback_data.split('_')[-1])
@@ -88,6 +88,8 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     if callback_data.startswith('apoyo_confirmar_'):
+        # ⭐ Este callback debe ir a supervisor.py
+        # Pero para evitar conflicto, lo dejamos pasar
         logger.info(f"⏩ Callback {callback_data} manejado por supervisor.py")
         return
 
@@ -832,7 +834,7 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
 
 
 # ============================================================
-# SOLICITAR APOYO DE OTRA CUADRILLA
+# SOLICITAR APOYO DE OTRA CUADRILLA (CON ASIGNACIÓN)
 # ============================================================
 
 async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
@@ -927,6 +929,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
+            # ⭐ DOS BOTONES: Asignar apoyo + Confirmar recepción
             keyboard = [
                 [
                     InlineKeyboardButton("👷 Asignar cuadrilla de apoyo", callback_data=f"apoyo_asignar_{reporte_id}")
@@ -971,7 +974,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
 
 
 # ============================================================
-# MOSTRAR CUADRILLAS PARA APOYO
+# MOSTRAR CUADRILLAS PARA APOYO (NUEVO)
 # ============================================================
 
 async def manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id):
@@ -1219,7 +1222,6 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
     except Exception as e:
         logger.error(f"❌ Error en manejar_asignar_apoyo: {e}")
         await query.edit_message_text("❌ Error al asignar apoyo.")
-
 
 # ============================================================
 # VOLVER AL REPORTE ORIGINAL
