@@ -360,6 +360,7 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
 async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Maneja cuando el supervisor presiona "✅ Confirmar recepción" en una solicitud de apoyo.
+    Actualiza el mensaje pero MANTIENE el botón de asignar.
     """
     query = update.callback_query
     try:
@@ -409,20 +410,42 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
                 await query.edit_message_text("❌ Cuadrilla no encontrada.")
                 return
 
-            # Obtener el bot (usar context.bot directamente)
+            # Obtener el bot
             bot = context.bot
 
-            # Actualizar el mensaje del supervisor (quitar el botón)
+            # ⭐ ACTUALIZAR MENSAJE PERO MANTENER EL BOTÓN DE ASIGNAR
             mensaje_original = query.message.text
-            nuevo_mensaje = mensaje_original + f"\n\n✅ *Confirmado por {supervisor.nombre}*"
+            
+            # Remover la sección "ACCIONES" si existe para reemplazarla
+            if "📋 ACCIONES:" in mensaje_original:
+                mensaje_base = mensaje_original.split("📋 ACCIONES:")[0].strip()
+            else:
+                mensaje_base = mensaje_original
+
+            # Construir nuevo mensaje con confirmación
+            nuevo_mensaje = (
+                mensaje_base + 
+                f"\n\n✅ *Confirmado por {supervisor.nombre}*\n"
+                f"⏰ {datetime.now().strftime('%d/%m/%Y %H:%M')}"
+            )
+
+            # ⭐ CREAR TECLADO CON EL BOTÓN DE ASIGNAR (MANTENER)
+            keyboard = [
+                [
+                    InlineKeyboardButton("👷 Asignar cuadrilla de apoyo", callback_data=f"apoyo_asignar_{reporte_id}")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            # Editar mensaje con el nuevo texto y el botón de asignar
             await query.edit_message_text(
                 text=nuevo_mensaje,
                 parse_mode=ParseMode.MARKDOWN,
-                reply_markup=None  # Quitar botones
+                reply_markup=reply_markup
             )
 
             # ============================================================
-            # NOTIFICAR A LA CUADRILLA (con context.bot)
+            # NOTIFICAR A LA CUADRILLA QUE EL SUPERVISOR CONFIRMÓ
             # ============================================================
             usuarios_cuadrilla = User.query.filter_by(team_id=cuadrilla.id, is_active=True).all()
             calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
@@ -434,7 +457,7 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
                 f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
-                f"*📋 El supervisor coordinará el apoyo.*"
+                f"*📋 El supervisor asignará una cuadrilla de apoyo próximamente.*"
             )
 
             # Notificar a todos los miembros de la cuadrilla
@@ -455,7 +478,7 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
 
             logger.info(f"✅ Supervisor {supervisor.nombre} confirmó recepción de solicitud de apoyo para reporte {reporte_id}. {notificados} notificaciones enviadas a la cuadrilla.")
             
-            # Confirmar al supervisor que se envió la notificación
+            # Confirmar al supervisor
             await query.answer(f"✅ Confirmación enviada a {notificados} miembros de la cuadrilla", show_alert=False)
 
     except Exception as e:
