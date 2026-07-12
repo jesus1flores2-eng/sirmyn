@@ -13,7 +13,29 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     numero = update.message.text.strip()
     user_data[user_id]["numero"] = numero
     
-    # Obtener datos de ubicación y tipo
+    # ============================================================
+    # ⭐ NUEVO: OBTENER COORDENADAS DE OSM PARA DIRECCIÓN MANUAL
+    # ============================================================
+    try:
+        from app.services.geocoding import obtener_coordenadas_osm
+        
+        localidad_nombre = user_data[user_id].get("localidad_nombre", "")
+        calle_nombre = user_data[user_id].get("calle_nombre", "")
+        
+        if localidad_nombre and calle_nombre:
+            latitud, longitud = obtener_coordenadas_osm(localidad_nombre, calle_nombre, numero)
+            if latitud and longitud:
+                user_data[user_id]["latitud"] = latitud
+                user_data[user_id]["longitud"] = longitud
+                logger.info(f"📍 Coordenadas obtenidas de OSM: {latitud}, {longitud}")
+            else:
+                logger.warning(f"⚠️ No se obtuvieron coordenadas de OSM para: {localidad_nombre}, {calle_nombre}, {numero}")
+    except Exception as e:
+        logger.warning(f"⚠️ Error al obtener coordenadas de OSM: {e}")
+    
+    # ============================================================
+    # VERIFICAR DUPLICADOS
+    # ============================================================
     loc_id = user_data[user_id].get("localidad_id")
     calle_id = user_data[user_id].get("calle_id")
     tipo_actual = user_data[user_id].get("tipo")
@@ -21,7 +43,6 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     duplicado = False
     
-    # Si tenemos los datos necesarios, verificar duplicados
     if loc_id and calle_id and tipo_actual:
         try:
             app = DatabaseManager.get_app()
@@ -31,7 +52,6 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 from app.models.team import Team
                 from app.models.status import Status
                 
-                # Buscar reporte exacto (misma dirección y tipo)
                 existente_exacto = Report.query.filter_by(
                     localidad_id=loc_id,
                     calle_id=calle_id,
@@ -42,7 +62,6 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 if existente_exacto:
                     duplicado = True
-                    # Guardar info del duplicado
                     asignacion = Assignment.query.filter_by(
                         report_id=existente_exacto.id
                     ).order_by(Assignment.timestamp.desc()).first()
@@ -85,11 +104,16 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         localidad_nombre = user_data[user_id].get("localidad_nombre", "Localidad no especificada")
         calle_nombre = user_data[user_id].get("calle_nombre", "Calle no especificada")
         
+        # Mostrar si se obtuvieron coordenadas
+        coords_msg = ""
+        if user_data[user_id].get("latitud") and user_data[user_id].get("longitud"):
+            coords_msg = f"\n📍 *Coordenadas:* {user_data[user_id]['latitud']}, {user_data[user_id]['longitud']}"
+        
         await update.message.reply_text(
             f"✅ *Ubicación confirmada:*\n\n"
             f"📍 *Localidad:* {localidad_nombre}\n"
             f"🛣️ *Calle:* {calle_nombre}\n"
-            f"🔢 *Número:* {numero}\n\n"
+            f"🔢 *Número:* {numero}{coords_msg}\n\n"
             f"*¿Entre qué calles está?* (Ej: 'Entre Morelos e Hidalgo' o 'No'):",
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
