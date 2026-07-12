@@ -346,3 +346,106 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
     except Exception as e:
         logger.error(f"❌ Error en reasignación: {e}")
         return False
+        
+# ============================================================
+# SUPERVISOR CONFIRMA QUE ESTÁ ENTERADO DE LA SOLICITUD DE APOYO
+# ============================================================
+
+async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Maneja cuando el supervisor presiona "✅ Enterado" en una solicitud de apoyo.
+    Notifica a la cuadrilla que el supervisor ya está enterado.
+    """
+    query = update.callback_query
+    try:
+        await query.answer()
+    except:
+        pass
+
+    callback_data = query.data
+    if not callback_data.startswith('super_enterado_apoyo_'):
+        return
+
+    reporte_id = int(callback_data.split('_')[-1])
+    supervisor_telegram_id = query.from_user.id
+
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.user import User
+            from app.models.team import Team
+            from app.routes.telegram_routes import get_telegram_app
+
+            # Obtener el supervisor
+            supervisor = User.query.filter_by(telegram_id=str(supervisor_telegram_id)).first()
+            if not supervisor:
+                await query.edit_message_text("❌ No autorizado.")
+                return
+
+            # Obtener el reporte
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.edit_message_text("❌ Reporte no encontrado.")
+                return
+
+            # Obtener la cuadrilla asignada
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            if not asignacion or not asignacion.team_id:
+                await query.edit_message_text("❌ No hay cuadrilla asignada.")
+                return
+
+            cuadrilla = Team.query.get(asignacion.team_id)
+            if not cuadrilla:
+                await query.edit_message_text("❌ Cuadrilla no encontrada.")
+                return
+
+            # Actualizar el mensaje del supervisor (quitar el botón)
+            mensaje_original = query.message.text
+            nuevo_mensaje = mensaje_original + f"\n\n✅ *Confirmado por {supervisor.nombre}*"
+            await query.edit_message_text(
+                text=nuevo_mensaje,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=None  # Quitar botones
+            )
+
+            # Notificar a la cuadrilla que el supervisor está enterado
+            usuarios_cuadrilla = User.query.filter_by(team_id=cuadrilla.id, is_active=True).all()
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
+
+            mensaje_cuadrilla = (
+                f"👷 *SUPERVISOR ENTERADO - Solicitud de Apoyo*\n\n"
+                f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
+                f"📍 *Ubicación:* {direccion}\n"
+                f"👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
+                f"*📋 El supervisor coordinará el apoyo.*\n"
+                f"*Se te notificará cuando se asigne una cuadrilla adicional.*"
+            )
+
+            bot_app = get_telegram_app()
+
+            # Notificar a todos los miembros de la cuadrilla
+            notificados = 0
+            for usuario in usuarios_cuadrilla:
+                if usuario.telegram_id:
+                    try:
+                        await bot_app.bot.send_message(
+                            chat_id=int(usuario.telegram_id),
+                            text=mensaje_cuadrilla,
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                        notificados += 1
+                    except Exception as e:
+                        logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
+
+            logger.info(f"✅ Supervisor {supervisor.nombre} confirmó estar enterado de solicitud de apoyo para reporte {reporte_id}")
+            await query.answer("✅ Confirmación enviada", show_alert=False)
+
+    except Exception as e:
+        logger.error(f"❌ Error en supervisor_enterado_apoyo: {e}")
+        await query.answer("❌ Error al procesar", show_alert=True)

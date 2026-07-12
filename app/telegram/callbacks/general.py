@@ -813,6 +813,7 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
 async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
     """
     Envía solicitud de apoyo a los supervisores/directores del área.
+    Incluye botón "✅ Enterado" para que el supervisor confirme.
     """
     try:
         app = DatabaseManager.get_app()
@@ -821,6 +822,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
             from app.models.user import User
             from app.models.team import Team
             from app.routes.telegram_routes import get_telegram_app
+            from app.telegram.utils import user_data
 
             reporte = Report.query.get(reporte_id)
             if not reporte:
@@ -840,6 +842,10 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
             if not cuadrilla_actual:
                 await query.answer("❌ Cuadrilla no encontrada.", show_alert=True)
                 return
+
+            # Obtener el nombre del solicitante desde la BD
+            usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
             # Buscar responsables (supervisores o directores del área)
             area = cuadrilla_actual.area
@@ -881,12 +887,13 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
 
-            mensaje = (
+            # Mensaje para el supervisor
+            mensaje_supervisor = (
                 f"👷 *SOLICITUD DE APOYO - OTRA CUADRILLA*\n\n"
                 f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Cuadrilla solicitante:* {cuadrilla_actual.nombre}\n"
-                f"👤 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"👤 *Solicitado por:* {nombre_solicitante}\n"
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
                 f"*🚨 Se solicita apoyo de otra cuadrilla para atender este reporte.*\n"
                 f"*🔧 Motivo:* La cuadrilla actual requiere refuerzos o personal adicional.\n\n"
@@ -895,7 +902,13 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
 
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
-                mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
+                mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
+
+            # ⭐ BOTÓN "ENTERADO" PARA EL SUPERVISOR
+            keyboard = [[
+                InlineKeyboardButton("✅ Enterado", callback_data=f"super_enterado_apoyo_{reporte_id}")
+            ]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
 
             bot_app = get_telegram_app()
 
@@ -906,19 +919,20 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                     try:
                         await bot_app.bot.send_message(
                             chat_id=int(responsable.telegram_id),
-                            text=mensaje,
-                            parse_mode=ParseMode.MARKDOWN
+                            text=mensaje_supervisor,
+                            parse_mode=ParseMode.MARKDOWN,
+                            reply_markup=reply_markup
                         )
                         enviados += 1
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {responsable.nombre}: {e}")
 
-            # Confirmar a la cuadrilla
+            # Confirmar a la cuadrilla que la solicitud fue enviada
             await query.message.reply_text(
                 f"✅ *Solicitud de apoyo enviada*\n\n"
                 f"Se ha notificado a {enviados} supervisor(es) del área.\n"
                 f"📍 Ubicación: {direccion}\n\n"
-                f"*Ellos se pondrán en contacto para coordinar el apoyo.*",
+                f"*Se te notificará cuando un supervisor confirme estar enterado.*",
                 parse_mode=ParseMode.MARKDOWN
             )
 

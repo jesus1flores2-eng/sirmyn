@@ -193,6 +193,7 @@ def build_telegram_app(token):
     # 4.1 Callbacks de SUPERVISOR
     app.add_handler(CallbackQueryHandler(supervisor_callback_handler, pattern="^super_"))
     app.add_handler(CallbackQueryHandler(rechazo_opciones_handler, pattern="^rechazar_"))
+    app.add_handler(CallbackQueryHandler(supervisor_enterado_apoyo, pattern="^super_enterado_apoyo_"))
     
     # 4.2 Callbacks de USUARIO (validación final)
     app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_"))
