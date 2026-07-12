@@ -14,7 +14,6 @@ import os
 import re
 import uuid
 from datetime import datetime
-# ⭐ NUEVA IMPORTACIÓN PARA url_for
 from flask import url_for
 
 logger = logging.getLogger(__name__)
@@ -135,7 +134,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: CONFIRMAR RECEPCIÓN
             # ============================================================
             if accion == 'confirmar':
-                # ... (código existente, sin cambios) ...
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte.id
                 ).order_by(Assignment.timestamp.desc()).first()
@@ -198,7 +196,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: PROBLEMA DE UBICACIÓN
             # ============================================================
             elif accion == 'problema':
-                # ... (código existente, sin cambios) ...
                 cuadrilla_nombre = usuario.team.nombre if usuario and usuario.team else "Cuadrilla desconocida"
 
                 status_problema = Status.query.get(9)
@@ -393,7 +390,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: MAPA
             # ============================================================
             elif accion == 'mapa':
-                # ... (código existente, sin cambios) ...
                 calle_nombre = reporte.calle.nombre if reporte.calle else 'Calle no especificada'
                 localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'Localidad no especificada'
 
@@ -430,16 +426,23 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                 logger.info(f"🗺️ Mapa enviado para reporte {reporte_id}")
 
             # ============================================================
-            # ⭐ ACCIÓN: EVIDENCIA (CORREGIDO - usa url_for de Flask)
+            # ⭐ ACCIÓN: EVIDENCIA (CORREGIDO - soporta Cloudinary y local)
             # ============================================================
             elif accion == 'evidencia':
                 if reporte.evidencia:
                     import os
                     from flask import url_for
 
-                    # ✅ Generar URL correcta usando el endpoint de Flask
-                    evidencia_url = url_for('admin.uploaded_file', filename=reporte.evidencia, _external=True)
-                    nombre_archivo = os.path.basename(reporte.evidencia)
+                    # ⭐ DETECTAR SI ES URL DE CLOUDINARY O RUTA LOCAL
+                    if reporte.evidencia.startswith('http'):
+                        evidencia_url = reporte.evidencia
+                        nombre_archivo = os.path.basename(reporte.evidencia.split('/')[-1])
+                        # Si es una URL de Cloudinary, extraer solo el nombre del archivo
+                        if '?' in nombre_archivo:
+                            nombre_archivo = nombre_archivo.split('?')[0]
+                    else:
+                        evidencia_url = url_for('admin.uploaded_file', filename=reporte.evidencia, _external=True)
+                        nombre_archivo = os.path.basename(reporte.evidencia)
 
                     mensaje = (
                         f"📎 *Evidencia del reporte #{reporte.id}*\n\n"
@@ -469,7 +472,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: REPARACIÓN
             # ============================================================
             elif accion == 'reparacion':
-                # ... (código existente, sin cambios) ...
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte_id
                 ).order_by(Assignment.timestamp.desc()).first()
@@ -511,21 +513,349 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
 
 
 # ============================================================
-# FUNCIONES AUXILIARES (sin cambios en el resto)
+# FUNCIÓN AUXILIAR PARA OBTENER OPERADOR UNIFICADO
+# ============================================================
+
+def obtener_operador_maquinaria():
+    """
+    Busca un operador que tenga rol 'retro' o 'camion_7m' (o variantes).
+    Retorna el primero que encuentre con telegram_id configurado.
+    """
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.user import User
+            
+            # Buscar por roles específicos (insensible a mayúsculas)
+            operador = User.query.filter(
+                (User.rol_especifico.ilike('%retro%')) | 
+                (User.rol_especifico.ilike('%camion%')) |
+                (User.rol_especifico.ilike('%camion_7m%')) |
+                (User.rol_especifico.ilike('%volteo%')),
+                User.is_active == True,
+                User.telegram_id.isnot(None)
+            ).first()
+            
+            if operador:
+                logger.info(f"✅ Operador de maquinaria encontrado: {operador.nombre} (rol: {operador.rol_especifico}, telegram_id: {operador.telegram_id})")
+                return operador
+            else:
+                # Log de depuración
+                todos_operadores = User.query.filter(
+                    (User.rol_especifico.ilike('%retro%')) | 
+                    (User.rol_especifico.ilike('%camion%')) |
+                    (User.rol_especifico.ilike('%volteo%')),
+                    User.is_active == True
+                ).all()
+                
+                if todos_operadores:
+                    logger.warning(f"⚠️ Se encontraron {len(todos_operadores)} operadores pero ninguno tiene telegram_id configurado:")
+                    for op in todos_operadores:
+                        logger.warning(f"   - {op.nombre} (rol: {op.rol_especifico}, telegram_id: {op.telegram_id})")
+                else:
+                    logger.warning("⚠️ No se encontró ningún operador con rol 'retro' o 'camion_7m'")
+                
+                return None
+                
+    except Exception as e:
+        logger.error(f"❌ Error obteniendo operador de maquinaria: {e}")
+        return None
+
+
+# ============================================================
+# SOLICITAR RETROEXCAVADORA
 # ============================================================
 
 async def manejar_solicitar_retro(query, context, reporte_id):
-    # ... (código existente) ...
-    pass
+    """Envía solicitud al operador de retroexcavadora"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            from app.routes.telegram_routes import get_telegram_app
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado.", show_alert=True)
+                return
+
+            # Usar el operador unificado
+            operador = obtener_operador_maquinaria()
+
+            if not operador:
+                await query.answer("❌ No hay operador de maquinaria disponible", show_alert=True)
+                await query.message.reply_text(
+                    "⚠️ *No se pudo enviar la solicitud*\n\n"
+                    "No hay un operador de retroexcavadora registrado en el sistema.\n\n"
+                    "📌 *Acción:* Contacta al administrador para registrar un operador con rol 'retro' o 'camion_7m' y asignarle un Telegram ID.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            if not operador.telegram_id:
+                await query.answer("❌ El operador no tiene Telegram configurado", show_alert=True)
+                await query.message.reply_text(
+                    f"⚠️ *El operador {operador.nombre} no tiene Telegram vinculado*\n\n"
+                    "Contacta al administrador para configurar su Telegram ID.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
+
+            mensaje = (
+                f"🛠️ *SOLICITUD DE RETROEXCAVADORA*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {direccion}\n"
+                f"👷 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+                f"*🚨 Se requiere retroexcavadora en el lugar.*"
+            )
+
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
+
+            bot_app = get_telegram_app()
+            await bot_app.bot.send_message(
+                chat_id=int(operador.telegram_id),
+                text=mensaje,
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            await query.message.reply_text(
+                f"✅ *Solicitud enviada a {operador.nombre}*\n\n"
+                f"Se ha notificado al operador de retroexcavadora.\n"
+                f"📍 Ubicación: {direccion}\n\n"
+                f"*El operador se pondrá en contacto.*",
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            await query.answer("✅ Solicitud enviada", show_alert=False)
+            logger.info(f"🛠️ Solicitud de retroexcavadora enviada a {operador.nombre} para reporte {reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_solicitar_retro: {e}")
+        await query.answer("❌ Error al enviar solicitud", show_alert=True)
+
+
+# ============================================================
+# SOLICITAR CAMIÓN DE MATERIAL
+# ============================================================
 
 async def manejar_solicitar_camion(query, context, reporte_id):
-    # ... (código existente) ...
-    pass
+    """Muestra lista de materiales para solicitar camión"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado.", show_alert=True)
+                return
+
+            # Verificar operador antes de mostrar materiales
+            operador = obtener_operador_maquinaria()
+
+            if not operador:
+                await query.answer("❌ No hay operador de maquinaria disponible", show_alert=True)
+                await query.message.reply_text(
+                    "⚠️ *No se puede solicitar camión*\n\n"
+                    "No hay un operador de camión registrado en el sistema.\n\n"
+                    "📌 *Acción:* Contacta al administrador para registrar un operador con rol 'camion_7m' y asignarle un Telegram ID.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            if not operador.telegram_id:
+                await query.answer("❌ El operador no tiene Telegram configurado", show_alert=True)
+                await query.message.reply_text(
+                    f"⚠️ *El operador {operador.nombre} no tiene Telegram vinculado*\n\n"
+                    "Contacta al administrador para configurar su Telegram ID.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            # Si todo está bien, mostrar materiales
+            keyboard = []
+            for i in range(0, len(MATERIALES), 2):
+                fila = []
+                for material in MATERIALES[i:i+2]:
+                    callback_material = f"material_camion_{material.replace(' ', '_')}_{reporte_id}"
+                    fila.append(InlineKeyboardButton(material, callback_data=callback_material))
+                keyboard.append(fila)
+
+            keyboard.append([InlineKeyboardButton("❌ Cancelar", callback_data=f"volver_reporte_{reporte_id}")])
+            reply_markup = InlineKeyboardMarkup(keyboard)
+
+            await query.message.reply_text(
+                f"🚛 *SELECCIONA EL MATERIAL*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
+                f"*Selecciona el material que necesita el camión:*",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
+            )
+
+            await query.answer("📋 Mostrando materiales", show_alert=False)
+            logger.info(f"🚛 Mostrando materiales para solicitud de camión en reporte {reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_solicitar_camion: {e}")
+        await query.answer("❌ Error al mostrar materiales", show_alert=True)
+
+
+# ============================================================
+# MATERIAL SELECCIONADO (enviar solicitud al operador)
+# ============================================================
 
 async def manejar_material_seleccionado(query, context, reporte_id, material, tipo):
-    # ... (código existente) ...
-    pass
+    """Envía solicitud al operador con el material seleccionado"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            from app.routes.telegram_routes import get_telegram_app
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado.", show_alert=True)
+                return
+
+            operador = obtener_operador_maquinaria()
+
+            if not operador:
+                await query.answer("❌ No hay operador disponible", show_alert=True)
+                await query.message.reply_text(
+                    "⚠️ *No se pudo enviar la solicitud*\n\n"
+                    "No hay un operador de camión registrado en el sistema.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            if not operador.telegram_id:
+                await query.answer("❌ Operador sin Telegram", show_alert=True)
+                return
+
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
+
+            mensaje = (
+                f"🚛 *SOLICITUD DE MATERIAL*\n\n"
+                f"📦 *Material solicitado:* {material}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {direccion}\n"
+                f"👷 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+                f"*🚨 Se requiere camión de 7m para trasladar el material.*"
+            )
+
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
+
+            bot_app = get_telegram_app()
+            await bot_app.bot.send_message(
+                chat_id=int(operador.telegram_id),
+                text=mensaje,
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            await query.message.reply_text(
+                f"✅ *Solicitud enviada a {operador.nombre}*\n\n"
+                f"📦 *Material:* {material}\n"
+                f"📍 *Ubicación:* {direccion}\n\n"
+                f"*El operador del camión se pondrá en contacto.*",
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            # Eliminar el mensaje de selección de materiales
+            try:
+                await query.message.delete()
+            except:
+                pass
+
+            await query.answer("✅ Solicitud enviada", show_alert=False)
+            logger.info(f"🚛 Solicitud de material '{material}' enviada a {operador.nombre} para reporte {reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_material_seleccionado: {e}")
+        await query.answer("❌ Error al enviar solicitud", show_alert=True)
+
+
+# ============================================================
+# VOLVER AL REPORTE ORIGINAL
+# ============================================================
 
 async def manejar_volver_reporte(query, context, reporte_id):
-    # ... (código existente) ...
-    pass
+    """Vuelve al mensaje original del reporte (cuadrilla)"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.status import Status
+            from app.telegram.keyboards import construir_botones_reporte
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.edit_message_text("❌ Reporte no encontrado.")
+                return
+
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+
+            mensaje = (
+                f"🚨 *REPORTE ASIGNADO*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"📋 *Folio:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                f"📞 *Reportante:* {reporte.reportante}\n"
+                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
+                f"*📋 Acciones rápidas:*"
+            )
+
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte.id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            confirmado = False
+            problema_reportado = False
+            if asignacion and asignacion.status:
+                if asignacion.status.descripcion == "En proceso":
+                    confirmado = True
+                elif asignacion.status.descripcion == "Problema ubicación":
+                    problema_reportado = True
+
+            reply_markup = construir_botones_reporte(
+                reporte.id,
+                confirmado=confirmado,
+                problema_reportado=problema_reportado,
+                context=context
+            )
+
+            # Enviar NUEVO mensaje (no editar)
+            await context.bot.send_message(
+                chat_id=query.from_user.id,
+                text=mensaje,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup,
+                disable_web_page_preview=True
+            )
+
+            # Eliminar el mensaje de evidencia si existe
+            try:
+                await query.message.delete()
+            except:
+                pass
+
+            await query.answer("↩️ Volviendo al reporte", show_alert=False)
+            logger.info(f"↩️ Cuadrilla volvió al mensaje original del reporte {reporte_id}")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_volver_reporte: {e}")
+        await query.answer("❌ Error al volver", show_alert=True)
