@@ -109,27 +109,55 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if user_data[user_id].get("latitud") and user_data[user_id].get("longitud"):
             coords_msg = f"\n📍 *Coordenadas:* {user_data[user_id]['latitud']}, {user_data[user_id]['longitud']}"
         
-        await update.message.reply_text(
-            f"✅ *Ubicación confirmada:*\n\n"
-            f"📍 *Localidad:* {localidad_nombre}\n"
-            f"🛣️ *Calle:* {calle_nombre}\n"
-            f"🔢 *Número:* {numero}{coords_msg}\n\n"
-            f"*¿Entre qué calles está?* (Ej: 'Entre Morelos e Hidalgo' o 'No'):",
-            parse_mode="Markdown",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return ENTRE_CALLES
+        # ⭐ DETECTAR SI VIENE DE GPS
+        viene_de_gps = user_data[user_id].get("ubicacion_gps", False)
+        
+        if viene_de_gps:
+            # ⭐ SI VIENE DE GPS → SALTAR ENTRE_CALLES → IR DIRECTAMENTE A DESCRIPCION
+            await update.message.reply_text(
+                f"✅ *Ubicación confirmada:*\n\n"
+                f"📍 *Localidad:* {localidad_nombre}\n"
+                f"🛣️ *Calle:* {calle_nombre}\n"
+                f"🔢 *Número:* {numero}{coords_msg}\n\n"
+                f"Descríbeme un poco el problema:",
+                parse_mode="Markdown",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return DESCRIPCION
+        else:
+            # ⭐ SI ES MANUAL → MANTENER ENTRE_CALLES
+            await update.message.reply_text(
+                f"✅ *Ubicación confirmada:*\n\n"
+                f"📍 *Localidad:* {localidad_nombre}\n"
+                f"🛣️ *Calle:* {calle_nombre}\n"
+                f"🔢 *Número:* {numero}{coords_msg}\n\n"
+                f"*¿Entre qué calles está?* (Ej: 'Entre Morelos e Hidalgo' o 'No'):",
+                parse_mode="Markdown",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return ENTRE_CALLES
 
 async def duplicado_confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     opcion = update.message.text.lower()
     
     if "continuar" in opcion or "✅" in opcion:
-        await update.message.reply_text(
-            "¿Entre qué calles está?",
-            reply_markup=ReplyKeyboardRemove()
-        )
-        return ENTRE_CALLES
+        # ⭐ DETECTAR SI VIENE DE GPS
+        viene_de_gps = user_data[user_id].get("ubicacion_gps", False)
+        
+        if viene_de_gps:
+            # ⭐ SI VIENE DE GPS → SALTAR ENTRE_CALLES → IR DIRECTAMENTE A DESCRIPCION
+            await update.message.reply_text(
+                "Descríbeme un poco el problema:",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return DESCRIPCION
+        else:
+            await update.message.reply_text(
+                "¿Entre qué calles está?",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return ENTRE_CALLES
     elif "detalles" in opcion or "ver" in opcion or "📋" in opcion:
         info = user_data[user_id].get("duplicado_info", {})
         mensaje = (

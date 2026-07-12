@@ -111,7 +111,7 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
             localidad_detectada = direccion['localidad']
             calle_detectada = direccion['road']
         else:
-            # Si no se detecta dirección, usar valores por defecto
+            # Si no se detecta dirección, usar valores predeterminados
             print("⚠️ No se pudo detectar dirección, usando valores predeterminados")
         
         # ⭐ Buscar localidad en BD (si se detectó)
@@ -130,23 +130,18 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
                         user_data[user_id]["calle_id"] = calle_id
                         user_data[user_id]["calle_nombre"] = calle_nombre
         
-        # ⭐ SI no se encontró localidad o calle, usar valores predeterminados
+        # ⭐ SI no se encontró localidad o calle, usar valores predeterminados amigables
         if not user_data[user_id].get("localidad_nombre"):
-            user_data[user_id]["localidad_nombre"] = "Ubicación GPS"
-            # Buscar una localidad por defecto o usar None
-            localidad_defecto = Localidad.query.first() if Localidad.query.count() > 0 else None
-            if localidad_defecto:
-                user_data[user_id]["localidad_id"] = localidad_defecto.id
-            else:
-                user_data[user_id]["localidad_id"] = None
+            user_data[user_id]["localidad_nombre"] = "Proporcionada por el usuario"
+            user_data[user_id]["localidad_id"] = None
         
         if not user_data[user_id].get("calle_nombre"):
-            user_data[user_id]["calle_nombre"] = "Calle GPS"
+            user_data[user_id]["calle_nombre"] = "Proporcionada por el usuario"
             user_data[user_id]["calle_id"] = None
         
-        # ⭐ Mostrar confirmación y pedir número (sin pedir localidad o calle)
-        localidad_mostrar = user_data[user_id].get("localidad_nombre", "Ubicación GPS")
-        calle_mostrar = user_data[user_id].get("calle_nombre", "Calle GPS")
+        # ⭐ Mostrar confirmación con mensaje amigable y pedir número
+        localidad_mostrar = user_data[user_id].get("localidad_nombre", "Proporcionada por el usuario")
+        calle_mostrar = user_data[user_id].get("calle_nombre", "Proporcionada por el usuario")
         
         await update.message.reply_text(
             f"✅ *Ubicación GPS recibida*\n\n"
@@ -155,8 +150,9 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
             f"Longitud: {location.longitude}\n"
             f"📍 *Localidad:* {localidad_mostrar}\n"
             f"🛣️ *Calle:* {calle_mostrar}\n\n"
-            "📝 **Escribe el número exterior o referencia:**\n"
-            "(Ej: 123, Casa azul, S/N)",
+            f"🔍 *Para ayudar a la cuadrilla a identificar tu lugar del reporte,*\n"
+            f"¿puedes darnos el número de casa más cercano por favor?\n"
+            f"(Ej: 80)",
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )
@@ -166,12 +162,26 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
         print(f"❌ ERROR en ubicacion_gps_handler: {e}")
         import traceback
         traceback.print_exc()
+        # ⭐ NUNCA pedir escribir manualmente, solo mostrar error y continuar con número
+        user_data[user_id]["localidad_nombre"] = "Proporcionada por el usuario"
+        user_data[user_id]["localidad_id"] = None
+        user_data[user_id]["calle_nombre"] = "Proporcionada por el usuario"
+        user_data[user_id]["calle_id"] = None
+        
         await update.message.reply_text(
-            "❌ Ocurrió un error al procesar tu ubicación.\n"
-            "Por favor, escribe la dirección manualmente:",
+            f"✅ *Ubicación GPS recibida*\n\n"
+            f"📍 *Coordenadas:*\n"
+            f"Latitud: {location.latitude}\n"
+            f"Longitud: {location.longitude}\n"
+            f"📍 *Localidad:* Proporcionada por el usuario\n"
+            f"🛣️ *Calle:* Proporcionada por el usuario\n\n"
+            f"🔍 *Para ayudar a la cuadrilla a identificar tu lugar del reporte,*\n"
+            f"¿puedes darnos el número de casa más cercano por favor?\n"
+            f"(Ej: 80)",
+            parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )
-        return LOCALIDAD
+        return NUMERO
 
 async def localidad_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
