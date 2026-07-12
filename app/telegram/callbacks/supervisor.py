@@ -352,15 +352,15 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
         logger.error(f"❌ Error en reasignación: {e}")
         return False
 
-
 # ============================================================
-# NUEVO: SUPERVISOR CONFIRMA RECEPCIÓN DE SOLICITUD DE APOYO
+# SUPERVISOR CONFIRMA RECEPCIÓN DE SOLICITUD DE APOYO
 # ============================================================
 
 async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Maneja cuando el supervisor presiona "✅ Confirmar recepción" en una solicitud de apoyo.
     Notifica a la cuadrilla que el supervisor ya está enterado.
+    VERSIÓN CORREGIDA - usa context.bot correctamente.
     """
     query = update.callback_query
     try:
@@ -410,6 +410,9 @@ async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAU
                 await query.edit_message_text("❌ Cuadrilla no encontrada.")
                 return
 
+            # Obtener el bot (usar context.bot directamente)
+            bot = context.bot
+
             # Actualizar el mensaje del supervisor (quitar el botón)
             mensaje_original = query.message.text
             nuevo_mensaje = mensaje_original + f"\n\n✅ *Confirmado por {supervisor.nombre}*"
@@ -419,7 +422,9 @@ async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAU
                 reply_markup=None  # Quitar botones
             )
 
-            # Notificar a la cuadrilla que el supervisor está enterado
+            # ============================================================
+            # NOTIFICAR A LA CUADRILLA (con context.bot)
+            # ============================================================
             usuarios_cuadrilla = User.query.filter_by(team_id=cuadrilla.id, is_active=True).all()
             calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
@@ -433,24 +438,26 @@ async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAU
                 f"*📋 El supervisor coordinará el apoyo.*"
             )
 
-            bot_app = get_telegram_app()
-
             # Notificar a todos los miembros de la cuadrilla
             notificados = 0
             for usuario in usuarios_cuadrilla:
                 if usuario.telegram_id:
                     try:
-                        await bot_app.bot.send_message(
+                        await bot.send_message(
                             chat_id=int(usuario.telegram_id),
                             text=mensaje_cuadrilla,
-                            parse_mode=ParseMode.MARKDOWN
+                            parse_mode=ParseMode.MARKDOWN,
+                            disable_web_page_preview=True
                         )
                         notificados += 1
+                        logger.info(f"✅ Notificación enviada a {usuario.nombre} (cuadrilla)")
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
 
-            logger.info(f"✅ Supervisor {supervisor.nombre} confirmó recepción de solicitud de apoyo para reporte {reporte_id}")
-            await query.answer("✅ Confirmación enviada", show_alert=False)
+            logger.info(f"✅ Supervisor {supervisor.nombre} confirmó recepción de solicitud de apoyo para reporte {reporte_id}. {notificados} notificaciones enviadas a la cuadrilla.")
+            
+            # Confirmar al supervisor que se envió la notificación
+            await query.answer(f"✅ Confirmación enviada a {notificados} miembros de la cuadrilla", show_alert=False)
 
     except Exception as e:
         logger.error(f"❌ Error en supervisor_confirmar_apoyo: {e}")

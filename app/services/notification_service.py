@@ -6,7 +6,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 import os
 from app.extensions import db
-from flask import current_app
+from flask import current_app, url_for
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +56,6 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
             ).first()
             
             if director_agua:
-                # Verificar si es la misma persona que el jefe técnico
                 if jefe_tecnico and jefe_tecnico.id == director_agua.id:
                     logger.info("ℹ️ Misma persona: Director y Jefe Técnico")
                 else:
@@ -115,7 +114,44 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
 
 
 # ============================================================
-# 2. NOTIFICAR NUEVO REPORTE
+# 2. FUNCIÓN AUXILIAR PARA CONSTRUIR ENLACES DE EVIDENCIA
+# ============================================================
+def construir_enlace_evidencia(evidencia: str, nombre_base: str = "evidencia"):
+    """
+    Construye un enlace formateado para una evidencia (Cloudinary o local).
+    Retorna (texto_con_enlace, es_archivo)
+    """
+    if not evidencia:
+        return None, False
+    
+    evidencia = evidencia.strip()
+    
+    # Determinar si es URL de Cloudinary o ruta local
+    if evidencia.startswith('http'):
+        url = evidencia
+        # Extraer nombre del archivo de la URL
+        nombre_archivo = evidencia.split('/')[-1].split('?')[0]
+        # Limpiar nombre si es muy largo
+        if len(nombre_archivo) > 30:
+            nombre_archivo = nombre_archivo[:27] + "..."
+        return f"[{nombre_archivo}]({url})", True
+    
+    # Ruta local
+    if evidencia.startswith('evidencias/'):
+        url = url_for('static', filename=evidencia, _external=True)
+    else:
+        url = url_for('admin.uploaded_file', filename=evidencia, _external=True)
+    
+    # Extraer nombre del archivo
+    nombre_archivo = os.path.basename(evidencia)
+    if len(nombre_archivo) > 30:
+        nombre_archivo = nombre_archivo[:27] + "..."
+    
+    return f"[{nombre_archivo}]({url})", True
+
+
+# ============================================================
+# 3. NOTIFICAR NUEVO REPORTE
 # ============================================================
 async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, tipo_reporte: str):
     """
@@ -128,7 +164,6 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
         from app.models.user import User
         from app.routes.telegram_routes import get_telegram_app
         
-        # Usar db.session directamente
         reporte = Report.query.get(reporte_id)
         if not reporte:
             logger.error(f"❌ Reporte {reporte_id} no encontrado")
@@ -137,7 +172,6 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
         localidad = Localidad.query.get(reporte.localidad_id)
         calle = Calle.query.get(reporte.calle_id)
         
-        # Obtener responsables
         responsables = obtener_directores_por_tipo_reporte(tipo_reporte)
         
         if not responsables:
@@ -163,7 +197,6 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
                 logger.warning(f"⚠️ Telegram ID inválido para {usuario.nombre}")
                 continue
             
-            # Construir mensaje según tipo
             if responsable['tipo_mensaje'] == 'completo_con_botones':
                 mensaje = await construir_mensaje_completo(reporte, localidad, calle)
                 reply_markup = construir_botones_reporte(reporte.id, es_director=True)
@@ -214,32 +247,10 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
 
 
 # ============================================================
-# 3. CONSTRUIR MENSAJE COMPLETO
+# 4. CONSTRUIR MENSAJE COMPLETO (con evidencia)
 # ============================================================
 async def construir_mensaje_completo(reporte, localidad, calle):
-    """Construye mensaje completo con botones de asignación"""
-    tiene_evidencia = False
-    icono_evidencia = "📎"
-    texto_evidencia = "No adjuntada"
-    
-    if reporte.evidencia:
-        upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
-        evidencia_completa = reporte.evidencia
-        evidencia_path = os.path.join(upload_folder, evidencia_completa)
-        
-        if os.path.exists(evidencia_path):
-            tiene_evidencia = True
-            evidencia_lower = evidencia_completa.lower()
-            if evidencia_lower.endswith(('.mp4', '.mov', '.avi', '.mkv', '.webm')):
-                icono_evidencia = "🎬"
-                texto_evidencia = "Video adjunto"
-            elif evidencia_lower.endswith(('.jpg', '.jpeg', '.png', '.gif', '.webp')):
-                icono_evidencia = "🖼️"
-                texto_evidencia = "Imagen adjunta"
-            else:
-                icono_evidencia = "📎"
-                texto_evidencia = "Archivo adjunto"
-    
+    """Construye mensaje completo con botones de asignación y evidencia"""
     mensaje = (
         f"🚨 *NUEVO REPORTE - {reporte.tipo.upper()}*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -253,8 +264,12 @@ async def construir_mensaje_completo(reporte, localidad, calle):
         f"{reporte.descripcion_problema[:150]}{'...' if len(reporte.descripcion_problema) > 150 else ''}\n\n"
     )
     
-    if tiene_evidencia:
-        mensaje += f"{icono_evidencia} *Evidencia:* {texto_evidencia}\n\n"
+    # ============================================================
+    # EVIDENCIA DEL USUARIO (con enlace)
+    # ============================================================
+    if reporte.evidencia:
+        enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+        mensaje += f"📎 *Evidencia:* {enlace}\n\n"
     
     mensaje += (
         f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M')}\n\n"
@@ -265,7 +280,7 @@ async def construir_mensaje_completo(reporte, localidad, calle):
 
 
 # ============================================================
-# 4. NOTIFICAR ASIGNACIÓN A CUADRILLA
+# 5. NOTIFICAR ASIGNACIÓN A CUADRILLA
 # ============================================================
 async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: int):
     """
@@ -292,14 +307,12 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
         localidad = Localidad.query.get(reporte.localidad_id)
         calle = Calle.query.get(reporte.calle_id)
         
-        # Obtener asignación
         asignacion = Assignment.query.filter_by(
             report_id=reporte_id
         ).order_by(Assignment.timestamp.desc()).first()
         
         status = Status.query.get(asignacion.status_id) if asignacion else None
         
-        # Construir mensaje
         mensaje = (
             f"🚨 *NUEVO REPORTE ASIGNADO*\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -339,12 +352,12 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
 
 
 # ============================================================
-# 5. NOTIFICAR SUPERVISOR REVISIÓN
+# 6. NOTIFICAR SUPERVISOR REVISIÓN (CON EVIDENCIAS ENLACES)
 # ============================================================
 async def notificar_supervisor_revision(reporte_id: int, team_id: int):
     """
     Notifica al supervisor que una cuadrilla ha terminado la reparación.
-    Para agua: supervisor de agua.
+    Incluye enlaces a las evidencias y materiales.
     """
     try:
         from app.models.report import Report, Assignment
@@ -370,7 +383,6 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
             logger.error(f"❌ Cuadrilla {team_id} no encontrada")
             return False
         
-        # Buscar supervisor del área (para agua, supervisor con área 'agua')
         supervisor = User.query.filter_by(
             area='agua',
             rol_especifico='supervisor',
@@ -386,6 +398,42 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
             logger.error("❌ Bot de Telegram no disponible")
             return False
         
+        # ============================================================
+        # CONSTRUIR EVIDENCIAS DE REPARACIÓN (CON ENLACES)
+        # ============================================================
+        evidencias_texto = "• No hay evidencia"
+        if asignacion.evidencia_cuadrilla:
+            evidencias_lista = asignacion.evidencia_cuadrilla.split(',')
+            evidencias_texto = ""
+            for i, evidencia in enumerate(evidencias_lista, 1):
+                evidencia = evidencia.strip()
+                if evidencia:
+                    enlace, _ = construir_enlace_evidencia(evidencia, f"evidencia_{i}")
+                    # Detectar tipo de archivo para el icono
+                    ext = evidencia.split('.')[-1].lower() if '.' in evidencia else ''
+                    icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "🎬" if ext in ['mp4', 'mov', 'avi', 'mkv'] else "📎"
+                    evidencias_texto += f"• {icono} {enlace}\n"
+        
+        # ============================================================
+        # CONSTRUIR MATERIALES UTILIZADOS (CON ENLACE)
+        # ============================================================
+        materiales_texto = "• No especificado"
+        if asignacion.materiales_utilizados:
+            materiales = asignacion.materiales_utilizados.strip()
+            if '.' in materiales or '/' in materiales:
+                # Es un archivo
+                enlace, _ = construir_enlace_evidencia(materiales, "material")
+                # Detectar tipo
+                ext = materiales.split('.')[-1].lower() if '.' in materiales else ''
+                icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "📎"
+                materiales_texto = f"{icono} {enlace}"
+            else:
+                # Es texto
+                materiales_texto = f"📝 {materiales}"
+        
+        # ============================================================
+        # CONSTRUIR MENSAJE COMPLETO
+        # ============================================================
         mensaje = f"""
 🔍 *REPARACIÓN PARA REVISIÓN - Reporte #{reporte.id}*
 
@@ -403,10 +451,11 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
 👷 *CUADRILLA RESPONSABLE:*
 {cuadrilla.nombre}
 
-📸 *EVIDENCIA DE REPARACIÓN:* {len(asignacion.evidencia_cuadrilla.split(',')) if asignacion.evidencia_cuadrilla else 0} archivo(s)
+📸 *EVIDENCIA DE REPARACIÓN:*
+{evidencias_texto}
 
 📦 *MATERIALES UTILIZADOS:*
-{asignacion.materiales_utilizados or 'No especificado'}
+{materiales_texto}
 
 💬 *COMENTARIOS DE LA CUADRILLA:*
 {asignacion.observaciones or 'Sin comentarios'}
@@ -444,12 +493,135 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
 
 
 # ============================================================
-# 6. NOTIFICAR PRESIDENTE
+# 7. NOTIFICAR DIRECTOR DE ÁREA NO-AGUA PARA VALIDACIÓN
 # ============================================================
+async def notificar_director_validacion(reporte_id: int, team_id: int):
+    """
+    Notifica al director del área (no-agua) que una cuadrilla ha terminado reparación.
+    Incluye enlaces a las evidencias y materiales.
+    """
+    try:
+        from app.models.report import Report, Assignment
+        from app.models.user import User
+        from app.models.team import Team
+        from app.routes.telegram_routes import get_telegram_app
+        
+        reporte = Report.query.get(reporte_id)
+        if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
+            return False
+        
+        asignacion = Assignment.query.filter_by(
+            report_id=reporte_id
+        ).order_by(Assignment.timestamp.desc()).first()
+        
+        if not asignacion:
+            logger.error(f"❌ No hay asignación para reporte {reporte_id}")
+            return False
+        
+        cuadrilla = Team.query.get(team_id)
+        if not cuadrilla or not cuadrilla.area:
+            logger.error(f"❌ Cuadrilla {team_id} sin área")
+            return False
+        
+        director = User.query.filter_by(
+            area=cuadrilla.area,
+            rol_especifico='director',
+            is_active=True
+        ).first()
+        
+        if not director or not director.telegram_id:
+            logger.warning(f"⚠️ Director para {cuadrilla.area} no configurado")
+            return False
+        
+        bot_app = get_telegram_app()
+        if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
+            return False
+        
+        # ============================================================
+        # CONSTRUIR EVIDENCIAS DE REPARACIÓN (CON ENLACES)
+        # ============================================================
+        evidencias_texto = "• No hay evidencia"
+        if asignacion.evidencia_cuadrilla:
+            evidencias_lista = asignacion.evidencia_cuadrilla.split(',')
+            evidencias_texto = ""
+            for i, evidencia in enumerate(evidencias_lista, 1):
+                evidencia = evidencia.strip()
+                if evidencia:
+                    enlace, _ = construir_enlace_evidencia(evidencia, f"evidencia_{i}")
+                    ext = evidencia.split('.')[-1].lower() if '.' in evidencia else ''
+                    icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "🎬" if ext in ['mp4', 'mov', 'avi', 'mkv'] else "📎"
+                    evidencias_texto += f"• {icono} {enlace}\n"
+        
+        # ============================================================
+        # CONSTRUIR MATERIALES UTILIZADOS (CON ENLACE)
+        # ============================================================
+        materiales_texto = "• No especificado"
+        if asignacion.materiales_utilizados:
+            materiales = asignacion.materiales_utilizados.strip()
+            if '.' in materiales or '/' in materiales:
+                enlace, _ = construir_enlace_evidencia(materiales, "material")
+                ext = materiales.split('.')[-1].lower() if '.' in materiales else ''
+                icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "📎"
+                materiales_texto = f"{icono} {enlace}"
+            else:
+                materiales_texto = f"📝 {materiales}"
+        
+        # ============================================================
+        # CONSTRUIR MENSAJE COMPLETO
+        # ============================================================
+        mensaje = f"""
+✅ *REPARACIÓN TERMINADA - ÁREA {cuadrilla.area.upper()}*
+
+📋 *Reporte:* #{reporte.id}
+📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
+👤 *Reportante:* {reporte.reportante}
+🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
+👷 *Cuadrilla:* {cuadrilla.nombre}
+
+📸 *EVIDENCIA DE REPARACIÓN:*
+{evidencias_texto}
+
+📦 *MATERIALES UTILIZADOS:*
+{materiales_texto}
+
+💬 *Comentarios:* {asignacion.observaciones or 'Sin comentarios'}
+
+⏰ *Fecha:* {asignacion.timestamp.strftime('%d/%m/%Y %H:%M') if asignacion.timestamp else 'N/D'}
+
+*📋 VALIDAR REPARACIÓN:*
+"""
+        keyboard = [
+            [
+                InlineKeyboardButton("✅ Validar", callback_data=f"dir_validar_{reporte.id}"),
+                InlineKeyboardButton("❌ Rechazar", callback_data=f"dir_rechazar_{reporte.id}")
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await bot_app.bot.send_message(
+            chat_id=int(director.telegram_id),
+            text=mensaje,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=reply_markup,
+            disable_web_page_preview=False
+        )
+        
+        logger.info(f"✅ Director {director.nombre} notificado para validación de reparación")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error en notificar_director_validacion: {e}", exc_info=True)
+        return False
+
+
+# ============================================================
+# 8. FUNCIONES ADICIONALES (presidente, admin, etc.)
+# ============================================================
+
 async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_reporte"):
-    """
-    Notifica al presidente sobre reportes importantes.
-    """
+    """Notifica al presidente sobre reportes importantes."""
     try:
         from app.models.report import Report, Localidad, Calle
         from app.models.user import User
@@ -526,9 +698,6 @@ async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_rep
         return False
 
 
-# ============================================================
-# 7. NOTIFICAR ADMIN VINCULACIÓN
-# ============================================================
 async def notificar_admin_vinculacion_original(usuario, telegram_user_id, telegram_username, context):
     try:
         from flask import current_app
@@ -566,9 +735,6 @@ async def notificar_admin_vinculacion_original(usuario, telegram_user_id, telegr
         return False
 
 
-# ============================================================
-# 8. FUNCIÓN SÍNCRONA PARA ADMIN
-# ============================================================
 def notificar_asignacion_sync(reporte_id: int, user_id: int):
     """Versión síncrona para notificar asignaciones (para admin.py)"""
     try:
@@ -601,98 +767,10 @@ def notificar_asignacion_sync(reporte_id: int, user_id: int):
 
 
 # ============================================================
-# 9. NOTIFICAR DIRECTOR DE ÁREA NO-AGUA PARA VALIDACIÓN
-# ============================================================
-async def notificar_director_validacion(reporte_id: int, team_id: int):
-    """
-    Notifica al director del área (no-agua) que una cuadrilla ha terminado reparación.
-    """
-    try:
-        from app.models.report import Report, Assignment
-        from app.models.user import User
-        from app.models.team import Team
-        from app.routes.telegram_routes import get_telegram_app
-        
-        reporte = Report.query.get(reporte_id)
-        if not reporte:
-            logger.error(f"❌ Reporte {reporte_id} no encontrado")
-            return False
-        
-        asignacion = Assignment.query.filter_by(
-            report_id=reporte_id
-        ).order_by(Assignment.timestamp.desc()).first()
-        
-        if not asignacion:
-            logger.error(f"❌ No hay asignación para reporte {reporte_id}")
-            return False
-        
-        cuadrilla = Team.query.get(team_id)
-        if not cuadrilla or not cuadrilla.area:
-            logger.error(f"❌ Cuadrilla {team_id} sin área")
-            return False
-        
-        director = User.query.filter_by(
-            area=cuadrilla.area,
-            rol_especifico='director',
-            is_active=True
-        ).first()
-        
-        if not director or not director.telegram_id:
-            logger.warning(f"⚠️ Director para {cuadrilla.area} no configurado")
-            return False
-        
-        bot_app = get_telegram_app()
-        if not bot_app or not bot_app.bot:
-            logger.error("❌ Bot de Telegram no disponible")
-            return False
-        
-        mensaje = f"""
-✅ *REPARACIÓN TERMINADA - ÁREA {cuadrilla.area.upper()}*
-
-📋 *Reporte:* #{reporte.id}
-📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
-👤 *Reportante:* {reporte.reportante}
-🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
-👷 *Cuadrilla:* {cuadrilla.nombre}
-📸 *Evidencia:* {len(asignacion.evidencia_cuadrilla.split(',')) if asignacion.evidencia_cuadrilla else 0} archivo(s)
-📦 *Materiales:* {asignacion.materiales_utilizados or 'No especificado'}
-💬 *Comentarios:* {asignacion.observaciones or 'Sin comentarios'}
-⏰ *Fecha:* {asignacion.timestamp.strftime('%d/%m/%Y %H:%M') if asignacion.timestamp else 'N/D'}
-
-*📋 VALIDAR REPARACIÓN:*
-"""
-        keyboard = [
-            [
-                InlineKeyboardButton("✅ Validar", callback_data=f"dir_validar_{reporte.id}"),
-                InlineKeyboardButton("❌ Rechazar", callback_data=f"dir_rechazar_{reporte.id}")
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
-        await bot_app.bot.send_message(
-            chat_id=int(director.telegram_id),
-            text=mensaje,
-            parse_mode=ParseMode.MARKDOWN,
-            reply_markup=reply_markup,
-            disable_web_page_preview=False
-        )
-        
-        logger.info(f"✅ Director {director.nombre} notificado para validación de reparación")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Error en notificar_director_validacion: {e}", exc_info=True)
-        return False
-
-
-# ============================================================
-# 10. NOTIFICAR USUARIO REPORTANTE PARA VALIDACIÓN FINAL
+# 9. NOTIFICAR USUARIO REPORTANTE PARA VALIDACIÓN FINAL
 # ============================================================
 async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido: str = "Sistema"):
-    """
-    Notifica al usuario reportante que su reporte ha sido atendido y pide validación final.
-    quien_valido: 'supervisor' (agua) o 'director' (otras áreas)
-    """
+    """Notifica al usuario reportante que su reporte ha sido atendido y pide validación final."""
     try:
         from app.models.team import Team
         from app.models.status import Status
@@ -710,7 +788,6 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
         
         cuadrilla = Team.query.get(asignacion.team_id)
         
-        # Cambiar estado a "Pendiente validación usuario"
         estado_pendiente = Status.query.filter_by(descripcion="Pendiente validación usuario").first()
         if not estado_pendiente:
             estado_pendiente = Status(descripcion="Pendiente validación usuario")
@@ -762,12 +839,10 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
 
 
 # ============================================================
-# 11. NOTIFICAR RECHAZO DEL USUARIO AL RESPONSABLE
+# 10. NOTIFICAR RECHAZO DEL USUARIO AL RESPONSABLE
 # ============================================================
 async def notificar_rechazo_usuario(reporte_id: int, usuario_id: int):
-    """
-    Notifica al responsable (Jefe Técnico o Director) que el usuario rechazó la reparación.
-    """
+    """Notifica al responsable (Jefe Técnico o Director) que el usuario rechazó la reparación."""
     try:
         from app.models.report import Report
         from app.models.user import User
@@ -777,7 +852,6 @@ async def notificar_rechazo_usuario(reporte_id: int, usuario_id: int):
         if not reporte:
             return
         
-        # Buscar responsable según tipo
         if reporte.tipo in ["Agua potable", "Drenaje"]:
             responsable = User.query.filter_by(
                 area='agua',
