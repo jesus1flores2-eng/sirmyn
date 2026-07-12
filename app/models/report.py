@@ -126,7 +126,7 @@ class Assignment(db.Model):
 
     materiales_utilizados = db.Column(db.String(255))
     observaciones = db.Column(db.Text)
-    evidencia_cuadrilla = db.Column(db.String(200))
+    evidencia_cuadrilla = db.Column(db.String(1000))
     motivo_reasignacion = db.Column(db.String(255), nullable=True)
 
     team = db.relationship("Team", backref="asignaciones")

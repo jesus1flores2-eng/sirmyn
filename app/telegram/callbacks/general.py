@@ -434,14 +434,13 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                 logger.info(f"🗺️ Mapa enviado para reporte {reporte_id}")
 
             # ============================================================
-            # ⭐ ACCIÓN: EVIDENCIA (CORREGIDO - soporta Cloudinary y local)
+            # ACCIÓN: EVIDENCIA
             # ============================================================
             elif accion == 'evidencia':
                 if reporte.evidencia:
                     import os
                     from flask import url_for
 
-                    # ⭐ DETECTAR SI ES URL DE CLOUDINARY O RUTA LOCAL
                     if reporte.evidencia.startswith('http'):
                         evidencia_url = reporte.evidencia
                         nombre_archivo = os.path.basename(reporte.evidencia.split('/')[-1])
@@ -533,7 +532,6 @@ def obtener_operador_maquinaria():
         with app.app_context():
             from app.models.user import User
             
-            # Buscar por roles específicos (insensible a mayúsculas)
             operador = User.query.filter(
                 (User.rol_especifico.ilike('%retro%')) | 
                 (User.rol_especifico.ilike('%camion%')) |
@@ -569,7 +567,7 @@ def obtener_operador_maquinaria():
 
 
 # ============================================================
-# SOLICITAR RETROEXCAVADORA (CORREGIDO - usa nombre del usuario de BD)
+# SOLICITAR RETROEXCAVADORA
 # ============================================================
 
 async def manejar_solicitar_retro(query, context, reporte_id):
@@ -586,7 +584,6 @@ async def manejar_solicitar_retro(query, context, reporte_id):
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
 
-            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
             usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
@@ -652,7 +649,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
 
 
 # ============================================================
-# SOLICITAR CAMIÓN DE MATERIAL (CORREGIDO)
+# SOLICITAR CAMIÓN DE MATERIAL
 # ============================================================
 
 async def manejar_solicitar_camion(query, context, reporte_id):
@@ -668,7 +665,6 @@ async def manejar_solicitar_camion(query, context, reporte_id):
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
 
-            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
             usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
@@ -693,7 +689,6 @@ async def manejar_solicitar_camion(query, context, reporte_id):
                 )
                 return
 
-            # Mostrar materiales
             keyboard = []
             for i in range(0, len(MATERIALES), 2):
                 fila = []
@@ -724,7 +719,7 @@ async def manejar_solicitar_camion(query, context, reporte_id):
 
 
 # ============================================================
-# MATERIAL SELECCIONADO (CORREGIDO)
+# MATERIAL SELECCIONADO
 # ============================================================
 
 async def manejar_material_seleccionado(query, context, reporte_id, material, tipo):
@@ -741,7 +736,6 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
 
-            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
             usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
@@ -807,13 +801,13 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
 
 
 # ============================================================
-# SOLICITAR APOYO DE OTRA CUADRILLA (notifica al supervisor)
+# SOLICITAR APOYO DE OTRA CUADRILLA (CORREGIDO - botón "Confirmar recepción")
 # ============================================================
 
 async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
     """
     Envía solicitud de apoyo a los supervisores/directores del área.
-    Incluye botón "✅ Enterado" para que el supervisor confirme.
+    Incluye botón "✅ Confirmar recepción" para que el supervisor confirme.
     """
     try:
         app = DatabaseManager.get_app()
@@ -822,7 +816,6 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
             from app.models.user import User
             from app.models.team import Team
             from app.routes.telegram_routes import get_telegram_app
-            from app.telegram.utils import user_data
 
             reporte = Report.query.get(reporte_id)
             if not reporte:
@@ -887,7 +880,6 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
 
-            # Mensaje para el supervisor
             mensaje_supervisor = (
                 f"👷 *SOLICITUD DE APOYO - OTRA CUADRILLA*\n\n"
                 f"📋 *Reporte:* #{reporte.id}\n"
@@ -904,9 +896,9 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
-            # ⭐ BOTÓN "ENTERADO" PARA EL SUPERVISOR
+            # ⭐ NUEVO CALLBACK: super_confirmar_apoyo (en lugar de super_enterado_apoyo)
             keyboard = [[
-                InlineKeyboardButton("✅ Enterado", callback_data=f"super_enterado_apoyo_{reporte_id}")
+                InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"super_confirmar_apoyo_{reporte_id}")
             ]]
             reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -927,7 +919,6 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {responsable.nombre}: {e}")
 
-            # Confirmar a la cuadrilla que la solicitud fue enviada
             await query.message.reply_text(
                 f"✅ *Solicitud de apoyo enviada*\n\n"
                 f"Se ha notificado a {enviados} supervisor(es) del área.\n"
@@ -995,7 +986,6 @@ async def manejar_volver_reporte(query, context, reporte_id):
                 context=context
             )
 
-            # Enviar NUEVO mensaje (no editar)
             await context.bot.send_message(
                 chat_id=query.from_user.id,
                 text=mensaje,
@@ -1004,7 +994,6 @@ async def manejar_volver_reporte(query, context, reporte_id):
                 disable_web_page_preview=True
             )
 
-            # Eliminar el mensaje de evidencia si existe
             try:
                 await query.message.delete()
             except:

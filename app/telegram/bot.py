@@ -1,4 +1,3 @@
-# app/telegram/bot.py
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ConversationHandler
 from app.telegram.states import *
 from app.telegram.handlers.start import start, manejar_aceptacion, menu_principal_handler
@@ -22,11 +21,10 @@ from app.telegram.callbacks.presidente import presidencia_command, presidente_ca
 from app.telegram.callbacks.director import director_callback_handler
 from app.telegram.callbacks.dashboard import dashboard_callback_handler
 from app.telegram.callbacks.general import button_callback_handler
-# Nuevos imports para handlers de rechazo, encuesta, supervisor, usuario
 from app.telegram.callbacks.supervisor import (
     supervisor_callback_handler,
     rechazo_opciones_handler,
-    supervisor_enterado_apoyo  # ⭐ AGREGADO
+    supervisor_confirmar_apoyo  # ⭐ NUEVA IMPORTACIÓN
 )
 from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
@@ -38,7 +36,6 @@ from app.telegram.handlers.reparacion import manejar_modo_reparacion
 import logging
 
 logger = logging.getLogger(__name__)
-
 
 def build_telegram_app(token):
     """Construye la aplicación de Telegram para webhooks"""
@@ -198,7 +195,8 @@ def build_telegram_app(token):
     # 4.1 Callbacks de SUPERVISOR
     app.add_handler(CallbackQueryHandler(supervisor_callback_handler, pattern="^super_"))
     app.add_handler(CallbackQueryHandler(rechazo_opciones_handler, pattern="^rechazar_"))
-    app.add_handler(CallbackQueryHandler(supervisor_enterado_apoyo, pattern="^super_enterado_apoyo_"))
+    # ⭐ NUEVO HANDLER PARA CONFIRMAR RECEPCIÓN DE APOYO
+    app.add_handler(CallbackQueryHandler(supervisor_confirmar_apoyo, pattern="^super_confirmar_apoyo_"))
     
     # 4.2 Callbacks de USUARIO (validación final)
     app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_"))
@@ -221,7 +219,6 @@ def build_telegram_app(token):
     # ============================================================
     
     # ⭐ Handler para ubicaciones GPS en modo "problema de ubicación"
-    # Debe ir ANTES del ConversationHandler para capturar ubicaciones fuera de la conversación
     app.add_handler(
         MessageHandler(
             filters.LOCATION,

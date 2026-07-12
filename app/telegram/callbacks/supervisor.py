@@ -354,12 +354,12 @@ async def realizar_reasignacion(reporte_id, asignacion_actual, nueva_cuadrilla_i
 
 
 # ============================================================
-# SUPERVISOR CONFIRMA QUE ESTÁ ENTERADO DE LA SOLICITUD DE APOYO
+# NUEVO: SUPERVISOR CONFIRMA RECEPCIÓN DE SOLICITUD DE APOYO
 # ============================================================
 
-async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def supervisor_confirmar_apoyo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
-    Maneja cuando el supervisor presiona "✅ Enterado" en una solicitud de apoyo.
+    Maneja cuando el supervisor presiona "✅ Confirmar recepción" en una solicitud de apoyo.
     Notifica a la cuadrilla que el supervisor ya está enterado.
     """
     query = update.callback_query
@@ -369,7 +369,7 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
         pass
 
     callback_data = query.data
-    if not callback_data.startswith('super_enterado_apoyo_'):
+    if not callback_data.startswith('super_confirmar_apoyo_'):
         return
 
     reporte_id = int(callback_data.split('_')[-1])
@@ -426,7 +426,7 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
             direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
 
             mensaje_cuadrilla = (
-                f"👷 *SUPERVISOR ENTERADO - Solicitud de Apoyo*\n\n"
+                f"👷 *SUPERVISOR CONFIRMADO - Solicitud de Apoyo*\n\n"
                 f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
@@ -449,11 +449,11 @@ async def supervisor_enterado_apoyo(update: Update, context: ContextTypes.DEFAUL
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
 
-            logger.info(f"✅ Supervisor {supervisor.nombre} confirmó estar enterado de solicitud de apoyo para reporte {reporte_id}")
+            logger.info(f"✅ Supervisor {supervisor.nombre} confirmó recepción de solicitud de apoyo para reporte {reporte_id}")
             await query.answer("✅ Confirmación enviada", show_alert=False)
 
     except Exception as e:
-        logger.error(f"❌ Error en supervisor_enterado_apoyo: {e}")
+        logger.error(f"❌ Error en supervisor_confirmar_apoyo: {e}")
         import traceback
         logger.error(traceback.format_exc())
         await query.answer("❌ Error al procesar", show_alert=True)
