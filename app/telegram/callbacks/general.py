@@ -157,6 +157,18 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     asignacion.observaciones = f"Confirmado por {usuario.nombre} via Telegram"
                     db.session.commit()
 
+                # ⭐ NOTIFICAR AL DIRECTOR/JEFE TÉCNICO DEL ÁREA
+                try:
+                    from app.services.notification_service import notificar_director_aceptacion_cuadrilla
+                    cuadrilla_nombre = usuario.team.nombre if usuario.team else "Cuadrilla desconocida"
+                    await notificar_director_aceptacion_cuadrilla(
+                        reporte_id=reporte.id,
+                        cuadrilla_nombre=cuadrilla_nombre,
+                        usuario_nombre=usuario.nombre
+                    )
+                except Exception as e:
+                    logger.error(f"⚠️ Error notificando al director sobre aceptación: {e}")
+
                 reply_markup = construir_botones_reporte(reporte.id, confirmado=True, context=context)
 
                 calle_nombre = reporte.calle.nombre if reporte.calle else ''
@@ -801,7 +813,7 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
 
 
 # ============================================================
-# SOLICITAR APOYO DE OTRA CUADRILLA (CORREGIDO - botón "Confirmar recepción")
+# SOLICITAR APOYO DE OTRA CUADRILLA
 # ============================================================
 
 async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
@@ -896,7 +908,6 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 mensaje_supervisor += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
-            # ⭐ NUEVO CALLBACK: super_confirmar_apoyo (en lugar de super_enterado_apoyo)
             keyboard = [[
                 InlineKeyboardButton("✅ Confirmar recepción", callback_data=f"super_confirmar_apoyo_{reporte_id}")
             ]]

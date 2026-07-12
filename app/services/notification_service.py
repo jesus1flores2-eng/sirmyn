@@ -1104,3 +1104,79 @@ async def notificar_rechazo_usuario(reporte_id: int, usuario_id: int):
         
     except Exception as e:
         logger.error(f"❌ Error en notificar_rechazo_usuario: {e}", exc_info=True)
+
+async def notificar_director_aceptacion_cuadrilla(reporte_id: int, cuadrilla_nombre: str, usuario_nombre: str):
+    """
+    Notifica al director/jefe técnico que la cuadrilla ha aceptado el reporte.
+    """
+    try:
+        from app.models.report import Report
+        from app.models.user import User
+        from app.routes.telegram_routes import get_telegram_app
+        from datetime import datetime
+        
+        reporte = Report.query.get(reporte_id)
+        if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
+            return False
+        
+        # Determinar responsable según tipo de reporte
+        if reporte.tipo in ["Agua potable", "Drenaje"]:
+            responsable = User.query.filter_by(
+                area='agua',
+                rol_especifico='jefe_area_tecnica',
+                is_active=True
+            ).first()
+        else:
+            mapeo = {
+                "Aseo público": "aseo",
+                "Alumbrado público": "alumbrado",
+                "Parques y jardines": "parques",
+                "Ecología": "ecologia",
+                "Seguridad pública": "seguridad",
+                "Obras públicas": "obras",
+                "Bomberos": "bomberos"
+            }
+            area = mapeo.get(reporte.tipo)
+            if area:
+                responsable = User.query.filter_by(
+                    area=area,
+                    rol_especifico='director',
+                    is_active=True
+                ).first()
+        
+        if not responsable or not responsable.telegram_id:
+            logger.warning(f"⚠️ No se encontró responsable para notificar aceptación del reporte {reporte_id}")
+            return False
+        
+        bot_app = get_telegram_app()
+        if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
+            return False
+        
+        calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+        localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+        
+        mensaje = (
+            f"✅ *CUADRILLA CONFIRMÓ RECEPCIÓN*\n\n"
+            f"📋 *Reporte:* #{reporte.id}\n"
+            f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+            f"👷 *Cuadrilla:* {cuadrilla_nombre}\n"
+            f"👤 *Confirmado por:* {usuario_nombre}\n"
+            f"📅 *Confirmado:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+            f"*🏷️ Estado:* En proceso\n\n"
+            f"La cuadrilla ha confirmado recepción del reporte y se dirige al lugar."
+        )
+        
+        await bot_app.bot.send_message(
+            chat_id=int(responsable.telegram_id),
+            text=mensaje,
+            parse_mode=ParseMode.MARKDOWN
+        )
+        
+        logger.info(f"✅ Responsable {responsable.nombre} notificado sobre aceptación de cuadrilla para reporte #{reporte_id}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"❌ Error en notificar_director_aceptacion_cuadrilla: {e}", exc_info=True)
+        return False
