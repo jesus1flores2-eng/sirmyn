@@ -113,6 +113,9 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         viene_de_gps = user_data[user_id].get("ubicacion_gps", False)
         
         if viene_de_gps:
+            # ⭐ GUARDAR ENTRE_CALLES COMO VACÍO
+            user_data[user_id]["entre_calles"] = ""
+            
             # ⭐ SI VIENE DE GPS → SALTAR ENTRE_CALLES → IR DIRECTAMENTE A DESCRIPCION
             await update.message.reply_text(
                 f"✅ *Ubicación confirmada:*\n\n"
