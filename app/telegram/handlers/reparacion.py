@@ -13,7 +13,7 @@ from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
 from app.telegram.keyboards import obtener_carpeta_departamento
-from app.services.cloudinary_service import subir_archivo  # ⭐ NUEVA IMPORTACIÓN
+from app.services.cloudinary_service import subir_archivo
 from datetime import datetime
 import logging
 import os
@@ -23,9 +23,25 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 
-async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int):
+async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: int = None):
     """Maneja el flujo de subida de evidencia de reparación"""
+    # ⭐ OBTENER USER_ID SI NO VIENE COMO ARGUMENTO
+    if user_id is None:
+        user_id = update.effective_user.id
+        logger.info(f"🔧 [REPARACION] user_id obtenido del update: {user_id}")
+    
+    # ⭐ VERIFICAR QUE EL USUARIO ESTÉ EN MODO REPARACIÓN
     if user_id not in user_data or not user_data[user_id].get('modo_reparacion'):
+        logger.warning(f"⚠️ [REPARACION] Usuario {user_id} no está en modo reparación")
+        if update.message:
+            await update.message.reply_text(
+                "🔧 *No estás en modo reparación.*\n\n"
+                "Para subir evidencia:\n"
+                "1. Ve al mensaje original del reporte\n"
+                "2. Presiona *'🔧 Subir evidencia reparación'*\n"
+                "3. Sigue las instrucciones",
+                parse_mode=ParseMode.MARKDOWN
+            )
         return
 
     datos = user_data[user_id]
@@ -53,7 +69,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
     # ============================================================
     if paso == 'evidencia':
         # Si es texto
-        if update.message.text:
+        if update.message and update.message.text:
             texto = update.message.text.lower()
 
             if texto == 'cancelar':
@@ -97,7 +113,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                 return
 
         # Si es foto/video
-        if update.message.photo or update.message.video:
+        if update.message and (update.message.photo or update.message.video):
             try:
                 with app.app_context():
                     carpeta = base_path / 'cuadrilla'
@@ -115,12 +131,11 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    # ⭐ Intentar subir a Cloudinary
+                    # Intentar subir a Cloudinary
                     url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/cuadrilla")
                     if url:
                         datos['evidencias'].append(url)
                         logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
-                        # Eliminar archivo local (ya no lo necesitamos)
                         try:
                             os.remove(filepath)
                         except:
@@ -130,7 +145,6 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                         ruta_relativa = f"evidencias/{carpeta_departamento}/cuadrilla/{filename}"
                         datos['evidencias'].append(ruta_relativa)
                         logger.warning(f"⚠️ Fallback local: {ruta_relativa}")
-                        # No eliminar el archivo local para que esté disponible
 
                     user_data[user_id] = datos
 
@@ -151,7 +165,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
     # ============================================================
     elif paso == 'materiales':
         # Si es foto
-        if update.message.photo:
+        if update.message and update.message.photo:
             try:
                 with app.app_context():
                     carpeta = base_path / 'materiales'
@@ -163,7 +177,6 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                     filepath = carpeta / filename
                     await file.download_to_drive(filepath)
 
-                    # ⭐ Intentar subir a Cloudinary
                     url = subir_archivo(str(filepath), folder=f"{carpeta_departamento}/materiales_utilizados")
                     if url:
                         datos['materiales'] = url
@@ -173,11 +186,9 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                         except:
                             pass
                     else:
-                        # Fallback local
                         ruta_relativa = f"evidencias/{carpeta_departamento}/materiales_utilizados/{filename}"
                         datos['materiales'] = ruta_relativa
                         logger.warning(f"⚠️ Fallback local: {ruta_relativa}")
-                        # No eliminar archivo local
 
                     user_data[user_id] = datos
             except Exception as e:
@@ -189,7 +200,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                 return
 
         # Si es texto
-        elif update.message.text:
+        elif update.message and update.message.text:
             texto = update.message.text.strip()
             if texto.lower() == 'cancelar':
                 claves = ['modo_reparacion', 'paso', 'evidencias', 'materiales', 'comentario', 'asignacion_id', 'reporte_id']
@@ -205,7 +216,7 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
                 )
                 return
 
-            datos['materiales'] = texto  # Guardar como texto (sin archivo)
+            datos['materiales'] = texto
             user_data[user_id] = datos
 
         datos['paso'] = 'comentario'
@@ -222,6 +233,9 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
     # PASO 3: COMENTARIO
     # ============================================================
     elif paso == 'comentario':
+        if not update.message or not update.message.text:
+            return
+            
         texto = update.message.text.strip()
 
         if texto.lower() == 'cancelar':
@@ -273,25 +287,24 @@ async def manejar_modo_reparacion(update: Update, context: ContextTypes.DEFAULT_
     # PASO 4: CONFIRMACIÓN
     # ============================================================
     elif paso == 'confirmacion':
+        if not update.message or not update.message.text:
+            return
+            
         if update.message.text == "✅ Sí, guardar":
             with app.app_context():
                 asignacion = Assignment.query.get(datos['asignacion_id'])
                 if asignacion:
-                    # Guardar evidencias (pueden ser URLs de Cloudinary o rutas locales)
                     if datos.get('evidencias'):
                         asignacion.evidencia_cuadrilla = ','.join(datos['evidencias'])
 
-                    # Guardar materiales (pueden ser URL de Cloudinary, ruta local o texto)
                     if isinstance(datos.get('materiales'), str) and datos['materiales'].endswith(('.jpg', '.jpeg', '.png')):
                         asignacion.materiales_utilizados = datos['materiales']
                     else:
                         asignacion.materiales_utilizados = datos.get('materiales', '')
 
-                    # Guardar comentario
                     if datos.get('comentario'):
                         asignacion.observaciones = datos['comentario']
 
-                    # Cambiar estado a "En revisión"
                     estado_revision = Status.query.filter_by(descripcion="En revisión").first()
                     if not estado_revision:
                         estado_revision = Status(descripcion="En revisión")

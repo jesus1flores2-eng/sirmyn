@@ -65,6 +65,14 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
+    # DETECCIÓN PARA SOLICITUD DE APOYO DE OTRA CUADRILLA
+    # ============================================================
+    if callback_data.startswith('solicitar_apoyo_cuadrilla_'):
+        reporte_id = int(callback_data.split('_')[-1])
+        await manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id)
+        return
+
+    # ============================================================
     # DETECCIÓN PARA VOLVER AL REPORTE
     # ============================================================
     if callback_data.startswith('volver_reporte_'):
@@ -437,7 +445,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     if reporte.evidencia.startswith('http'):
                         evidencia_url = reporte.evidencia
                         nombre_archivo = os.path.basename(reporte.evidencia.split('/')[-1])
-                        # Si es una URL de Cloudinary, extraer solo el nombre del archivo
                         if '?' in nombre_archivo:
                             nombre_archivo = nombre_archivo.split('?')[0]
                     else:
@@ -540,7 +547,6 @@ def obtener_operador_maquinaria():
                 logger.info(f"✅ Operador de maquinaria encontrado: {operador.nombre} (rol: {operador.rol_especifico}, telegram_id: {operador.telegram_id})")
                 return operador
             else:
-                # Log de depuración
                 todos_operadores = User.query.filter(
                     (User.rol_especifico.ilike('%retro%')) | 
                     (User.rol_especifico.ilike('%camion%')) |
@@ -563,7 +569,7 @@ def obtener_operador_maquinaria():
 
 
 # ============================================================
-# SOLICITAR RETROEXCAVADORA
+# SOLICITAR RETROEXCAVADORA (CORREGIDO - usa nombre del usuario de BD)
 # ============================================================
 
 async def manejar_solicitar_retro(query, context, reporte_id):
@@ -572,6 +578,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report
+            from app.models.user import User
             from app.routes.telegram_routes import get_telegram_app
 
             reporte = Report.query.get(reporte_id)
@@ -579,7 +586,10 @@ async def manejar_solicitar_retro(query, context, reporte_id):
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
 
-            # Usar el operador unificado
+            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
+            usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
+
             operador = obtener_operador_maquinaria()
 
             if not operador:
@@ -609,7 +619,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
                 f"🛠️ *SOLICITUD DE RETROEXCAVADORA*\n\n"
                 f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {direccion}\n"
-                f"👷 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"👷 *Solicitado por:* {nombre_solicitante}\n"
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
                 f"*🚨 Se requiere retroexcavadora en el lugar.*"
             )
@@ -634,7 +644,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
             )
 
             await query.answer("✅ Solicitud enviada", show_alert=False)
-            logger.info(f"🛠️ Solicitud de retroexcavadora enviada a {operador.nombre} para reporte {reporte_id}")
+            logger.info(f"🛠️ Solicitud de retroexcavadora enviada por {nombre_solicitante} para reporte {reporte_id}")
 
     except Exception as e:
         logger.error(f"❌ Error en manejar_solicitar_retro: {e}")
@@ -642,7 +652,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
 
 
 # ============================================================
-# SOLICITAR CAMIÓN DE MATERIAL
+# SOLICITAR CAMIÓN DE MATERIAL (CORREGIDO)
 # ============================================================
 
 async def manejar_solicitar_camion(query, context, reporte_id):
@@ -651,13 +661,17 @@ async def manejar_solicitar_camion(query, context, reporte_id):
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report
+            from app.models.user import User
 
             reporte = Report.query.get(reporte_id)
             if not reporte:
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
 
-            # Verificar operador antes de mostrar materiales
+            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
+            usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
+
             operador = obtener_operador_maquinaria()
 
             if not operador:
@@ -679,7 +693,7 @@ async def manejar_solicitar_camion(query, context, reporte_id):
                 )
                 return
 
-            # Si todo está bien, mostrar materiales
+            # Mostrar materiales
             keyboard = []
             for i in range(0, len(MATERIALES), 2):
                 fila = []
@@ -695,13 +709,14 @@ async def manejar_solicitar_camion(query, context, reporte_id):
                 f"🚛 *SELECCIONA EL MATERIAL*\n\n"
                 f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
+                f"*Solicitado por:* {nombre_solicitante}\n\n"
                 f"*Selecciona el material que necesita el camión:*",
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=reply_markup
             )
 
             await query.answer("📋 Mostrando materiales", show_alert=False)
-            logger.info(f"🚛 Mostrando materiales para solicitud de camión en reporte {reporte_id}")
+            logger.info(f"🚛 Mostrando materiales para solicitud de camión por {nombre_solicitante} en reporte {reporte_id}")
 
     except Exception as e:
         logger.error(f"❌ Error en manejar_solicitar_camion: {e}")
@@ -709,7 +724,7 @@ async def manejar_solicitar_camion(query, context, reporte_id):
 
 
 # ============================================================
-# MATERIAL SELECCIONADO (enviar solicitud al operador)
+# MATERIAL SELECCIONADO (CORREGIDO)
 # ============================================================
 
 async def manejar_material_seleccionado(query, context, reporte_id, material, tipo):
@@ -718,12 +733,17 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report
+            from app.models.user import User
             from app.routes.telegram_routes import get_telegram_app
 
             reporte = Report.query.get(reporte_id)
             if not reporte:
                 await query.answer("❌ Reporte no encontrado.", show_alert=True)
                 return
+
+            # ⭐ OBTENER EL NOMBRE REAL DEL USUARIO DESDE LA BD
+            usuario_solicitante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            nombre_solicitante = usuario_solicitante.nombre if usuario_solicitante else query.from_user.first_name or "Cuadrilla"
 
             operador = obtener_operador_maquinaria()
 
@@ -749,7 +769,7 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
                 f"📦 *Material solicitado:* {material}\n"
                 f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {direccion}\n"
-                f"👷 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"👷 *Solicitado por:* {nombre_solicitante}\n"
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
                 f"*🚨 Se requiere camión de 7m para trasladar el material.*"
             )
@@ -773,17 +793,140 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
                 parse_mode=ParseMode.MARKDOWN
             )
 
-            # Eliminar el mensaje de selección de materiales
             try:
                 await query.message.delete()
             except:
                 pass
 
             await query.answer("✅ Solicitud enviada", show_alert=False)
-            logger.info(f"🚛 Solicitud de material '{material}' enviada a {operador.nombre} para reporte {reporte_id}")
+            logger.info(f"🚛 Solicitud de material '{material}' enviada por {nombre_solicitante} para reporte {reporte_id}")
 
     except Exception as e:
         logger.error(f"❌ Error en manejar_material_seleccionado: {e}")
+        await query.answer("❌ Error al enviar solicitud", show_alert=True)
+
+
+# ============================================================
+# SOLICITAR APOYO DE OTRA CUADRILLA (notifica al supervisor)
+# ============================================================
+
+async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
+    """
+    Envía solicitud de apoyo a los supervisores/directores del área.
+    """
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.user import User
+            from app.models.team import Team
+            from app.routes.telegram_routes import get_telegram_app
+
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado.", show_alert=True)
+                return
+
+            # Obtener la cuadrilla actual (la que solicita apoyo)
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            if not asignacion or not asignacion.team_id:
+                await query.answer("❌ No se encontró la cuadrilla asignada.", show_alert=True)
+                return
+
+            cuadrilla_actual = Team.query.get(asignacion.team_id)
+            if not cuadrilla_actual:
+                await query.answer("❌ Cuadrilla no encontrada.", show_alert=True)
+                return
+
+            # Buscar responsables (supervisores o directores del área)
+            area = cuadrilla_actual.area
+
+            # Buscar supervisores del área
+            supervisores = User.query.filter_by(
+                area=area,
+                rol_especifico='supervisor',
+                is_active=True
+            ).all()
+
+            # Si no hay supervisores, buscar directores
+            if not supervisores:
+                supervisores = User.query.filter_by(
+                    area=area,
+                    rol_especifico='director',
+                    is_active=True
+                ).all()
+
+            if not supervisores:
+                # Fallback: buscar jefe de área técnica
+                supervisores = User.query.filter_by(
+                    area=area,
+                    rol_especifico='jefe_area_tecnica',
+                    is_active=True
+                ).all()
+
+            if not supervisores:
+                await query.answer("❌ No hay supervisores disponibles para este área", show_alert=True)
+                await query.message.reply_text(
+                    "⚠️ *No se pudo enviar la solicitud de apoyo*\n\n"
+                    "No hay supervisores o directores registrados para esta área.\n\n"
+                    "📌 *Acción:* Contacta al administrador para registrar un supervisor.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                return
+
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
+
+            mensaje = (
+                f"👷 *SOLICITUD DE APOYO - OTRA CUADRILLA*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {direccion}\n"
+                f"👷 *Cuadrilla solicitante:* {cuadrilla_actual.nombre}\n"
+                f"👤 *Solicitado por:* {query.from_user.first_name or 'Cuadrilla'}\n"
+                f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+                f"*🚨 Se solicita apoyo de otra cuadrilla para atender este reporte.*\n"
+                f"*🔧 Motivo:* La cuadrilla actual requiere refuerzos o personal adicional.\n\n"
+                f"*📋 Acción requerida:* Asignar una cuadrilla adicional a este reporte."
+            )
+
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
+
+            bot_app = get_telegram_app()
+
+            # Enviar a todos los supervisores/directores
+            enviados = 0
+            for responsable in supervisores:
+                if responsable.telegram_id:
+                    try:
+                        await bot_app.bot.send_message(
+                            chat_id=int(responsable.telegram_id),
+                            text=mensaje,
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                        enviados += 1
+                    except Exception as e:
+                        logger.error(f"❌ Error notificando a {responsable.nombre}: {e}")
+
+            # Confirmar a la cuadrilla
+            await query.message.reply_text(
+                f"✅ *Solicitud de apoyo enviada*\n\n"
+                f"Se ha notificado a {enviados} supervisor(es) del área.\n"
+                f"📍 Ubicación: {direccion}\n\n"
+                f"*Ellos se pondrán en contacto para coordinar el apoyo.*",
+                parse_mode=ParseMode.MARKDOWN
+            )
+
+            await query.answer("✅ Solicitud de apoyo enviada", show_alert=False)
+            logger.info(f"👷 Solicitud de apoyo enviada para reporte {reporte_id} a {enviados} responsables")
+
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_solicitar_apoyo_cuadrilla: {e}")
         await query.answer("❌ Error al enviar solicitud", show_alert=True)
 
 
