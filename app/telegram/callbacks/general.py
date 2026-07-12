@@ -1223,7 +1223,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
 
 
 # ============================================================
-# VOLVER AL REPORTE ORIGINAL
+# VOLVER AL REPORTE ORIGINAL (CORREGIDO)
 # ============================================================
 
 async def manejar_volver_reporte(query, context, reporte_id):
@@ -1286,13 +1286,13 @@ async def manejar_volver_reporte(query, context, reporte_id):
 
             mensaje += f"*📋 Acciones rápidas:*"
 
-            # ⭐ CONSTRUIR BOTONES CON EL ESTADO ACTUAL
+            # ⭐ CONSTRUIR BOTONES CON EL ESTADO ACTUAL Y EL user_id CORRECTO
             reply_markup = construir_botones_reporte(
                 reporte.id,
                 confirmado=confirmado,
                 problema_reportado=problema_reportado,
                 context=context,
-                user_id=query.from_user.id
+                user_id=query.from_user.id  # ← ⭐ PASAR EL user_id EXPLÍCITAMENTE
             )
 
             # ⭐ ENVIAR NUEVO MENSAJE (NO editar el anterior)
