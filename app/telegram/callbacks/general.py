@@ -1227,12 +1227,14 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
 # ============================================================
 
 async def manejar_volver_reporte(query, context, reporte_id):
-    """Vuelve al mensaje original del reporte (cuadrilla)"""
+    """Vuelve al mensaje original del reporte (cuadrilla) con todos los botones activos"""
     try:
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report, Assignment
             from app.models.status import Status
+            from app.models.user import User
+            from app.models.team import Team
             from app.telegram.keyboards import construir_botones_reporte
 
             reporte = Report.query.get(reporte_id)
@@ -1240,6 +1242,24 @@ async def manejar_volver_reporte(query, context, reporte_id):
                 await query.edit_message_text("❌ Reporte no encontrado.")
                 return
 
+            # Obtener la última asignación para saber el estado
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte.id
+            ).order_by(Assignment.timestamp.desc()).first()
+
+            # Obtener el usuario que está presionando el botón
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            
+            # Determinar si está confirmado o hay problema de ubicación
+            confirmado = False
+            problema_reportado = False
+            if asignacion and asignacion.status:
+                if asignacion.status.descripcion == "En proceso":
+                    confirmado = True
+                elif asignacion.status.descripcion == "Problema ubicación":
+                    problema_reportado = True
+
+            # ⭐ CONSTRUIR MENSAJE CON TODOS LOS DATOS
             calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
 
@@ -1251,28 +1271,31 @@ async def manejar_volver_reporte(query, context, reporte_id):
                 f"📞 *Reportante:* {reporte.reportante}\n"
                 f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
                 f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
-                f"*📋 Acciones rápidas:*"
             )
 
-            asignacion = Assignment.query.filter_by(
-                report_id=reporte.id
-            ).order_by(Assignment.timestamp.desc()).first()
+            # ⭐ AGREGAR EVIDENCIA SI EXISTE
+            if reporte.evidencia:
+                from app.services.notification_service import construir_enlace_evidencia
+                enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+                mensaje += f"📎 *Evidencia:* {enlace}\n\n"
 
-            confirmado = False
-            problema_reportado = False
-            if asignacion and asignacion.status:
-                if asignacion.status.descripcion == "En proceso":
-                    confirmado = True
-                elif asignacion.status.descripcion == "Problema ubicación":
-                    problema_reportado = True
+            # ⭐ AGREGAR MAPA SI HAY COORDENADAS
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                mensaje += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
 
+            mensaje += f"*📋 Acciones rápidas:*"
+
+            # ⭐ CONSTRUIR BOTONES CON EL ESTADO ACTUAL
             reply_markup = construir_botones_reporte(
                 reporte.id,
                 confirmado=confirmado,
                 problema_reportado=problema_reportado,
-                context=context
+                context=context,
+                user_id=query.from_user.id
             )
 
+            # ⭐ ENVIAR NUEVO MENSAJE (NO editar el anterior)
             await context.bot.send_message(
                 chat_id=query.from_user.id,
                 text=mensaje,
@@ -1281,6 +1304,7 @@ async def manejar_volver_reporte(query, context, reporte_id):
                 disable_web_page_preview=True
             )
 
+            # ⭐ ELIMINAR EL MENSAJE ANTERIOR (el de la evidencia)
             try:
                 await query.message.delete()
             except:
