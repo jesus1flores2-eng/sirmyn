@@ -108,12 +108,12 @@ async def rechazo_otro_motivo_handler(update: Update, context: ContextTypes.DEFA
 
 
 # ============================================================
-# EJECUTAR RECHAZO DE USUARIO (ACCIÓN PRINCIPAL)
+# EJECUTAR RECHAZO DE USUARIO (ACCIÓN PRINCIPAL) - CORREGIDO
 # ============================================================
 
 async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
     """
-    Ejecuta el rechazo del usuario: cambia estado, notifica a cuadrilla y responsable.
+    Ejecuta el rechazo del usuario: cambia estado a "En proceso" (ID 2), notifica a cuadrilla y responsable.
     """
     try:
         app = DatabaseManager.get_app()
@@ -137,16 +137,24 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                 await query.edit_message_text("❌ No hay cuadrilla asignada a este reporte.")
                 return
             
-            # Cambiar estado a "En proceso"
-            estado_en_proceso = Status.query.filter_by(descripcion="En proceso").first()
+            # ⭐ CAMBIAR ESTADO A "En proceso" (ID 2 directamente)
+            estado_en_proceso = Status.query.get(2)  # Usa el ID exacto que ya existe en tu BD
             if not estado_en_proceso:
-                estado_en_proceso = Status(descripcion="En proceso")
-                db.session.add(estado_en_proceso)
-                db.session.commit()
+                # Si por alguna razón no existe el ID 2, buscarlo por descripción
+                estado_en_proceso = Status.query.filter_by(descripcion="En proceso").first()
+                if not estado_en_proceso:
+                    estado_en_proceso = Status(descripcion="En proceso")
+                    db.session.add(estado_en_proceso)
+                    db.session.commit()
+                    logger.info(f"✅ Estado 'En proceso' creado con ID {estado_en_proceso.id}")
             
+            # Asignar el estado a la asignación
             asignacion.status_id = estado_en_proceso.id
             asignacion.observaciones = f"Rechazado por usuario {nombre_reportante} el {datetime.now().strftime('%d/%m/%Y %H:%M')}. Motivo: {motivo}"
             db.session.commit()
+            
+            logger.info(f"✅ [RECHAZO USUARIO] Estado cambiado a 'En proceso' (ID: {estado_en_proceso.id}) para reporte {reporte_id}")
+            logger.info(f"✅ [RECHAZO USUARIO] Asignación {asignacion.id} actualizada -> status_id {asignacion.status_id}")
             
             # ============================================================
             # NOTIFICAR A LA CUADRILLA (CON MENSAJE COMPLETO Y BOTÓN REPARACIÓN)
@@ -206,6 +214,7 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                             disable_web_page_preview=True
                         )
                         notificados += 1
+                        logger.info(f"✅ Rechazo enviado a {usuario.nombre}")
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
             
@@ -226,7 +235,7 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                 parse_mode=ParseMode.MARKDOWN
             )
             
-            logger.info(f"✅ Usuario {nombre_reportante} rechazó reporte #{reporte_id}, notificados {notificados} miembros de cuadrilla")
+            logger.info(f"✅ Usuario {nombre_reportante} rechazó reporte #{reporte_id}, estado cambiado a 'En proceso', notificados {notificados} miembros de cuadrilla")
             
     except Exception as e:
         logger.error(f"❌ Error en ejecutar_rechazo_usuario: {e}")
