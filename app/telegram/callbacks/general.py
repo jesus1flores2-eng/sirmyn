@@ -523,10 +523,9 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No estás asignado a este reporte", show_alert=True)
                     return
 
-                # ⭐ USAR EL USUARIO QUE PRESIONÓ EL BOTÓN (YA ESTÁ VERIFICADO)
                 logger.info(f"✅ [REPARACION] Usuario: {usuario.nombre} (telegram_id: {usuario.telegram_id})")
+                logger.info(f"✅ [REPARACION] Guardando modo_reparacion para {telegram_user_id}")
                 
-                # ⭐ GUARDAR EN user_data CON EL ID DEL USUARIO QUE PRESIONÓ
                 user_data[telegram_user_id] = {
                     'modo_reparacion': True,
                     'reporte_id': reporte_id,
@@ -536,6 +535,8 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     'materiales': [],
                     'comentario': ''
                 }
+                
+                logger.info(f"✅ [REPARACION] user_data guardado: {user_data[telegram_user_id]}")
 
                 await query.message.reply_text(
                     "🔧 *EVIDENCIA DE REPARACIÓN*\n\n"
