@@ -188,7 +188,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                 except Exception as e:
                     logger.error(f"⚠️ Error notificando al director sobre aceptación: {e}")
 
-                reply_markup = construir_botones_reporte(reporte.id, confirmado=True, context=context)
+                reply_markup = construir_botones_reporte(reporte.id, confirmado=True, context=context, user_id=telegram_user_id)
 
                 calle_nombre = reporte.calle.nombre if reporte.calle else ''
                 localidad_nombre = reporte.localidad.nombre if reporte.localidad else ''
@@ -252,7 +252,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     asignacion.observaciones = f"Problema de ubicación reportado por {usuario.nombre}"
                     db.session.commit()
 
-                reply_markup = construir_botones_reporte(reporte.id, problema_reportado=True, context=context)
+                reply_markup = construir_botones_reporte(reporte.id, problema_reportado=True, context=context, user_id=telegram_user_id)
                 nuevo_texto = query.message.text + f"\n\n⚠️ *Problema de ubicación reportado por {usuario.nombre}*"
 
                 try:
