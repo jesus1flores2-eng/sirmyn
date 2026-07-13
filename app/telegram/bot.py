@@ -24,13 +24,15 @@ from app.telegram.callbacks.general import button_callback_handler
 from app.telegram.callbacks.supervisor import (
     supervisor_callback_handler,
     rechazo_opciones_handler,
-    apoyo_confirmar_handler
+    apoyo_confirmar_handler,
+    manejar_motivo_rechazo_supervisor  # ⭐ NUEVO
 )
 from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
 from app.telegram.callbacks.rechazo import (
     rechazo_motivo_handler,
-    rechazo_volver_handler
+    rechazo_volver_handler,
+    rechazo_otro_motivo_handler  # ⭐ NUEVO
 )
 from app.telegram.handlers.reparacion import manejar_modo_reparacion
 import logging
@@ -111,32 +113,9 @@ def build_telegram_app(token):
         per_chat=True,
     )
     
-    # ConversationHandler para RECHAZO (usuario)
-    conv_handler_rechazo = ConversationHandler(
-        entry_points=[CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_")],
-        states={
-            RECHAZO_DESCRIPCION: [
-                MessageHandler(filters.TEXT & ~filters.COMMAND, rechazo_descripcion_handler)
-            ],
-            RECHAZO_EVIDENCIA: [
-                MessageHandler(filters.PHOTO | filters.VIDEO, rechazo_evidencia_handler)
-            ],
-            RECHAZO_CONFIRMACION: [
-                CallbackQueryHandler(rechazo_confirmacion_handler, pattern="^rech_(confirmar|cancelar)_")
-            ]
-        },
-        fallbacks=[
-            CommandHandler('cancelar', cancelar_command),
-            CommandHandler('start', start)
-        ],
-        name="rechazo_usuario",
-        persistent=False,
-        per_user=True,
-        per_chat=True
-    )
-    app.add_handler(conv_handler_rechazo)
-    
+    # ============================================================
     # ConversationHandler para ENCUESTA
+    # ============================================================
     conv_handler_encuesta = ConversationHandler(
         entry_points=[CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_")],
         states={
@@ -195,7 +174,6 @@ def build_telegram_app(token):
     # 4.1 Callbacks de SUPERVISOR
     app.add_handler(CallbackQueryHandler(supervisor_callback_handler, pattern="^super_"))
     app.add_handler(CallbackQueryHandler(rechazo_opciones_handler, pattern="^rechazar_"))
-    # ⭐ NUEVO HANDLER PARA CONFIRMAR RECEPCIÓN DE APOYO
     app.add_handler(CallbackQueryHandler(apoyo_confirmar_handler, pattern="^apoyo_confirmar_"))
     
     # 4.2 Callbacks de USUARIO (validación final)
@@ -205,7 +183,7 @@ def build_telegram_app(token):
     app.add_handler(CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_"))
     app.add_handler(CallbackQueryHandler(encuesta_velocidad_handler, pattern="^enc_vel_"))
     
-    # 4.4 Callbacks de RECHAZO (usuario)
+    # 4.4 Callbacks de RECHAZO (usuario) - simplificado
     app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_"))
     app.add_handler(CallbackQueryHandler(rechazo_volver_handler, pattern="^rech_volver_"))
         
