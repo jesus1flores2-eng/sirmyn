@@ -30,7 +30,6 @@ from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
 from app.telegram.callbacks.rechazo import (
     rechazo_motivo_handler,
-    rechazo_confirmacion_handler,
     rechazo_volver_handler
 )
 from app.telegram.handlers.reparacion import manejar_modo_reparacion
@@ -208,7 +207,6 @@ def build_telegram_app(token):
     
     # 4.4 Callbacks de RECHAZO (usuario)
     app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_"))
-    app.add_handler(CallbackQueryHandler(rechazo_confirmacion_handler, pattern="^rech_(confirmar|cancelar)_"))
     app.add_handler(CallbackQueryHandler(rechazo_volver_handler, pattern="^rech_volver_"))
         
     # 5. Callbacks generales (sin patrón, pero solo para casos específicos)
