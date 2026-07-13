@@ -1,4 +1,3 @@
-# app/telegram/callbacks/usuario.py
 """
 Maneja la validación final del usuario (aceptar/rechazar reparación)
 """
@@ -108,9 +107,8 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
             )
         
         # ============================================================
-        # USUARIO RECHAZA LA REPARACIÓN (SIMPLIFICADO CON BOTÓN VOLVER)
+        # USUARIO RECHAZA LA REPARACIÓN (CON NUEVOS CALLBACKS)
         # ============================================================
-
         elif accion == 'rechazar':
             # Guardar en user_data para el flujo de rechazo
             user_data[user_id] = {
@@ -119,14 +117,14 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
                 'paso_actual': 'motivo'
             }
     
-            # Mostrar botones de motivos predefinidos + botón Volver
+            # ⭐ NUEVOS CALLBACKS: usuario_rechazo_motivo_*
             keyboard = [
-                [InlineKeyboardButton("🚫 PROBLEMA PERSISTE IGUAL", callback_data=f"rech_motivo_problema_persiste_{reporte_id}")],
-                [InlineKeyboardButton("🔧 REPARACIÓN INCOMPLETA", callback_data=f"rech_motivo_reparacion_incompleta_{reporte_id}")],
-                [InlineKeyboardButton("🕳️ NO TERMINARON DE TAPAR", callback_data=f"rech_motivo_no_termino_tapar_{reporte_id}")],
-                [InlineKeyboardButton("⚠️ CAUSARON OTRO PROBLEMA", callback_data=f"rech_motivo_causo_otro_{reporte_id}")],
-                [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"rech_motivo_otro_{reporte_id}")],
-                [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]  # ⭐ NUEVO
+                [InlineKeyboardButton("🚫 PROBLEMA PERSISTE IGUAL", callback_data=f"usuario_rechazo_motivo_problema_persiste_{reporte_id}")],
+                [InlineKeyboardButton("🔧 REPARACIÓN INCOMPLETA", callback_data=f"usuario_rechazo_motivo_reparacion_incompleta_{reporte_id}")],
+                [InlineKeyboardButton("🕳️ NO TERMINARON DE TAPAR", callback_data=f"usuario_rechazo_motivo_no_termino_tapar_{reporte_id}")],
+                [InlineKeyboardButton("⚠️ CAUSARON OTRO PROBLEMA", callback_data=f"usuario_rechazo_motivo_causo_otro_{reporte_id}")],
+                [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -141,4 +139,3 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
     
             logger.info(f"❌ Usuario inició rechazo para reporte #{reporte_id}")
             await query.answer("Selecciona un motivo o vuelve atrás", show_alert=False)
-

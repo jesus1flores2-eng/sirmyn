@@ -19,25 +19,51 @@ logger = logging.getLogger(__name__)
 
 
 # ============================================================
-# MANEJAR SELECCIÓN DE MOTIVO DE RECHAZO
+# MANEJAR SELECCIÓN DE MOTIVO DE RECHAZO (NUEVO PATRÓN)
 # ============================================================
 
 async def rechazo_motivo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Maneja la selección de un motivo de rechazo por parte del usuario.
-    Si es "OTRO MOTIVO", pide texto; si es predefinido, ejecuta rechazo directo.
+    Ahora usa el patrón 'usuario_rechazo_motivo_*' para evitar conflictos.
     """
     query = update.callback_query
-    await query.answer()
+    try:
+        await query.answer()
+    except:
+        pass
     
     callback_data = query.data
-    if not callback_data.startswith('rech_motivo_'):
+    logger.info(f"🔍 [RECHAZO USUARIO] Callback recibido: {callback_data}")
+    
+    if not callback_data.startswith('usuario_rechazo_motivo_'):
+        logger.warning(f"⚠️ Callback no coincide con el patrón esperado: {callback_data}")
         return
     
     # Extraer reporte_id y motivo_key
     partes = callback_data.split('_')
-    reporte_id = int(partes[-1])
-    motivo_key = partes[1]  # 'problema_persiste', 'reparacion_incompleta', etc.
+    logger.info(f"🔍 Partes del callback: {partes}")
+    
+    # El reporte_id es el último elemento
+    try:
+        reporte_id = int(partes[-1])
+    except ValueError:
+        logger.error(f"❌ No se pudo extraer el reporte_id de: {partes}")
+        await query.answer("❌ Error: ID de reporte inválido", show_alert=True)
+        return
+    
+    # El motivo está entre 'usuario_rechazo_motivo_' y el ID
+    # Ejemplo: usuario_rechazo_motivo_problema_persiste_123
+    # partes = ['usuario', 'rechazo', 'motivo', 'problema', 'persiste', '123']
+    # motivo_key = '_'.join(partes[3:-1]) -> 'problema_persiste'
+    if len(partes) >= 4:
+        motivo_key = '_'.join(partes[3:-1])
+    else:
+        logger.error(f"❌ Formato inesperado: {partes}")
+        await query.answer("❌ Error: formato de motivo inválido", show_alert=True)
+        return
+    
+    logger.info(f"🔍 Motivo extraído: {motivo_key} para reporte {reporte_id}")
     
     # Diccionario de motivos predefinidos
     motivos_predefinidos = {
@@ -64,6 +90,7 @@ async def rechazo_motivo_handler(update: Update, context: ContextTypes.DEFAULT_T
     
     # Motivo predefinido
     motivo = motivos_predefinidos.get(motivo_key, 'Motivo no especificado')
+    logger.info(f"✅ Motivo asignado: {motivo}")
     
     # Ejecutar rechazo con el motivo
     await ejecutar_rechazo_usuario(query, context, reporte_id, motivo)
@@ -108,13 +135,15 @@ async def rechazo_otro_motivo_handler(update: Update, context: ContextTypes.DEFA
 
 
 # ============================================================
-# EJECUTAR RECHAZO DE USUARIO (ACCIÓN PRINCIPAL) - CORREGIDO
+# EJECUTAR RECHAZO DE USUARIO (ACCIÓN PRINCIPAL)
 # ============================================================
 
 async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
     """
     Ejecuta el rechazo del usuario: cambia estado a "En proceso" (ID 2), notifica a cuadrilla y responsable.
     """
+    logger.info(f"🔧 [RECHAZO USUARIO] Iniciando ejecución para reporte {reporte_id} con motivo: {motivo}")
+    
     try:
         app = DatabaseManager.get_app()
         with app.app_context():
@@ -127,6 +156,7 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
             
             usuario_reportante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_reportante = usuario_reportante.nombre if usuario_reportante else "Usuario reportante"
+            logger.info(f"👤 [RECHAZO USUARIO] Reportante: {nombre_reportante}")
             
             # Obtener la asignación actual
             asignacion = Assignment.query.filter_by(
@@ -137,16 +167,16 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                 await query.edit_message_text("❌ No hay cuadrilla asignada a este reporte.")
                 return
             
-            # ⭐ CAMBIAR ESTADO A "En proceso" (ID 2 directamente)
-            estado_en_proceso = Status.query.get(2)  # Usa el ID exacto que ya existe en tu BD
+            logger.info(f"📋 [RECHAZO USUARIO] Asignación encontrada ID {asignacion.id}, status actual: {asignacion.status_id}")
+            
+            # ⭐ CAMBIAR ESTADO A "En proceso" (ID 2)
+            estado_en_proceso = Status.query.get(2)
             if not estado_en_proceso:
-                # Si por alguna razón no existe el ID 2, buscarlo por descripción
-                estado_en_proceso = Status.query.filter_by(descripcion="En proceso").first()
-                if not estado_en_proceso:
-                    estado_en_proceso = Status(descripcion="En proceso")
-                    db.session.add(estado_en_proceso)
-                    db.session.commit()
-                    logger.info(f"✅ Estado 'En proceso' creado con ID {estado_en_proceso.id}")
+                logger.error("❌ No se encontró el estado con ID 2 (En proceso)")
+                await query.edit_message_text("❌ Error: No se encontró el estado 'En proceso'.")
+                return
+            
+            logger.info(f"✅ [RECHAZO USUARIO] Estado 'En proceso' encontrado con ID {estado_en_proceso.id}")
             
             # Asignar el estado a la asignación
             asignacion.status_id = estado_en_proceso.id
@@ -218,6 +248,8 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
             
+            logger.info(f"📤 [RECHAZO USUARIO] Notificados {notificados} miembros de la cuadrilla")
+            
             # ============================================================
             # NOTIFICAR AL RESPONSABLE (SUPERVISOR/DIRECTOR)
             # ============================================================
@@ -235,10 +267,10 @@ async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
                 parse_mode=ParseMode.MARKDOWN
             )
             
-            logger.info(f"✅ Usuario {nombre_reportante} rechazó reporte #{reporte_id}, estado cambiado a 'En proceso', notificados {notificados} miembros de cuadrilla")
+            logger.info(f"✅ [RECHAZO USUARIO] Usuario {nombre_reportante} rechazó reporte #{reporte_id}, estado cambiado a 'En proceso' (ID 2)")
             
     except Exception as e:
-        logger.error(f"❌ Error en ejecutar_rechazo_usuario: {e}")
+        logger.error(f"❌ Error en ejecutar_rechazo_usuario: {e}", exc_info=True)
         await query.edit_message_text("❌ Error al procesar el rechazo. Intenta nuevamente.")
     
     finally:

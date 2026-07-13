@@ -25,14 +25,14 @@ from app.telegram.callbacks.supervisor import (
     supervisor_callback_handler,
     rechazo_opciones_handler,
     apoyo_confirmar_handler,
-    manejar_motivo_rechazo_supervisor  # ⭐ NUEVO
+    manejar_motivo_rechazo_supervisor
 )
 from app.telegram.callbacks.usuario import usuario_validacion_callback_handler
 from app.telegram.callbacks.encuesta import encuesta_calificacion_handler, encuesta_velocidad_handler, encuesta_comentario_handler
 from app.telegram.callbacks.rechazo import (
     rechazo_motivo_handler,
     rechazo_volver_handler,
-    rechazo_otro_motivo_handler  # ⭐ NUEVO
+    rechazo_otro_motivo_handler
 )
 from app.telegram.handlers.reparacion import manejar_modo_reparacion
 import logging
@@ -183,8 +183,8 @@ def build_telegram_app(token):
     app.add_handler(CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_"))
     app.add_handler(CallbackQueryHandler(encuesta_velocidad_handler, pattern="^enc_vel_"))
     
-    # 4.4 Callbacks de RECHAZO (usuario) - simplificado
-    app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^rech_motivo_"))
+    # 4.4 Callbacks de RECHAZO (usuario) - NUEVO PATRÓN
+    app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^usuario_rechazo_motivo_"))
     app.add_handler(CallbackQueryHandler(rechazo_volver_handler, pattern="^rech_volver_"))
         
     # 5. Callbacks generales (sin patrón, pero solo para casos específicos)
