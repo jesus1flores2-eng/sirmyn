@@ -111,6 +111,14 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
         from .reparacion import manejar_modo_reparacion
         await manejar_modo_reparacion(update, context, user_id)
         return
+        
+    # ⭐ 1.5 MODO ESPERANDO MOTIVO DE RECHAZO (SUPERVISOR)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo'):
+        logger.info(f"❌ Router: Supervisor {user_id} enviando motivo de rechazo")
+        from app.telegram.callbacks.supervisor import manejar_motivo_rechazo_supervisor
+        await manejar_motivo_rechazo_supervisor(update, context)
+        return
+        
     
     # 2. MODO COMENTARIO RECHAZO (DIRECTOR)
     if user_id in user_data and user_data[user_id].get('modo_comentario_rechazo'):

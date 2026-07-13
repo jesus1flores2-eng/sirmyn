@@ -109,40 +109,26 @@ async def supervisor_callback_handler(update: Update, context: ContextTypes.DEFA
         # ACCIÓN: RECHAZAR
         # ============================================================
         elif accion == 'rechazar':
-            # Mostrar opciones de rechazo
-            keyboard = [
-                [
-                    InlineKeyboardButton("🔄 Reasignar automáticamente", 
-                                       callback_data=f"rechazar_rea_{reporte_id}")
-                ],
-                [
-                    InlineKeyboardButton("👨‍💼 Enviar a administrador", 
-                                       callback_data=f"rechazar_admin_{reporte_id}")
-                ],
-                [
-                    InlineKeyboardButton("🔧 Devolver a misma cuadrilla", 
-                                       callback_data=f"rechazar_misma_{reporte_id}")
-                ],
-                [
-                    InlineKeyboardButton("❌ Cancelar", 
-                                       callback_data=f"rechazar_cancel_{reporte_id}")
-                ]
-            ]
+            # ⭐ GUARDAR ESTADO PARA ESPERAR MOTIVO
+            user_data[query.from_user.id] = {
+                'modo_esperando_motivo_rechazo': True,
+                'reporte_id': reporte_id,
+                'cuadrilla_id': asignacion.team_id,
+                'cuadrilla_nombre': cuadrilla.nombre if cuadrilla else 'Cuadrilla desconocida'
+            }
             
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            mensaje_original = query.message.text
-            if "📋 ACCIONES DISPONIBLES:" in mensaje_original:
-                mensaje_original = mensaje_original.split("📋 ACCIONES DISPONIBLES:")[0].strip()
-            
+            # ⭐ PEDIR MOTIVO AL SUPERVISOR
             await query.edit_message_text(
-                text=mensaje_original + f"\n\n❌ *REPARACIÓN RECHAZADA*\n\n¿Qué deseas hacer con este reporte?",
+                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte #{reporte_id}*\n\n"
+                     f"Escribe el *motivo del rechazo*:\n"
+                     f"(Ej: 'La reparación no cumple con los estándares de calidad')\n\n"
+                     f"📌 *El reporte volverá a estado 'En proceso' para que la cuadrilla corrija.*",
                 parse_mode=ParseMode.MARKDOWN,
-                reply_markup=reply_markup
+                reply_markup=None
             )
             
-            logger.info(f"❌ Supervisor {usuario.nombre} rechazó reporte #{reporte_id}")
-            await query.answer("⚠️ Rechazo iniciado", show_alert=False)
+            logger.info(f"❌ Supervisor {usuario.nombre} inició rechazo para reporte #{reporte_id}")
+            await query.answer("⚠️ Escribe el motivo del rechazo", show_alert=False)
 
 
 async def rechazo_opciones_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -492,3 +478,115 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
         import traceback
         logger.error(traceback.format_exc())
         await query.answer("❌ Error al procesar", show_alert=True)
+        
+# ============================================================
+# MANEJAR MOTIVO DE RECHAZO DEL SUPERVISOR
+# ============================================================
+
+async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Procesa el motivo de rechazo escrito por el supervisor.
+    Notifica a la cuadrilla y vuelve el reporte a "En proceso".
+    """
+    user_id = update.effective_user.id
+    motivo = update.message.text.strip()
+    
+    # Obtener datos del estado
+    datos = user_data.get(user_id, {})
+    reporte_id = datos.get('reporte_id')
+    cuadrilla_id = datos.get('cuadrilla_id')
+    cuadrilla_nombre = datos.get('cuadrilla_nombre', 'Cuadrilla desconocida')
+    
+    if not reporte_id:
+        await update.message.reply_text("❌ No se encontró el reporte. Intenta nuevamente.")
+        limpiar_estado(user_id)
+        return
+    
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report, Assignment
+            from app.models.user import User
+            from app.models.status import Status
+            from app.extensions import db
+            from datetime import datetime
+            from app.routes.telegram_routes import get_telegram_app
+            
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await update.message.reply_text("❌ Reporte no encontrado.")
+                limpiar_estado(user_id)
+                return
+            
+            # Obtener el supervisor
+            supervisor = User.query.filter_by(telegram_id=str(user_id)).first()
+            nombre_supervisor = supervisor.nombre if supervisor else "Supervisor"
+            
+            # ⭐ CAMBIAR ESTADO A "En proceso"
+            estado_en_proceso = Status.query.filter_by(descripcion="En proceso").first()
+            if not estado_en_proceso:
+                estado_en_proceso = Status(descripcion="En proceso")
+                db.session.add(estado_en_proceso)
+                db.session.commit()
+            
+            # Actualizar la asignación actual
+            asignacion = Assignment.query.filter_by(
+                report_id=reporte_id
+            ).order_by(Assignment.timestamp.desc()).first()
+            
+            if asignacion:
+                asignacion.status_id = estado_en_proceso.id
+                asignacion.observaciones = f"Rechazado por supervisor {nombre_supervisor} el {datetime.now().strftime('%d/%m/%Y %H:%M')}. Motivo: {motivo}"
+                db.session.commit()
+            
+            # ⭐ NOTIFICAR A LA CUADRILLA
+            bot = context.bot
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            
+            mensaje_cuadrilla = (
+                f"❌ *REPARACIÓN RECHAZADA - Reporte #{reporte.id}*\n\n"
+                f"*Supervisor:* {nombre_supervisor}\n"
+                f"*Motivo:* {motivo}\n\n"
+                f"📋 *Acción requerida:*\n"
+                f"Corrige el trabajo y vuelve a subir evidencia de reparación.\n\n"
+                f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
+                f"*📌 El reporte ha sido regresado a estado 'En proceso'*"
+            )
+            
+            # Notificar a todos los miembros de la cuadrilla
+            usuarios_cuadrilla = User.query.filter_by(team_id=cuadrilla_id, is_active=True).all()
+            notificados = 0
+            for usuario in usuarios_cuadrilla:
+                if usuario.telegram_id:
+                    try:
+                        await bot.send_message(
+                            chat_id=int(usuario.telegram_id),
+                            text=mensaje_cuadrilla,
+                            parse_mode=ParseMode.MARKDOWN
+                        )
+                        notificados += 1
+                    except Exception as e:
+                        logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
+            
+            # ⭐ CONFIRMAR AL SUPERVISOR
+            await update.message.reply_text(
+                f"✅ *Rechazo enviado correctamente*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
+                f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
+                f"📝 *Motivo:* {motivo}\n\n"
+                f"*📌 El reporte ha vuelto a estado 'En proceso' para corrección.*",
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=ReplyKeyboardRemove()
+            )
+            
+            logger.info(f"✅ Supervisor {nombre_supervisor} rechazó reporte #{reporte_id} con motivo: {motivo[:50]}...")
+            
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_motivo_rechazo_supervisor: {e}")
+        await update.message.reply_text("❌ Error al procesar el rechazo. Intenta nuevamente.")
+    
+    finally:
+        # ⭐ LIMPIAR ESTADO
+        limpiar_estado(user_id)
