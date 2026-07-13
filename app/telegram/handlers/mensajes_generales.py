@@ -1,4 +1,3 @@
-# app/telegram/handlers/mensajes_generales.py
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from app.telegram.utils import user_data, get_saludo

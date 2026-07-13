@@ -506,7 +506,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No hay evidencia disponible", show_alert=True)
 
             # ============================================================
-            # ACCIÓN: REPARACIÓN
+            # ACCIÓN: REPARACIÓN (VERSIÓN SIMPLE Y CORRECTA)
             # ============================================================
             elif accion == 'reparacion':
                 asignacion = Assignment.query.filter_by(
@@ -1226,7 +1226,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
 
 
 # ============================================================
-# VOLVER AL REPORTE ORIGINAL 
+# VOLVER AL REPORTE ORIGINAL
 # ============================================================
 
 async def manejar_volver_reporte(query, context, reporte_id):
@@ -1251,21 +1251,7 @@ async def manejar_volver_reporte(query, context, reporte_id):
             ).order_by(Assignment.timestamp.desc()).first()
 
             # Obtener el usuario que está presionando el botón
-            usuario_actual = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
-            
-            # ⭐ BUSCAR EL USUARIO DE LA CUADRILLA ASIGNADA (NO EL QUE PRESIONÓ)
-            usuario_cuadrilla = None
-            if asignacion and asignacion.team_id:
-                # Buscar el primer usuario de la cuadrilla asignada con Telegram
-                usuario_cuadrilla = User.query.filter_by(
-                    team_id=asignacion.team_id,
-                    is_active=True
-                ).filter(User.telegram_id.isnot(None)).first()
-            
-            # ⭐ SI NO SE ENCUENTRA USUARIO EN LA CUADRILLA, USAR EL QUE PRESIONÓ
-            if not usuario_cuadrilla and usuario_actual:
-                usuario_cuadrilla = usuario_actual
-                logger.warning(f"⚠️ No se encontró usuario con Telegram en cuadrilla {asignacion.team_id if asignacion else 'N/A'}, usando usuario actual: {usuario_actual.nombre}")
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             
             # Determinar si está confirmado o hay problema de ubicación
             confirmado = False
@@ -1303,16 +1289,13 @@ async def manejar_volver_reporte(query, context, reporte_id):
 
             mensaje += f"*📋 Acciones rápidas:*"
 
-            # ⭐ CONSTRUIR BOTONES CON EL USUARIO DE LA CUADRILLA (NO EL QUE PRESIONÓ)
-            # ⭐ PASAR EL USER_ID DEL USUARIO DE LA CUADRILLA, NO EL DE LA PERSONA QUE PRESIONÓ
-            user_id_para_botones = usuario_cuadrilla.telegram_id if usuario_cuadrilla else query.from_user.id
-            
+            # ⭐ CONSTRUIR BOTONES CON EL USUARIO QUE PRESIONÓ
             reply_markup = construir_botones_reporte(
                 reporte.id,
                 confirmado=confirmado,
                 problema_reportado=problema_reportado,
                 context=context,
-                user_id=user_id_para_botones
+                user_id=query.from_user.id
             )
 
             # ⭐ ENVIAR NUEVO MENSAJE (NO editar el anterior)

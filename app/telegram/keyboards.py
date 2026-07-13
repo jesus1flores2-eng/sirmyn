@@ -33,14 +33,6 @@ def obtener_carpeta_departamento(tipo_reporte: str) -> str:
 def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=False, es_director=False, context=None, user_id=None):
     """
     Construye los botones para el mensaje de reporte.
-    
-    Args:
-        reporte_id: ID del reporte
-        confirmado: Si ya fue confirmado por la cuadrilla
-        problema_reportado: Si ya se reportó problema de ubicación
-        es_director: Si es para vista de director
-        context: Contexto de Telegram (para obtener user_id desde el callback)
-        user_id: ID del usuario de Telegram (para verificar asignación)
     """
     try:
         app = DatabaseManager.get_app()
@@ -133,24 +125,17 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
             keyboard.append(fila2)
             
             # ============================================================
-            # ⭐ BOTONES DE REPARACIÓN Y APOYO (USANDO user_id O context)
+            # ⭐ BOTONES DE REPARACIÓN Y APOYO - SIMPLE Y DIRECTO
             # ============================================================
             
-            # Determinar user_id (prioridad: user_id > context)
-            user_id_efectivo = user_id
-            if user_id_efectivo is None and context is not None:
-                if hasattr(context, 'user_data') and context.user_data:
-                    user_id_efectivo = context.user_data.get('user_id')
-                elif hasattr(context, '_user_id'):
-                    user_id_efectivo = context._user_id
-            
-            if user_id_efectivo:
+            # ⭐ SIEMPRE verificar si el usuario que presiona está en la cuadrilla asignada
+            if user_id:
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte_id
                 ).order_by(Assignment.timestamp.desc()).first()
                 
                 if asignacion and asignacion.team_id:
-                    usuario_actual = User.query.filter_by(telegram_id=str(user_id_efectivo)).first()
+                    usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
                     
                     if usuario_actual and usuario_actual.team_id == asignacion.team_id:
                         # ⭐ SOLO mostrar si el estado NO es "Finalizado" o "Aceptado por usuario"
