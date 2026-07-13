@@ -1101,7 +1101,7 @@ async def manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id):
 # ============================================================
 
 async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
-    """Asigna una cuadrilla de apoyo al reporte con GPS"""
+    """Asigna una cuadrilla de apoyo al reporte (SOLO NOTIFICACIÓN, CON GPS)"""
     try:
         app = DatabaseManager.get_app()
         with app.app_context():
@@ -1119,38 +1119,27 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                 await query.edit_message_text("❌ Datos no válidos.")
                 return
 
-            # Obtener la cuadrilla actual
+            # Obtener la cuadrilla actual (SIN MODIFICAR)
             asignacion_actual = Assignment.query.filter_by(
                 report_id=reporte_id
             ).order_by(Assignment.timestamp.desc()).first()
 
-            cuadrilla_actual = Team.query.get(asignacion_actual.team_id) if asignacion_actual else None
+            if not asignacion_actual or not asignacion_actual.team_id:
+                await query.edit_message_text("❌ No hay asignación activa para este reporte.")
+                return
+
+            cuadrilla_actual = Team.query.get(asignacion_actual.team_id)
             nombre_cuadrilla_actual = cuadrilla_actual.nombre if cuadrilla_actual else "Cuadrilla desconocida"
 
             # Obtener el supervisor que asigna
             supervisor = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
             nombre_supervisor = supervisor.nombre if supervisor else "Supervisor"
 
-            # Obtener estado "Asignado"
-            status_asignado = Status.query.filter_by(descripcion="Asignado").first()
-            if not status_asignado:
-                status_asignado = Status(descripcion="Asignado")
-                db.session.add(status_asignado)
-                db.session.commit()
-
-            # Crear asignación para la cuadrilla de apoyo
-            nueva_asignacion = Assignment(
-                report_id=reporte_id,
-                team_id=cuadrilla_id,
-                status_id=status_asignado.id,
-                timestamp=datetime.utcnow(),
-                observaciones=f"Cuadrilla de apoyo asignada por {nombre_supervisor} para ayudar a {nombre_cuadrilla_actual}"
-            )
-            db.session.add(nueva_asignacion)
-            db.session.commit()
+            # ⭐ NO CREAR NUEVA ASIGNACIÓN
+            # ⭐ NO CAMBIAR EL ESTADO
 
             # ============================================================
-            # NOTIFICACIONES CON GPS
+            # NOTIFICACIONES CON GPS (LA PARTE IMPORTANTE)
             # ============================================================
 
             bot = context.bot
@@ -1158,13 +1147,13 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             direccion = f"{calle_nombre} #{reporte.numero}, {localidad_nombre}"
 
-            # ⭐ CONSTRUIR TEXTO GPS PARA TODOS LOS MENSAJES
+            # ⭐ CONSTRUIR TEXTO GPS
             gps_texto = ""
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                 gps_texto = f"\n\n📍 *Ubicación exacta:* [Ver en Google Maps]({maps_url})"
 
-            # 1. NOTIFICAR A LA CUADRILLA ORIGINAL
+            # 1. NOTIFICAR A LA CUADRILLA ORIGINAL (CONFIRMAR QUE SIGUE SIENDO LA RESPONSABLE)
             usuarios_original = User.query.filter_by(team_id=asignacion_actual.team_id, is_active=True).all()
             for usuario in usuarios_original:
                 if usuario.telegram_id:
@@ -1174,7 +1163,8 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                             f"Se ha asignado la cuadrilla *{cuadrilla_apoyo.nombre}* como apoyo.\n\n"
                             f"📍 *Ubicación:* {direccion}"
                             f"{gps_texto}"
-                            f"\n\n🤝 *Trabajarán juntos para resolver el reporte.*"
+                            f"\n\n🤝 *Trabajarán juntos para resolver el reporte.*\n"
+                            f"📋 *El reporte sigue asignado a {nombre_cuadrilla_actual}.*"
                         )
                         await bot.send_message(
                             chat_id=int(usuario.telegram_id),
@@ -1185,7 +1175,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                     except Exception as e:
                         logger.error(f"❌ Error notificando a cuadrilla original: {e}")
 
-            # 2. NOTIFICAR A LA CUADRILLA DE APOYO
+            # 2. NOTIFICAR A LA CUADRILLA DE APOYO (CON GPS Y DIRECCIÓN)
             usuarios_apoyo = User.query.filter_by(team_id=cuadrilla_id, is_active=True).all()
             for usuario in usuarios_apoyo:
                 if usuario.telegram_id:
@@ -1193,11 +1183,11 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                         mensaje = (
                             f"👷 *HAS SIDO ASIGNADO COMO APOYO*\n\n"
                             f"📋 *Reporte:* #{reporte.id}\n"
-                            f"📍 *Ubicación:* {direccion}\n"
-                            f"🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}\n"
-                            f"🤝 *Cuadrilla principal:* {nombre_cuadrilla_actual}"
+                            f"📍 *Ubicación:* {direccion}"
                             f"{gps_texto}"
-                            f"\n\n*🚨 Apoya a la cuadrilla principal en este reporte.*"
+                            f"\n🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}\n"
+                            f"🤝 *Cuadrilla principal:* {nombre_cuadrilla_actual}\n\n"
+                            f"*🚨 Apoya a la cuadrilla principal en este reporte.*"
                         )
                         await bot.send_message(
                             chat_id=int(usuario.telegram_id),
@@ -1208,7 +1198,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                     except Exception as e:
                         logger.error(f"❌ Error notificando a cuadrilla de apoyo: {e}")
 
-            # 3. NOTIFICAR AL JEFE DE ÁREA TÉCNICA (INFORMATIVO)
+            # 3. NOTIFICAR AL JEFE DE ÁREA TÉCNICA
             await notificar_jefe_area_apoyo(
                 reporte_id=reporte.id,
                 cuadrilla_principal=nombre_cuadrilla_actual,
@@ -1237,7 +1227,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                 parse_mode=ParseMode.MARKDOWN
             )
 
-            logger.info(f"✅ Supervisor {nombre_supervisor} asignó apoyo al reporte #{reporte_id}")
+            logger.info(f"✅ Supervisor {nombre_supervisor} asignó apoyo (sin cambiar asignación) al reporte #{reporte_id}")
 
     except Exception as e:
         logger.error(f"❌ Error en manejar_asignar_apoyo: {e}")
