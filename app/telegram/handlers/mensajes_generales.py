@@ -106,9 +106,28 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
     texto = update.message.text
     logger.info(f"📱 Router texto: user_id={user_id}, texto='{texto[:50]}...'")
     
-    # 1. MODO REPARACIÓN
-    if user_id in user_data and user_data[user_id].get('modo_reparacion'):
-        logger.info(f"🔧 Router: Enviando a manejar_modo_reparacion")
+    # ⭐ 1. MODO REPARACIÓN - Buscar en TODOS los user_data
+    # El modo reparación puede estar guardado con otro ID (el de la cuadrilla)
+    modo_reparacion_encontrado = False
+    for uid, data in user_data.items():
+        if data.get('modo_reparacion') and data.get('reporte_id'):
+            # Verificar si el usuario que envía el mensaje está en la misma cuadrilla
+            app = DatabaseManager.get_app()
+            with app.app_context():
+                from app.models.user import User
+                usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
+                if usuario_actual and usuario_actual.team_id:
+                    # Buscar el usuario que tiene el modo_reparacion
+                    usuario_modo = User.query.filter_by(telegram_id=str(uid)).first()
+                    if usuario_modo and usuario_modo.team_id == usuario_actual.team_id:
+                        # Si están en la misma cuadrilla, usar el ID del modo reparación
+                        logger.info(f"🔧 Router: Usuario {user_id} está en misma cuadrilla que modo_reparacion {uid}")
+                        user_id = uid
+                        modo_reparacion_encontrado = True
+                        break
+    
+    if modo_reparacion_encontrado or (user_id in user_data and user_data[user_id].get('modo_reparacion')):
+        logger.info(f"🔧 Router: Enviando a manejar_modo_reparacion para user_id {user_id}")
         from .reparacion import manejar_modo_reparacion
         await manejar_modo_reparacion(update, context, user_id)
         return
