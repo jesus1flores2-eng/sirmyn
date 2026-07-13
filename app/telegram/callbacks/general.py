@@ -509,8 +509,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: REPARACIÓN
             # ============================================================
             elif accion == 'reparacion':
-                logger.info(f"🔧 [REPARACION] Iniciando reparación para reporte {reporte_id}")
-                
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte_id
                 ).order_by(Assignment.timestamp.desc()).first()
@@ -523,9 +521,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No estás asignado a este reporte", show_alert=True)
                     return
 
-                logger.info(f"✅ [REPARACION] Usuario: {usuario.nombre} (telegram_id: {usuario.telegram_id})")
-                logger.info(f"✅ [REPARACION] Guardando modo_reparacion para {telegram_user_id}")
-                
                 user_data[telegram_user_id] = {
                     'modo_reparacion': True,
                     'reporte_id': reporte_id,
@@ -535,8 +530,6 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     'materiales': [],
                     'comentario': ''
                 }
-                
-                logger.info(f"✅ [REPARACION] user_data guardado: {user_data[telegram_user_id]}")
 
                 await query.message.reply_text(
                     "🔧 *EVIDENCIA DE REPARACIÓN*\n\n"
