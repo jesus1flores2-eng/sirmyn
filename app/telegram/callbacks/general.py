@@ -509,6 +509,8 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: REPARACIÓN
             # ============================================================
             elif accion == 'reparacion':
+                logger.info(f"🔧 [REPARACION] Iniciando reparación para reporte {reporte_id}")
+                
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte_id
                 ).order_by(Assignment.timestamp.desc()).first()
@@ -517,11 +519,33 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No se pudo verificar la asignación", show_alert=True)
                     return
 
-                if usuario.team_id != asignacion.team_id:
+                # ⭐ BUSCAR EL USUARIO DE LA CUADRILLA ASIGNADA (NO EL QUE PRESIONÓ)
+                usuario_cuadrilla = None
+                if asignacion and asignacion.team_id:
+                    usuario_cuadrilla = User.query.filter_by(
+                        team_id=asignacion.team_id,
+                        is_active=True
+                    ).filter(User.telegram_id.isnot(None)).first()
+                
+                # ⭐ SI NO SE ENCUENTRA USUARIO EN LA CUADRILLA, USAR EL QUE PRESIONÓ
+                if not usuario_cuadrilla and usuario:
+                    usuario_cuadrilla = usuario
+                    logger.warning(f"⚠️ No se encontró usuario con Telegram en cuadrilla {asignacion.team_id}, usando usuario actual: {usuario.nombre}")
+                
+                if not usuario_cuadrilla:
+                    logger.error(f"❌ [REPARACION] No se encontró usuario para la cuadrilla {asignacion.team_id}")
+                    await query.answer("❌ No se encontró usuario en la cuadrilla asignada", show_alert=True)
+                    return
+
+                # ⭐ VERIFICAR QUE EL USUARIO DE LA CUADRILLA ESTÉ EN LA ASIGNACIÓN
+                if usuario_cuadrilla.team_id != asignacion.team_id:
                     await query.answer("❌ No estás asignado a este reporte", show_alert=True)
                     return
 
-                user_data[telegram_user_id] = {
+                logger.info(f"✅ [REPARACION] Usuario de cuadrilla: {usuario_cuadrilla.nombre}")
+                
+                # ⭐ GUARDAR EN user_data CON EL ID DEL USUARIO DE LA CUADRILLA
+                user_data[usuario_cuadrilla.telegram_id] = {
                     'modo_reparacion': True,
                     'reporte_id': reporte_id,
                     'asignacion_id': asignacion.id,
@@ -542,6 +566,9 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                 )
                 await query.answer("🔧 Iniciando reparación", show_alert=False)
 
+            # ============================================================
+            # ACCIÓN: NO RECONOCIDA
+            # ============================================================
             else:
                 await query.answer("⚠️ Acción no reconocida", show_alert=True)
 
