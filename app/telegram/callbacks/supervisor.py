@@ -13,6 +13,8 @@ from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
 from datetime import datetime
+from app.telegram.utils import limpiar_estado
+from telegram import ReplyKeyboardRemove
 import logging
 
 logger = logging.getLogger(__name__)
