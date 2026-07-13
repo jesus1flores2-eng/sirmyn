@@ -108,30 +108,37 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
             )
         
         # ============================================================
-        # USUARIO RECHAZA
+        # USUARIO RECHAZA LA REPARACIÓN (SIMPLIFICADO CON BOTÓN VOLVER)
         # ============================================================
+
         elif accion == 'rechazar':
             # Guardar en user_data para el flujo de rechazo
             user_data[user_id] = {
-                'modo_rechazo': True,
+                'modo_rechazo_usuario': True,
                 'reporte_id': reporte_id,
-                'paso_actual': 'motivo',
-                'timestamp': time.time()
+                'paso_actual': 'motivo'
             }
-            
+    
+            # Mostrar botones de motivos predefinidos + botón Volver
             keyboard = [
                 [InlineKeyboardButton("🚫 PROBLEMA PERSISTE IGUAL", callback_data=f"rech_motivo_problema_persiste_{reporte_id}")],
                 [InlineKeyboardButton("🔧 REPARACIÓN INCOMPLETA", callback_data=f"rech_motivo_reparacion_incompleta_{reporte_id}")],
                 [InlineKeyboardButton("🕳️ NO TERMINARON DE TAPAR", callback_data=f"rech_motivo_no_termino_tapar_{reporte_id}")],
                 [InlineKeyboardButton("⚠️ CAUSARON OTRO PROBLEMA", callback_data=f"rech_motivo_causo_otro_{reporte_id}")],
-                [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"rech_motivo_otro_{reporte_id}")]
+                [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"rech_motivo_otro_{reporte_id}")],
+                [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]  # ⭐ NUEVO
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
-            
+    
             await query.edit_message_text(
-                text="🚨 *FORMULARIO DE RECHAZO*\n\nDebes explicar por qué rechazas la reparación.\nSelecciona el motivo principal:",
+                text="🚨 *FORMULARIO DE RECHAZO*\n\n"
+                     "Selecciona el motivo principal por el que rechazas la reparación:\n\n"
+                     "📌 *Si seleccionas 'OTRO MOTIVO', podrás escribir tu propio texto.*\n"
+                     "📌 *Si te equivocaste, presiona '↩️ Volver' para regresar.*",
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=reply_markup
             )
-            
+    
             logger.info(f"❌ Usuario inició rechazo para reporte #{reporte_id}")
+            await query.answer("Selecciona un motivo o vuelve atrás", show_alert=False)
+

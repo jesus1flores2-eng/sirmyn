@@ -148,6 +148,22 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
                 parse_mode="Markdown"
             )
             return
+            
+    # ⭐ 4.5 MODO RECHAZO USUARIO - ESCRIBIENDO MOTIVO PERSONALIZADO
+    if user_id in user_data and user_data[user_id].get('modo_rechazo_usuario'):
+        paso_actual = user_data[user_id].get('paso_actual')
+        if paso_actual == 'escribir_motivo':
+            logger.info(f"✍️ Router: Usuario {user_id} escribiendo motivo de rechazo personalizado")
+            from app.telegram.callbacks.rechazo import rechazo_otro_motivo_handler
+            await rechazo_otro_motivo_handler(update, context)
+            return
+        else:
+            # Si no está en paso 'escribir_motivo', pero está en modo rechazo, mostrar mensaje de ayuda
+            await update.message.reply_text(
+                "❌ Para rechazar, selecciona un motivo de la lista o escribe tu propio motivo.\n"
+                "Si deseas cancelar, usa /cancelar."
+            )
+            return
     
     # 5. SI NADA DE LO ANTERIOR, USAR EL MANEJADOR GENERAL
     logger.info(f"🤖 Router: Enviando a mensaje_general_handler")

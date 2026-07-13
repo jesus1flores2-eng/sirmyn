@@ -1261,5 +1261,82 @@ async def notificar_director_aceptacion_cuadrilla(reporte_id: int, cuadrilla_nom
     except Exception as e:
         logger.error(f"❌ Error en notificar_director_aceptacion_cuadrilla: {e}", exc_info=True)
         return False
+
+# ============================================================
+# NOTIFICAR RESPONSABLE SOBRE RECHAZO DE USUARIO
+# ============================================================
+
+async def notificar_responsable_rechazo_usuario(reporte_id: int, motivo: str, nombre_reportante: str):
+    """
+    Notifica al responsable (supervisor o director) que el usuario rechazó la reparación.
+    """
+    try:
+        from app.models.report import Report
+        from app.models.user import User
+        from app.routes.telegram_routes import get_telegram_app
+        
+        reporte = Report.query.get(reporte_id)
+        if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
+            return
+        
+        # Determinar responsable según el tipo de reporte
+        if reporte.tipo in ["Agua potable", "Drenaje"]:
+            responsable = User.query.filter_by(
+                area='agua',
+                rol_especifico='supervisor',
+                is_active=True
+            ).first()
+            if not responsable:
+                responsable = User.query.filter_by(
+                    area='agua',
+                    rol_especifico='jefe_area_tecnica',
+                    is_active=True
+                ).first()
+        else:
+            mapeo = {
+                "Aseo público": "aseo",
+                "Alumbrado público": "alumbrado",
+                "Parques y jardines": "parques",
+                "Ecología": "ecologia",
+                "Seguridad pública": "seguridad",
+                "Obras públicas": "obras",
+                "Bomberos": "bomberos"
+            }
+            area = mapeo.get(reporte.tipo)
+            if area:
+                responsable = User.query.filter_by(
+                    area=area,
+                    rol_especifico='director',
+                    is_active=True
+                ).first()
+        
+        if not responsable or not responsable.telegram_id:
+            logger.warning(f"⚠️ No se encontró responsable para notificar rechazo del usuario en reporte {reporte_id}")
+            return
+        
+        bot_app = get_telegram_app()
+        if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
+            return
+        
+        mensaje = (
+            f"📋 *NOTIFICACIÓN DE RECHAZO DE USUARIO*\n\n"
+            f"El usuario *{nombre_reportante}* ha rechazado la reparación del reporte #{reporte.id}.\n\n"
+            f"📝 *Motivo:* {motivo}\n\n"
+            f"*📌 La cuadrilla ha sido notificada para corregir el trabajo.*\n"
+            f"*Recibirás una nueva notificación cuando la reparación sea reenviada.*"
+        )
+        
+        await bot_app.bot.send_message(
+            chat_id=int(responsable.telegram_id),
+            text=mensaje,
+            parse_mode=ParseMode.MARKDOWN
+        )
+        
+        logger.info(f"✅ Responsable {responsable.nombre} notificado sobre rechazo de usuario en reporte {reporte_id}")
+        
+    except Exception as e:
+        logger.error(f"❌ Error en notificar_responsable_rechazo_usuario: {e}", exc_info=True)
         
 
