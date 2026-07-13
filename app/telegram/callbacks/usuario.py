@@ -29,6 +29,11 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
     callback_data = query.data
     user_id = query.from_user.id
     
+    # ⭐ IGNORAR CALLBACKS DE MOTIVOS (que empiezan con usuario_rechazo_motivo_)
+    if callback_data.startswith('usuario_rechazo_motivo_'):
+        logger.info(f"⏩ Callback de motivo ignorado por usuario_validacion_callback_handler: {callback_data}")
+        return
+    
     if not callback_data.startswith('usuario_'):
         return
     

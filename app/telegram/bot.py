@@ -177,7 +177,7 @@ def build_telegram_app(token):
     app.add_handler(CallbackQueryHandler(apoyo_confirmar_handler, pattern="^apoyo_confirmar_"))
     
     # 4.2 Callbacks de USUARIO (validación final)
-    app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_"))
+    app.add_handler(CallbackQueryHandler(usuario_validacion_callback_handler, pattern="^usuario_(aceptar|rechazar)_"))
     
     # 4.3 Callbacks de ENCUESTA
     app.add_handler(CallbackQueryHandler(encuesta_calificacion_handler, pattern="^enc_calif_"))
