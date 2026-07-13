@@ -506,21 +506,36 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No hay evidencia disponible", show_alert=True)
 
             # ============================================================
-            # ACCIÓN: REPARACIÓN (VERSIÓN SIMPLE Y CORRECTA)
+            # ACCIÓN: REPARACIÓN
             # ============================================================
             elif accion == 'reparacion':
+                logger.info(f"🔧 [REPARACION] Iniciando reparación para reporte {reporte_id}")
+                logger.info(f"🔧 [REPARACION] telegram_user_id: {telegram_user_id}")
+                
+                # Obtener asignación
                 asignacion = Assignment.query.filter_by(
                     report_id=reporte_id
                 ).order_by(Assignment.timestamp.desc()).first()
-
-                if not usuario or not asignacion:
-                    await query.answer("❌ No se pudo verificar la asignación", show_alert=True)
+                
+                if not asignacion:
+                    logger.error(f"❌ [REPARACION] No se encontró asignación para reporte {reporte_id}")
+                    await query.answer("❌ No se encontró la asignación del reporte", show_alert=True)
                     return
-
+                
+                # Verificar usuario
+                if not usuario:
+                    logger.error(f"❌ [REPARACION] Usuario no encontrado para telegram_id {telegram_user_id}")
+                    await query.answer("❌ Usuario no autorizado", show_alert=True)
+                    return
+                
                 if usuario.team_id != asignacion.team_id:
+                    logger.error(f"❌ [REPARACION] Usuario {usuario.nombre} (team {usuario.team_id}) no está en la cuadrilla asignada {asignacion.team_id}")
                     await query.answer("❌ No estás asignado a este reporte", show_alert=True)
                     return
-
+                
+                logger.info(f"✅ [REPARACION] Usuario {usuario.nombre} verificado, guardando modo_reparacion")
+                
+                # Guardar en user_data
                 user_data[telegram_user_id] = {
                     'modo_reparacion': True,
                     'reporte_id': reporte_id,
@@ -530,7 +545,10 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     'materiales': [],
                     'comentario': ''
                 }
-
+                
+                logger.info(f"✅ [REPARACION] user_data guardado para {telegram_user_id}: {user_data[telegram_user_id]}")
+                
+                # Enviar mensaje de instrucción
                 await query.message.reply_text(
                     "🔧 *EVIDENCIA DE REPARACIÓN*\n\n"
                     "Envía las fotos/videos del trabajo realizado:\n"
@@ -541,6 +559,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     reply_markup=ReplyKeyboardRemove()
                 )
                 await query.answer("🔧 Iniciando reparación", show_alert=False)
+                logger.info(f"✅ [REPARACION] Reparación iniciada correctamente para reporte {reporte_id}")
 
             # ============================================================
             # ACCIÓN: NO RECONOCIDA
