@@ -13,7 +13,7 @@ from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
 from datetime import datetime
-from app.telegram.utils import limpiar_estado
+from app.telegram.utils import user_data, limpiar_estado
 from telegram import ReplyKeyboardRemove
 import logging
 
@@ -482,13 +482,13 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
         await query.answer("❌ Error al procesar", show_alert=True)
         
 # ============================================================
-# MANEJAR MOTIVO DE RECHAZO DEL SUPERVISOR
+# MANEJAR MOTIVO DE RECHAZO DEL SUPERVISOR (CON BOTONES)
 # ============================================================
 
 async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Procesa el motivo de rechazo escrito por el supervisor.
-    Notifica a la cuadrilla y vuelve el reporte a "En proceso".
+    Notifica a la cuadrilla con el mensaje completo y el botón de reparación.
     """
     user_id = update.effective_user.id
     motivo = update.message.text.strip()
@@ -513,6 +513,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             from app.extensions import db
             from datetime import datetime
             from app.routes.telegram_routes import get_telegram_app
+            from app.telegram.keyboards import construir_botones_reporte
             
             reporte = Report.query.get(reporte_id)
             if not reporte:
@@ -541,20 +542,39 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
                 asignacion.observaciones = f"Rechazado por supervisor {nombre_supervisor} el {datetime.now().strftime('%d/%m/%Y %H:%M')}. Motivo: {motivo}"
                 db.session.commit()
             
-            # ⭐ NOTIFICAR A LA CUADRILLA
+            # ⭐ NOTIFICAR A LA CUADRILLA CON MENSAJE COMPLETO Y BOTÓN DE REPARACIÓN
             bot = context.bot
             calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             
-            mensaje_cuadrilla = (
-                f"❌ *REPARACIÓN RECHAZADA - Reporte #{reporte.id}*\n\n"
-                f"*Supervisor:* {nombre_supervisor}\n"
-                f"*Motivo:* {motivo}\n\n"
-                f"📋 *Acción requerida:*\n"
-                f"Corrige el trabajo y vuelve a subir evidencia de reparación.\n\n"
+            # Construir mensaje base
+            mensaje_base = (
+                f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"📋 *Folio:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
-                f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
-                f"*📌 El reporte ha sido regresado a estado 'En proceso'*"
+                f"📞 *Reportante:* {reporte.reportante}\n"
+                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
+            )
+            
+            # ⭐ AGREGAR EVIDENCIA SI EXISTE
+            if reporte.evidencia:
+                from app.services.notification_service import construir_enlace_evidencia
+                enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+                mensaje_base += f"📎 *Evidencia:* {enlace}\n\n"
+            
+            # ⭐ AGREGAR MAPA SI HAY COORDENADAS
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                mensaje_base += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
+            
+            # ⭐ AGREGAR MOTIVO DEL RECHAZO
+            mensaje_base += (
+                f"❌ *RECHAZADO POR SUPERVISOR*\n"
+                f"*Motivo:* {motivo}\n\n"
+                f"*📌 Acción requerida:* Corrige el trabajo y vuelve a subir evidencia.\n\n"
+                f"*📋 Acciones rápidas:*"
             )
             
             # Notificar a todos los miembros de la cuadrilla
@@ -563,12 +583,24 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             for usuario in usuarios_cuadrilla:
                 if usuario.telegram_id:
                     try:
+                        # ⭐ CONSTRUIR BOTONES PARA CADA USUARIO (CON SU user_id)
+                        reply_markup = construir_botones_reporte(
+                            reporte_id,
+                            confirmado=True,  # Ya está en proceso
+                            problema_reportado=False,
+                            context=context,
+                            user_id=usuario.telegram_id  # ⭐ CLAVE: PASAR EL ID DEL USUARIO
+                        )
+                        
                         await bot.send_message(
                             chat_id=int(usuario.telegram_id),
-                            text=mensaje_cuadrilla,
-                            parse_mode=ParseMode.MARKDOWN
+                            text=mensaje_base,
+                            parse_mode=ParseMode.MARKDOWN,
+                            reply_markup=reply_markup,
+                            disable_web_page_preview=True
                         )
                         notificados += 1
+                        logger.info(f"✅ Rechazo enviado a {usuario.nombre}")
                     except Exception as e:
                         logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
             
@@ -578,12 +610,13 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
                 f"📋 *Reporte:* #{reporte.id}\n"
                 f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
-                f"*📌 El reporte ha vuelto a estado 'En proceso' para corrección.*",
+                f"*📌 El reporte ha vuelto a estado 'En proceso'*\n"
+                f"*🔧 La cuadrilla podrá subir nueva evidencia.*",
                 parse_mode=ParseMode.MARKDOWN,
                 reply_markup=ReplyKeyboardRemove()
             )
             
-            logger.info(f"✅ Supervisor {nombre_supervisor} rechazó reporte #{reporte_id} con motivo: {motivo[:50]}...")
+            logger.info(f"✅ Supervisor {nombre_supervisor} rechazó reporte #{reporte_id} notificando a {notificados} miembros de la cuadrilla")
             
     except Exception as e:
         logger.error(f"❌ Error en manejar_motivo_rechazo_supervisor: {e}")
