@@ -519,33 +519,15 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     await query.answer("❌ No se pudo verificar la asignación", show_alert=True)
                     return
 
-                # ⭐ BUSCAR EL USUARIO DE LA CUADRILLA ASIGNADA (NO EL QUE PRESIONÓ)
-                usuario_cuadrilla = None
-                if asignacion and asignacion.team_id:
-                    usuario_cuadrilla = User.query.filter_by(
-                        team_id=asignacion.team_id,
-                        is_active=True
-                    ).filter(User.telegram_id.isnot(None)).first()
-                
-                # ⭐ SI NO SE ENCUENTRA USUARIO EN LA CUADRILLA, USAR EL QUE PRESIONÓ
-                if not usuario_cuadrilla and usuario:
-                    usuario_cuadrilla = usuario
-                    logger.warning(f"⚠️ No se encontró usuario con Telegram en cuadrilla {asignacion.team_id}, usando usuario actual: {usuario.nombre}")
-                
-                if not usuario_cuadrilla:
-                    logger.error(f"❌ [REPARACION] No se encontró usuario para la cuadrilla {asignacion.team_id}")
-                    await query.answer("❌ No se encontró usuario en la cuadrilla asignada", show_alert=True)
-                    return
-
-                # ⭐ VERIFICAR QUE EL USUARIO DE LA CUADRILLA ESTÉ EN LA ASIGNACIÓN
-                if usuario_cuadrilla.team_id != asignacion.team_id:
+                if usuario.team_id != asignacion.team_id:
                     await query.answer("❌ No estás asignado a este reporte", show_alert=True)
                     return
 
-                logger.info(f"✅ [REPARACION] Usuario de cuadrilla: {usuario_cuadrilla.nombre}")
+                # ⭐ USAR EL USUARIO QUE PRESIONÓ EL BOTÓN (YA ESTÁ VERIFICADO)
+                logger.info(f"✅ [REPARACION] Usuario: {usuario.nombre} (telegram_id: {usuario.telegram_id})")
                 
-                # ⭐ GUARDAR EN user_data CON EL ID DEL USUARIO DE LA CUADRILLA
-                user_data[usuario_cuadrilla.telegram_id] = {
+                # ⭐ GUARDAR EN user_data CON EL ID DEL USUARIO QUE PRESIONÓ
+                user_data[telegram_user_id] = {
                     'modo_reparacion': True,
                     'reporte_id': reporte_id,
                     'asignacion_id': asignacion.id,
