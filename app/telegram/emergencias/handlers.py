@@ -17,13 +17,11 @@ async def emergencia_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Inicia el flujo de emergencia desde el menú principal"""
     user_id = update.effective_user.id
     
-    # Verificar si es patrullero para mostrar botón de pánico
     es_patrullero = False
     app = DatabaseManager.get_app()
     with app.app_context():
         usuario = User.query.filter_by(telegram_id=str(user_id), is_active=True).first()
         if usuario and usuario.rol_especifico in ['patrullero', 'policia', 'comandante', 'cuadrilla']:
-            # Verificar si está en área de seguridad
             if usuario.area == 'seguridad' or usuario.team_id:
                 from app.models.team import Team
                 team = Team.query.get(usuario.team_id)
@@ -84,7 +82,6 @@ async def emergencia_departamento(update: Update, context: ContextTypes.DEFAULT_
     user_data[user_id]['emergencia_depto'] = depto
     user_data[user_id]['emergencia_depto_nombre'] = texto
     
-    # Directo a pedir teléfono (sin segunda advertencia)
     await update.message.reply_text(
         f"⚠️ *{texto} - EMERGENCIA*\n\n"
         f"⚖️ Recuerda: El uso indebido es un DELITO.\n\n"
@@ -128,7 +125,6 @@ async def emergencia_telefono(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_id = update.effective_user.id
     telefono = update.message.text.strip()
     
-    # Validar teléfono (10 dígitos)
     import re
     if not re.match(r'^\d{10}$', telefono):
         await update.message.reply_text("❌ El número debe ser de 10 dígitos. Intenta de nuevo:")
@@ -162,7 +158,6 @@ async def emergencia_ubicacion(update: Update, context: ContextTypes.DEFAULT_TYP
     user_data[user_id]['latitud'] = location.latitude
     user_data[user_id]['longitud'] = location.longitude
     
-    # ⭐ Obtener dirección por geocodificación inversa
     try:
         from app.services.geocoding import obtener_direccion_osm
         direccion = obtener_direccion_osm(location.latitude, location.longitude)
@@ -176,7 +171,6 @@ async def emergencia_ubicacion(update: Update, context: ContextTypes.DEFAULT_TYP
     
     depto = user_data[user_id].get('emergencia_depto', 'seguridad')
     
-    # Subtipos por departamento
     subtipos = {
         'seguridad': [
             ["🔫 Balacera / Disparos", "👊 Agresión física"],
@@ -209,8 +203,7 @@ async def emergencia_ubicacion(update: Update, context: ContextTypes.DEFAULT_TYP
     reply_markup = ReplyKeyboardMarkup(opciones, resize_keyboard=True, one_time_keyboard=True)
     
     await update.message.reply_text(
-        f"✅ Ubicación recibida: {location.latitude}, {location.longitude}\n\n"
-        "Selecciona el tipo de incidente:",
+        f"✅ Ubicación recibida\n\nSelecciona el tipo de incidente:",
         reply_markup=reply_markup
     )
     
@@ -218,7 +211,7 @@ async def emergencia_ubicacion(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 async def emergencia_subtipo(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Guarda subtipo y pide comentario"""
+    """Guarda subtipo y pide evidencia"""
     user_id = update.effective_user.id
     texto = update.message.text.strip()
     
@@ -296,28 +289,6 @@ async def mostrar_resumen_emergencia(update: Update, context: ContextTypes.DEFAU
     return EMERGENCIA_CONFIRMAR
 
 
-async def confirmar_emergencia(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Muestra resumen y confirma"""
-    user_id = update.effective_user.id
-    datos = user_data[user_id]
-    
-    resumen = (
-        f"🚨 *CONFIRMAR EMERGENCIA*\n\n"
-        f"🏛️ *Depto:* {datos.get('emergencia_depto_nombre', 'N/A')}\n"
-        f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
-        f"📍 *GPS:* {datos.get('latitud')}, {datos.get('longitud')}\n"
-        f"⚠️ *Incidente:* {datos.get('subtipo', 'N/A')}\n"
-        f"📸 *Evidencia:* {'Sí' if datos.get('evidencia') else 'No'}\n\n"
-        f"¿Enviar reporte de emergencia?"
-    )
-    
-    keyboard = [["🚨 ENVIAR EMERGENCIA", "❌ Cancelar"]]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-    
-    await update.message.reply_text(resumen, parse_mode="Markdown", reply_markup=reply_markup)
-    return EMERGENCIA_CONFIRMAR
-
-
 async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Envía la emergencia a cabina y notifica"""
     user_id = update.effective_user.id
@@ -348,11 +319,9 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             depto = datos.get('emergencia_depto', 'seguridad')
             depto_nombre = datos.get('emergencia_depto_nombre', 'Seguridad Pública')
             
-            # Buscar localidad y calle en BD
             localidad_id = 1
             calle_id = 1
             localidad_nombre = datos.get('localidad_detectada', 'No detectada')
-            calle_nombre = datos.get('calle_detectada', 'No detectada')
             
             if localidad_nombre and localidad_nombre != 'No detectada':
                 loc = Localidad.query.filter(Localidad.nombre.ilike(f"%{localidad_nombre}%")).first()
@@ -360,7 +329,6 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
                     localidad_id = loc.id
                     localidad_nombre = loc.nombre
             
-            # Crear reporte de emergencia
             nuevo_reporte = Report(
                 telefono=datos.get('telefono', str(user_id)),
                 reportante=datos.get('nombre_telegram', 'Ciudadano'),
@@ -379,7 +347,6 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             db.session.add(nuevo_reporte)
             db.session.commit()
             
-            # Asignar a cuadrilla de emergencia
             team = Team.query.filter_by(area=depto, nombre='Sin asignar').first()
             if not team:
                 team = Team.query.filter_by(nombre='Sin asignar').first()
@@ -399,7 +366,6 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             db.session.add(asignacion)
             db.session.commit()
             
-            # Notificar a cabina (jefe_area del departamento)
             cabina = User.query.filter_by(area=depto, rol_especifico='jefe_area', is_active=True).first()
             if not cabina:
                 cabina = User.query.filter_by(area=depto, rol_especifico='director', is_active=True).first()
@@ -456,7 +422,6 @@ async def boton_panico(update: Update, context: ContextTypes.DEFAULT_TYPE):
             limpiar_estado(user_id)
             return ConversationHandler.END
     
-    # Pedir ubicación inmediata
     keyboard = [[KeyboardButton("📍 ENVIAR UBICACIÓN - PÁNICO", request_location=True)]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
     
