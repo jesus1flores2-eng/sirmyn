@@ -5,6 +5,7 @@ import logging
 from datetime import datetime, timedelta
 from app.services.db_manager import DatabaseManager
 from app.services.notification_service import notificar_presidente_urgente
+from app.extensions import db
 import asyncio
 
 logger = logging.getLogger(__name__)
