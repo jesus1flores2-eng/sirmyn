@@ -20,7 +20,7 @@ def iniciar_scheduler():
         
         scheduler.add_job(
             func=revisar_reportes_urgentes,
-            trigger=IntervalTrigger(hours=4),
+            trigger=IntervalTrigger(minutes=1),
             id='revisar_reportes_urgentes',
             name='Revisar reportes urgentes (>48hrs)',
             replace_existing=True
