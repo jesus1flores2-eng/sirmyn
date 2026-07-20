@@ -1,3 +1,4 @@
+# app/services/emergencias/emergencias_bot.py
 """
 Servicio principal del bot de emergencias SIRMYN - VERSIÓN CORREGIDA
 """
@@ -7,7 +8,7 @@ from threading import Thread
 from telegram.ext import Application
 
 from .config import EmergenciasConfig
-from .handlers.inicio import setup_emergencia_handlers
+from .handlers.inicio import start_emergencia
 
 logger = logging.getLogger(__name__)
 

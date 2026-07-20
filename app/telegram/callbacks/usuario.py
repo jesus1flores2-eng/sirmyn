@@ -4,8 +4,8 @@ Maneja la validación final del usuario (aceptar/rechazar reparación)
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data
 from app.services.db_manager import DatabaseManager
 from app.models.report import Report, Assignment
 from app.models.user import User
@@ -29,7 +29,9 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
     callback_data = query.data
     user_id = query.from_user.id
     
-    # ⭐ IGNORAR CALLBACKS DE MOTIVOS (que empiezan con usuario_rechazo_motivo_)
+    logger.info(f"🔍🔍🔍 USUARIO CALLBACK RECIBIDO: {callback_data}")
+    
+    # IGNORAR CALLBACKS DE MOTIVOS (que empiezan con usuario_rechazo_motivo_)
     if callback_data.startswith('usuario_rechazo_motivo_'):
         logger.info(f"⏩ Callback de motivo ignorado por usuario_validacion_callback_handler: {callback_data}")
         return
@@ -122,18 +124,63 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
                 'paso_actual': 'motivo'
             }
     
-            # ⭐ NUEVOS CALLBACKS: usuario_rechazo_motivo_*
-            keyboard = [
-                [InlineKeyboardButton("🚫 PROBLEMA PERSISTE IGUAL", callback_data=f"usuario_rechazo_motivo_problema_persiste_{reporte_id}")],
-                [InlineKeyboardButton("🔧 REPARACIÓN INCOMPLETA", callback_data=f"usuario_rechazo_motivo_reparacion_incompleta_{reporte_id}")],
-                [InlineKeyboardButton("🕳️ NO TERMINARON DE TAPAR", callback_data=f"usuario_rechazo_motivo_no_termino_tapar_{reporte_id}")],
-                [InlineKeyboardButton("⚠️ CAUSARON OTRO PROBLEMA", callback_data=f"usuario_rechazo_motivo_causo_otro_{reporte_id}")],
-                [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
-                [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
-            ]
+            # Detectar el tipo de reporte para mostrar motivos personalizados
+            if reporte.tipo == "Aseo público":
+                keyboard = [
+                    [InlineKeyboardButton("🗑️ NO RECOGIERON TODA LA BASURA", callback_data=f"usuario_rechazo_motivo_basura_incompleta_{reporte_id}")],
+                    [InlineKeyboardButton("🚛 NO PASÓ EL CAMIÓN", callback_data=f"usuario_rechazo_motivo_no_paso_camion_{reporte_id}")],
+                    [InlineKeyboardButton("🧹 DEJARON ESCOMBROS TIRADOS", callback_data=f"usuario_rechazo_motivo_escombros_{reporte_id}")],
+                    [InlineKeyboardButton("🤢 MAL OLOR PERSISTE", callback_data=f"usuario_rechazo_motivo_mal_olor_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+            elif reporte.tipo in ["Alumbrado público"]:
+                keyboard = [
+                    [InlineKeyboardButton("💡 LÁMPARA SIGUE SIN FUNCIONAR", callback_data=f"usuario_rechazo_motivo_lampara_sigue_mal_{reporte_id}")],
+                    [InlineKeyboardButton("⚡ CABLES SIGUEN SUELTOS", callback_data=f"usuario_rechazo_motivo_cables_sueltos_{reporte_id}")],
+                    [InlineKeyboardButton("🔧 POSTE SIGUE DAÑADO", callback_data=f"usuario_rechazo_motivo_poste_danado_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+            elif reporte.tipo in ["Parques y jardines"]:
+                keyboard = [
+                    [InlineKeyboardButton("🌳 NO PODARON CORRECTAMENTE", callback_data=f"usuario_rechazo_motivo_no_podaron_{reporte_id}")],
+                    [InlineKeyboardButton("🏞️ ÁREA VERDE SIGUE SUCIA", callback_data=f"usuario_rechazo_motivo_area_sucia_{reporte_id}")],
+                    [InlineKeyboardButton("💧 NO REGARON LAS PLANTAS", callback_data=f"usuario_rechazo_motivo_no_regaron_{reporte_id}")],
+                    [InlineKeyboardButton("🛝 JUEGOS SIGUEN ROTOS", callback_data=f"usuario_rechazo_motivo_juegos_rotos_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+            elif reporte.tipo in ["Seguridad pública"]:
+                keyboard = [
+                    [InlineKeyboardButton("🚔 NO HUBO RESPUESTA POLICIAL", callback_data=f"usuario_rechazo_motivo_sin_respuesta_{reporte_id}")],
+                    [InlineKeyboardButton("👮 NO SE RESOLVIÓ EL PROBLEMA", callback_data=f"usuario_rechazo_motivo_no_resuelto_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+            elif reporte.tipo in ["Bomberos"]:
+                keyboard = [
+                    [InlineKeyboardButton("🔥 INCENDIO NO CONTROLADO", callback_data=f"usuario_rechazo_motivo_incendio_{reporte_id}")],
+                    [InlineKeyboardButton("🚒 NO LLEGÓ LA UNIDAD", callback_data=f"usuario_rechazo_motivo_no_llego_{reporte_id}")],
+                    [InlineKeyboardButton("⚠️ FALTA ATENCIÓN", callback_data=f"usuario_rechazo_motivo_falta_atencion_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+            else:
+                # Agua, Drenaje y otros
+                keyboard = [
+                    [InlineKeyboardButton("🚫 PROBLEMA PERSISTE IGUAL", callback_data=f"usuario_rechazo_motivo_problema_persiste_{reporte_id}")],
+                    [InlineKeyboardButton("🔧 REPARACIÓN INCOMPLETA", callback_data=f"usuario_rechazo_motivo_reparacion_incompleta_{reporte_id}")],
+                    [InlineKeyboardButton("🕳️ NO TERMINARON DE TAPAR", callback_data=f"usuario_rechazo_motivo_no_termino_tapar_{reporte_id}")],
+                    [InlineKeyboardButton("⚠️ CAUSARON OTRO PROBLEMA", callback_data=f"usuario_rechazo_motivo_causo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("📝 OTRO MOTIVO", callback_data=f"usuario_rechazo_motivo_otro_{reporte_id}")],
+                    [InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")]
+                ]
+
             reply_markup = InlineKeyboardMarkup(keyboard)
     
-            await query.edit_message_text(
+            # ⭐ CORRECCIÓN: Usar reply_text en lugar de edit_message_text
+            await query.message.reply_text(
                 text="🚨 *FORMULARIO DE RECHAZO*\n\n"
                      "Selecciona el motivo principal por el que rechazas la reparación:\n\n"
                      "📌 *Si seleccionas 'OTRO MOTIVO', podrás escribir tu propio texto.*\n"

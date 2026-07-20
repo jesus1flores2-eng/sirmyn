@@ -1,6 +1,6 @@
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
-from app.telegram.utils import limpiar_estado
+from app.telegram.common.utils import limpiar_estado
 
 def cancelar_command(update, context):
     user_id = update.effective_user.id

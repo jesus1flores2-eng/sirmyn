@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
-from app.telegram.states import *
-from app.telegram.utils import user_data, limpiar_estado
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data, limpiar_estado
 from app.services.db_manager import DatabaseManager
 import logging, time
 

@@ -4,8 +4,8 @@ Maneja la encuesta de satisfacción (calificación, velocidad, comentario)
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data
 from app.services.db_manager import DatabaseManager
 from app.models.feedback import EncuestaSatisfaccion
 from app.extensions import db

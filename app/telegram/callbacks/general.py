@@ -4,10 +4,10 @@ Maneja todos los botones de cuadrillas y acciones generales
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
 from app.services.db_manager import DatabaseManager
-from app.telegram.keyboards import construir_botones_reporte, obtener_carpeta_departamento
+from app.telegram.common.keyboards import construir_botones_reporte, obtener_carpeta_departamento
 from app.telegram.materiales import MATERIALES
 import logging
 import os
@@ -318,9 +318,51 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                             is_active=True
                         ).first()
                         rol_nombre = "Jefe Técnico de Agua/Drenaje"
+                    elif reporte.tipo == "Aseo público":
+                        responsable = User.query.filter_by(
+                            area='aseo',
+                            rol_especifico='jefe_area',
+                            is_active=True
+                        ).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(
+                                area='aseo',
+                                rol_especifico='director',
+                                is_active=True
+                            ).first()
+                        rol_nombre = "Jefe de Área de Aseo"
+                    elif reporte.tipo == "Alumbrado público":
+                        responsable = User.query.filter_by(area='alumbrado', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='alumbrado', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Alumbrado"
+                    elif reporte.tipo == "Parques y jardines":
+                        responsable = User.query.filter_by(area='parques', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='parques', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Parques"
+                    elif reporte.tipo == "Ecología":
+                        responsable = User.query.filter_by(area='ecologia', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='ecologia', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Ecología"
+                    elif reporte.tipo == "Seguridad pública":
+                        responsable = User.query.filter_by(area='seguridad', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='seguridad', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Seguridad"
+                    elif reporte.tipo == "Obras públicas":
+                        responsable = User.query.filter_by(area='obras', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='obras', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Obras"
+                    elif reporte.tipo == "Bomberos":
+                        responsable = User.query.filter_by(area='bomberos', rol_especifico='jefe_area', is_active=True).first()
+                        if not responsable:
+                            responsable = User.query.filter_by(area='bomberos', rol_especifico='director', is_active=True).first()
+                        rol_nombre = "Jefe de Bomberos"
                     else:
                         mapeo_tipo_a_area = {
-                            "Aseo público": "aseo",
                             "Alumbrado público": "alumbrado",
                             "Parques y jardines": "parques",
                             "Ecología": "ecologia",
@@ -509,58 +551,9 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             # ACCIÓN: REPARACIÓN
             # ============================================================
             elif accion == 'reparacion':
-                logger.info(f"🔧 [REPARACION] Iniciando reparación para reporte {reporte_id}")
-                logger.info(f"🔧 [REPARACION] telegram_user_id: {telegram_user_id}")
-                
-                # Obtener asignación
-                asignacion = Assignment.query.filter_by(
-                    report_id=reporte_id
-                ).order_by(Assignment.timestamp.desc()).first()
-                
-                if not asignacion:
-                    logger.error(f"❌ [REPARACION] No se encontró asignación para reporte {reporte_id}")
-                    await query.answer("❌ No se encontró la asignación del reporte", show_alert=True)
-                    return
-                
-                # Verificar usuario
-                if not usuario:
-                    logger.error(f"❌ [REPARACION] Usuario no encontrado para telegram_id {telegram_user_id}")
-                    await query.answer("❌ Usuario no autorizado", show_alert=True)
-                    return
-                
-                if usuario.team_id != asignacion.team_id:
-                    logger.error(f"❌ [REPARACION] Usuario {usuario.nombre} (team {usuario.team_id}) no está en la cuadrilla asignada {asignacion.team_id}")
-                    await query.answer("❌ No estás asignado a este reporte", show_alert=True)
-                    return
-                
-                logger.info(f"✅ [REPARACION] Usuario {usuario.nombre} verificado, guardando modo_reparacion")
-                
-                # Guardar en user_data
-                user_data[telegram_user_id] = {
-                    'modo_reparacion': True,
-                    'reporte_id': reporte_id,
-                    'asignacion_id': asignacion.id,
-                    'paso': 'evidencia',
-                    'evidencias': [],
-                    'materiales': [],
-                    'comentario': ''
-                }
-                
-                logger.info(f"✅ [REPARACION] user_data guardado para {telegram_user_id}: {user_data[telegram_user_id]}")
-                
-                # Enviar mensaje de instrucción
-                await query.message.reply_text(
-                    "🔧 *EVIDENCIA DE REPARACIÓN*\n\n"
-                    "Envía las fotos/videos del trabajo realizado:\n"
-                    "• Puedes enviar múltiples archivos\n"
-                    "• Cuando termines, escribe *'listo'*\n"
-                    "• Para cancelar, escribe *'cancelar'*",
-                    parse_mode=ParseMode.MARKDOWN,
-                    reply_markup=ReplyKeyboardRemove()
-                )
-                await query.answer("🔧 Iniciando reparación", show_alert=False)
-                logger.info(f"✅ [REPARACION] Reparación iniciada correctamente para reporte {reporte_id}")
-
+                await query.answer("🔧 Inicia reparación", show_alert=False)
+                # El ConversationHandler de reparación se encarga del resto
+                return
             # ============================================================
             # ACCIÓN: NO RECONOCIDA
             # ============================================================
@@ -1247,7 +1240,7 @@ async def manejar_volver_reporte(query, context, reporte_id):
             from app.models.status import Status
             from app.models.user import User
             from app.models.team import Team
-            from app.telegram.keyboards import construir_botones_reporte
+            from app.telegram.common.keyboards import construir_botones_reporte
 
             reporte = Report.query.get(reporte_id)
             if not reporte:

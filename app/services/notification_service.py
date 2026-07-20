@@ -1,7 +1,8 @@
+# app/services/notification_service.py
 import logging
 from datetime import datetime, timedelta
 from app.services.db_manager import DatabaseManager
-from app.telegram.keyboards import construir_botones_reporte
+from app.telegram.callbacks.general import construir_botones_reporte
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.constants import ParseMode
 import os
@@ -72,39 +73,111 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
             
             return responsables
         
-        # ========== OTROS DEPARTAMENTOS ==========
-        mapeo_tipo_a_area = {
-            "Aseo público": "aseo",
-            "Alumbrado público": "alumbrado",
-            "Parques y jardines": "parques",
-            "Ecología": "ecologia",
-            "Seguridad pública": "seguridad",
-            "Obras públicas": "obras",
-            "Bomberos": "bomberos"
+        # ========== ASEO PÚBLICO ==========
+        if tipo_reporte == "Aseo público":
+            logger.info(f"🗑️ [NOTIFICACIÓN] Procesando Aseo público")
+            
+            # 1. JEFE DE ÁREA DE ASEO (mensaje COMPLETO con botones)
+            from sqlalchemy import func
+            jefe_aseo = User.query.filter(
+                User.area == 'aseo',
+                func.lower(User.rol_especifico) == 'jefe_area',
+                User.is_active == True
+            ).first()
+            
+            if jefe_aseo:
+                responsables.append({
+                    'usuario': jefe_aseo,
+                    'tipo_mensaje': 'completo_con_botones',
+                    'puede_asignar': True,
+                    'es_jefe_tecnico': True,
+                    'descripcion': 'Jefe de Área de Aseo'
+                })
+                logger.info(f"✅ Jefe de Área de Aseo encontrado: {jefe_aseo.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró jefe de área de aseo")
+            
+            # 2. DIRECTOR DE ASEO (mensaje INFORMATIVO)
+            director_aseo = User.query.filter_by(
+                area='aseo',
+                rol_especifico='director',
+                is_active=True
+            ).first()
+            
+            if director_aseo:
+                if jefe_aseo and jefe_aseo.id == director_aseo.id:
+                    logger.info("ℹ️ Misma persona: Director y Jefe de Área de Aseo")
+                else:
+                    responsables.append({
+                        'usuario': director_aseo,
+                        'tipo_mensaje': 'informativo_simple_sin_botones',
+                        'puede_asignar': False,
+                        'es_jefe_tecnico': False,
+                        'descripcion': 'Director de Aseo (informativo)'
+                    })
+                    logger.info(f"✅ Director de Aseo encontrado: {director_aseo.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró director de aseo")
+            
+            return responsables
+        
+        # ========== TODOS LOS DEMÁS DEPARTAMENTOS ==========
+        CONFIG_DEPARTAMENTOS = {
+            "Alumbrado público": ("jefe_area", "alumbrado"),
+            "Parques y jardines": ("jefe_area", "parques"),
+            "Ecología": ("jefe_area", "ecologia"),
+            "Seguridad pública": ("jefe_area", "seguridad"),
+            "Obras públicas": ("jefe_area", "obras"),
+            "Bomberos": ("jefe_area", "bomberos"),
         }
         
-        area_reporte = mapeo_tipo_a_area.get(tipo_reporte)
-        if not area_reporte:
-            logger.warning(f"⚠️ Área no mapeada para tipo: {tipo_reporte}")
-            return []
+        config = CONFIG_DEPARTAMENTOS.get(tipo_reporte)
         
-        director = User.query.filter_by(
-            area=area_reporte,
-            rol_especifico='director',
-            is_active=True
-        ).first()
-        
-        if director:
-            responsables.append({
-                'usuario': director,
-                'tipo_mensaje': 'completo_con_botones',
-                'puede_asignar': True,
-                'es_jefe_tecnico': False,
-                'descripcion': f'Director de {area_reporte.title()}'
-            })
-            logger.info(f"✅ Director {area_reporte} encontrado: {director.nombre}")
+        if config:
+            rol_principal, area = config
+            
+            # Buscar rol principal (jefe_area)
+            jefe = User.query.filter_by(
+                area=area,
+                rol_especifico=rol_principal,
+                is_active=True
+            ).first()
+            
+            if jefe:
+                responsables.append({
+                    'usuario': jefe,
+                    'tipo_mensaje': 'completo_con_botones',
+                    'puede_asignar': True,
+                    'es_jefe_tecnico': True,
+                    'descripcion': f'Jefe de {area.title()}'
+                })
+                logger.info(f"✅ Jefe de {area.title()} encontrado: {jefe.nombre}")
+            else:
+                logger.warning(f"⚠️ No se encontró jefe para {area}")
+            
+            # Director (informativo)
+            director = User.query.filter_by(
+                area=area,
+                rol_especifico='director',
+                is_active=True
+            ).first()
+            
+            if director:
+                if jefe and jefe.id == director.id:
+                    logger.info(f"ℹ️ Misma persona: Director y Jefe de {area.title()}")
+                else:
+                    responsables.append({
+                        'usuario': director,
+                        'tipo_mensaje': 'informativo_simple_sin_botones',
+                        'puede_asignar': False,
+                        'es_jefe_tecnico': False,
+                        'descripcion': f'Director de {area.title()} (informativo)'
+                    })
+                    logger.info(f"✅ Director de {area.title()} encontrado: {director.nombre}")
+            else:
+                logger.warning(f"⚠️ No se encontró director para {area}")
         else:
-            logger.warning(f"⚠️ No se encontró director para {area_reporte}")
+            logger.warning(f"⚠️ Área no mapeada para tipo: {tipo_reporte}")
         
         return responsables
         
@@ -704,8 +777,7 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
 # ============================================================
 async def notificar_director_validacion(reporte_id: int, team_id: int):
     """
-    Notifica al director del área (no-agua) que una cuadrilla ha terminado reparación.
-    Incluye enlaces a las evidencias y materiales.
+    Notifica al jefe de área que una cuadrilla ha terminado reparación.
     """
     try:
         from app.models.report import Report, Assignment
@@ -731,14 +803,21 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
             logger.error(f"❌ Cuadrilla {team_id} sin área")
             return False
         
+        # Buscar jefe_area primero, fallback a director
         director = User.query.filter_by(
             area=cuadrilla.area,
-            rol_especifico='director',
+            rol_especifico='jefe_area',
             is_active=True
         ).first()
+        if not director:
+            director = User.query.filter_by(
+                area=cuadrilla.area,
+                rol_especifico='director',
+                is_active=True
+            ).first()
         
         if not director or not director.telegram_id:
-            logger.warning(f"⚠️ Director para {cuadrilla.area} no configurado")
+            logger.warning(f"⚠️ No se encontró responsable para {cuadrilla.area}")
             return False
         
         bot_app = get_telegram_app()
@@ -746,9 +825,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
             logger.error("❌ Bot de Telegram no disponible")
             return False
         
-        # ============================================================
-        # CONSTRUIR EVIDENCIAS DE REPARACIÓN (CON ENLACES)
-        # ============================================================
+        # Evidencias
         evidencias_texto = "• No hay evidencia"
         if asignacion.evidencia_cuadrilla:
             evidencias_lista = asignacion.evidencia_cuadrilla.split(',')
@@ -761,9 +838,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
                     icono = "📷" if ext in ['jpg', 'jpeg', 'png', 'gif', 'webp'] else "🎬" if ext in ['mp4', 'mov', 'avi', 'mkv'] else "📎"
                     evidencias_texto += f"• {icono} {enlace}\n"
         
-        # ============================================================
-        # CONSTRUIR MATERIALES UTILIZADOS (CON ENLACE)
-        # ============================================================
+        # Materiales
         materiales_texto = "• No especificado"
         if asignacion.materiales_utilizados:
             materiales = asignacion.materiales_utilizados.strip()
@@ -775,11 +850,8 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
             else:
                 materiales_texto = f"📝 {materiales}"
         
-        # ============================================================
-        # CONSTRUIR MENSAJE COMPLETO
-        # ============================================================
         mensaje = f"""
-✅ *REPARACIÓN TERMINADA - ÁREA {cuadrilla.area.upper()}*
+✅ *REPARACIÓN TERMINADA - {cuadrilla.area.upper()}*
 
 📋 *Reporte:* #{reporte.id}
 📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
@@ -799,10 +871,18 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
 
 *📋 VALIDAR REPARACIÓN:*
 """
+        # Mapeo de prefijo según área
+        prefijos = {
+            'agua': 'super', 'aseo': 'aseo', 'alumbrado': 'alumbrado', 
+            'parques': 'parques', 'ecologia': 'ecologia', 'seguridad': 'seguridad',
+            'obras': 'obras', 'bomberos': 'bomberos'
+        }
+        prefijo = prefijos.get(cuadrilla.area, 'dir')
+        
         keyboard = [
             [
-                InlineKeyboardButton("✅ Validar", callback_data=f"dir_validar_{reporte.id}"),
-                InlineKeyboardButton("❌ Rechazar", callback_data=f"dir_rechazar_{reporte.id}")
+                InlineKeyboardButton("✅ Validar", callback_data=f"{prefijo}_validar_{reporte.id}"),
+                InlineKeyboardButton("❌ Rechazar", callback_data=f"{prefijo}_rechazar_{reporte.id}")
             ]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -815,7 +895,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
             disable_web_page_preview=False
         )
         
-        logger.info(f"✅ Director {director.nombre} notificado para validación de reparación")
+        logger.info(f"✅ {director.nombre} notificado para validación")
         return True
         
     except Exception as e:
@@ -1210,21 +1290,29 @@ async def notificar_director_aceptacion_cuadrilla(reporte_id: int, cuadrilla_nom
             ).first()
         else:
             mapeo = {
-                "Aseo público": "aseo",
-                "Alumbrado público": "alumbrado",
-                "Parques y jardines": "parques",
-                "Ecología": "ecologia",
-                "Seguridad pública": "seguridad",
-                "Obras públicas": "obras",
-                "Bomberos": "bomberos"
+                "Aseo público": ("aseo", "jefe_area"),
+                "Alumbrado público": ("alumbrado", "jefe_area"),
+                "Parques y jardines": ("parques", "jefe_area"),
+                "Ecología": ("ecologia", "jefe_area"),
+                "Seguridad pública": ("seguridad", "jefe_area"),
+                "Obras públicas": ("obras", "jefe_area"),
+                "Bomberos": ("bomberos", "jefe_area"),
             }
-            area = mapeo.get(reporte.tipo)
-            if area:
+            config = mapeo.get(reporte.tipo)
+            if config:
+                area, rol = config
                 responsable = User.query.filter_by(
                     area=area,
-                    rol_especifico='director',
+                    rol_especifico=rol,
                     is_active=True
                 ).first()
+                # Fallback a director si no hay jefe_area
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area=area,
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
         
         if not responsable or not responsable.telegram_id:
             logger.warning(f"⚠️ No se encontró responsable para notificar aceptación del reporte {reporte_id}")

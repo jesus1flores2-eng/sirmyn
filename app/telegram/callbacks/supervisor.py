@@ -4,8 +4,8 @@ Maneja los callbacks del supervisor de agua (validación de reparaciones)
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data
 from app.services.db_manager import DatabaseManager
 from app.models.report import Report, Assignment
 from app.models.user import User
@@ -13,7 +13,7 @@ from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
 from datetime import datetime
-from app.telegram.utils import user_data, limpiar_estado
+from app.telegram.common.utils import user_data, limpiar_estado
 from telegram import ReplyKeyboardRemove
 import logging
 
@@ -513,7 +513,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             from app.extensions import db
             from datetime import datetime
             from app.routes.telegram_routes import get_telegram_app
-            from app.telegram.keyboards import construir_botones_reporte
+            from app.telegram.common.keyboards import construir_botones_reporte
             
             reporte = Report.query.get(reporte_id)
             if not reporte:

@@ -1,40 +1,191 @@
 {% extends 'base.html' %}
 {% block content %}
-<h1>Gestión de Estados</h1>
 
-<!-- Crear nuevo estado -->
-<form method="POST" action="{{ url_for('admin.crear_status') }}">
-  <input type="text" name="descripcion" placeholder="Descripción" required>
-  <input type="color" name="color" value="#cccccc">
-  <button type="submit">Crear Estado</button>
-</form>
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                <i class="fas fa-clipboard-check me-2"></i>Gestión de Estados
+            </h1>
+            <p class="mb-0">Administra los estados de los reportes (Asignado, En proceso, Finalizado, etc.)</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
 
-<hr>
+    <!-- Tarjeta para crear nuevo estado -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-success text-white py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-plus-circle me-2"></i>Crear Nuevo Estado
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin.crear_status') }}">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="descripcion" class="form-label">Descripción del Estado *</label>
+                        <input type="text" name="descripcion" id="descripcion" class="form-control" required 
+                               placeholder="Ej: En revisión, Finalizado, Pendiente...">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="color" class="form-label">Color</label>
+                        <input type="color" name="color" id="color" class="form-control form-control-color" 
+                               value="#cccccc" title="Elige un color para el estado">
+                    </div>
+                    <div class="col-md-3 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus me-2"></i>Crear Estado
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
 
-<!-- Listado de estados -->
-<table border="1">
-  <tr>
-    <th>ID</th>
-    <th>Descripción</th>
-    <th>Color</th>
-    <th>Acciones</th>
-  </tr>
-  {% for estado in estados %}
-  <tr>
-    <form method="POST" action="{{ url_for('admin.editar_status', id=estado.id) }}">
-      <td>{{ estado.id }}</td>
-      <td><input type="text" name="descripcion" value="{{ estado.descripcion }}"></td>
-      <td><input type="color" name="color" value="{{ estado.color }}"></td>
-      <td>
-        <button type="submit">Actualizar</button>
-    </form>
-    <form method="POST" action="{{ url_for('admin.eliminar_status', id=estado.id) }}" style="display:inline;">
-        <button type="submit" onclick="return confirm('¿Estás seguro de eliminar?')">Eliminar</button>
-    </form>
-      </td>
-  </tr>
-  {% endfor %}
-</table>
+    <!-- Tabla de estados existentes -->
+    <div class="card border-0 shadow">
+        <div class="card-header bg-info text-white py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-list me-2"></i>Estados Existentes 
+                    <span class="badge bg-light text-dark ms-2">{{ estados|length }}</span>
+                </h6>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if estados %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Vista previa</th>
+                            <th>Descripción</th>
+                            <th>Color</th>
+                            <th style="width: 200px;" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for estado in estados %}
+                        <tr>
+                            <td><span class="badge bg-secondary fs-6">{{ estado.id }}</span></td>
+                            <td>
+                                <span class="badge fs-6" style="background-color: {{ estado.color or '#cccccc' }}; min-width: 120px;">
+                                    {{ estado.descripcion }}
+                                </span>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('admin.editar_status', id=estado.id) }}" class="row g-2 align-items-center">
+                                    <div class="col-md-7">
+                                        <input type="text" name="descripcion" class="form-control form-control-sm" 
+                                               value="{{ estado.descripcion }}" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <input type="color" name="color" class="form-control form-control-sm form-control-color" 
+                                               value="{{ estado.color or '#cccccc' }}">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button type="submit" class="btn btn-sm btn-primary" title="Actualizar">
+                                            <i class="fas fa-save"></i>
+                                        </button>
+                                    </div>
+                                </form>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div style="width: 30px; height: 30px; border-radius: 6px; background-color: {{ estado.color or '#cccccc' }}; border: 2px solid #ddd;"></div>
+                                    <code class="small">{{ estado.color or '#cccccc' }}</code>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEliminarEstado{{ estado.id }}"
+                                        title="Eliminar estado">
+                                    <i class="fas fa-trash-alt"></i> Eliminar
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">No hay estados registrados</h4>
+                <p class="text-muted">Crea tu primer estado usando el formulario superior.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
-<a href="{{ url_for('admin.dashboard') }}">← Volver al Dashboard</a>
+<!-- ============================================================ -->
+<!-- MODALES PARA ELIMINAR -->
+<!-- ============================================================ -->
+{% for estado in estados %}
+<div class="modal fade" id="modalEliminarEstado{{ estado.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Eliminar Estado</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger d-flex align-items-center">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div>
+                        <strong>¡ADVERTENCIA!</strong> Esta acción no se puede deshacer.
+                    </div>
+                </div>
+                <p>¿Estás seguro de eliminar el estado?</p>
+                <div class="card border-danger">
+                    <div class="card-body text-center">
+                        <span class="badge fs-5 px-4 py-2" style="background-color: {{ estado.color or '#cccccc' }};">
+                            {{ estado.descripcion }}
+                        </span>
+                    </div>
+                </div>
+                <p class="mt-3 text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Los reportes que usen este estado quedarán sin estado asignado.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_status', id=estado.id) }}" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Eliminar Definitivamente
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Inicializar tooltips de Bootstrap
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+
+<style>
+.form-control-color {
+    max-width: 80px;
+    padding: 0.375rem;
+    cursor: pointer;
+}
+</style>
 {% endblock %}

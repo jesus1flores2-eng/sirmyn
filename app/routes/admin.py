@@ -422,6 +422,7 @@ def gestionar_cuadrillas():
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role', 'cuadrilla')
+        rol_especifico = request.form.get('rol_especifico') or role
         area = request.form.get('area')
         team_id = request.form.get('team_id') or None
         telegram_id = request.form.get('telegram_id') or None
@@ -438,6 +439,7 @@ def gestionar_cuadrillas():
             nombre=nombre,
             username=username,
             role=role,
+            rol_especifico=rol_especifico,
             area=area,
             team_id=team_id if team_id else None,
             telegram_id=telegram_id if telegram_id else None
@@ -445,7 +447,7 @@ def gestionar_cuadrillas():
         nuevo_usuario.set_password(password)
         db.session.add(nuevo_usuario)
         db.session.commit()
-        flash(f'Usuario {username} creado exitosamente como {role}.', 'success')
+        flash(f'Usuario {username} creado exitosamente como {role} ({rol_especifico}).', 'success')
         return redirect(url_for('admin.gestionar_cuadrillas'))
 
     usuarios = User.query.all()
@@ -469,6 +471,7 @@ def actualizar_usuario(user_id):
         username = request.form.get('username')
         password = request.form.get('password')
         role = request.form.get('role')
+        rol_especifico = request.form.get('rol_especifico') or role
         area = request.form.get('area')
         team_id = request.form.get('team_id')
         telegram_id = request.form.get('telegram_id')
@@ -490,6 +493,7 @@ def actualizar_usuario(user_id):
         usuario.nombre = nombre
         usuario.username = username
         usuario.role = role
+        usuario.rol_especifico = rol_especifico
         usuario.area = area if area and area.strip() else None
         if password and password.strip():
             usuario.set_password(password)
@@ -985,37 +989,51 @@ def test_notificaciones_reporte(reporte_id):
         
         # ========== OTROS DEPARTAMENTOS ==========
         else:
-            logger.info(f"🏗️ [TEST] Reporte de {tipo_reporte} - Buscando director...")
-            mapeo_tipo_a_area = {
-                "Aseo público": "aseo",
-                "Alumbrado público": "alumbrado", 
-                "Parques y jardines": "parques",
-                "Ecología": "ecologia",
-                "Seguridad pública": "seguridad",
-                "Obras públicas": "obra",
-                "Bomberos": "bomberos"
+            logger.info(f"🏗️ [TEST] Reporte de {tipo_reporte} - Buscando responsable...")
+            
+            CONFIG_DEPARTAMENTOS = {
+                "Aseo público": ("jefe_area", "aseo"),
+                "Alumbrado público": ("jefe_area", "alumbrado"),
+                "Parques y jardines": ("jefe_area", "parques"),
+                "Ecología": ("jefe_area", "ecologia"),
+                "Seguridad pública": ("jefe_area", "seguridad"),
+                "Obras públicas": ("jefe_area", "obras"),
+                "Bomberos": ("jefe_area", "bomberos"),
             }
-            area = mapeo_tipo_a_area.get(tipo_reporte)
-            if area:
-                director = User.query.filter_by(
-                    area=area, 
-                    rol_especifico='director', 
+            
+            config = CONFIG_DEPARTAMENTOS.get(tipo_reporte)
+            
+            if config:
+                rol_principal, area = config
+                # Buscar rol principal
+                responsable = User.query.filter_by(
+                    area=area,
+                    rol_especifico=rol_principal,
                     is_active=True
                 ).first()
-                if director and director.telegram_id:
+                
+                # Fallback a director
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area=area,
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                
+                if responsable and responsable.telegram_id:
                     try:
-                        telegram_id = int(director.telegram_id)
-                        logger.info(f"👨‍💼 [TEST] Enviando a Director {area}: {director.nombre}")
+                        telegram_id = int(responsable.telegram_id)
+                        logger.info(f"👷 [TEST] Enviando a {rol_principal} de {area}: {responsable.nombre}")
                         async def enviar():
                             return await notificar_director_nuevo_reporte(reporte_id, telegram_id, tipo_reporte)
                         success = asyncio.run(enviar())
-                        resultados.append(f"✅ Director {area.title()} ({director.nombre}): {'ENVIADO' if success else 'ERROR'}")
+                        resultados.append(f"✅ {rol_principal} {area.title()} ({responsable.nombre}): {'ENVIADO' if success else 'ERROR'}")
                     except Exception as e:
-                        resultados.append(f"❌ Director {area.title()}: {str(e)[:50]}")
+                        resultados.append(f"❌ {rol_principal} {area.title()}: {str(e)[:50]}")
                 else:
-                    resultados.append(f"⚠️ Director {area.title()}: {'No encontrado' if not director else 'Sin Telegram ID'}")
+                    resultados.append(f"⚠️ {rol_principal} {area.title()}: {'No encontrado' if not responsable else 'Sin Telegram ID'}")
             else:
-                resultados.append(f"⚠️ Área no mapeada para tipo: {tipo_reporte}")
+                resultados.append(f"⚠️ Departamento no configurado: {tipo_reporte}")
         
         # ========== MOSTRAR RESULTADOS ==========
         if resultados:
@@ -1038,7 +1056,7 @@ def test_notificaciones_reporte(reporte_id):
 @login_required
 @admin_required
 def test_notificar_inicial(reporte_id):
-    """Prueba: Notificación inicial (usuario -> director/jefe técnico) - CORREGIDO SIN DUPLICADOS"""
+    """Prueba: Notificación inicial - busca Jefe de Área o Director según departamento"""
     try:
         logger.info(f"🔔 [TEST] Notificación inicial para reporte #{reporte_id}")
         
@@ -1047,36 +1065,46 @@ def test_notificar_inicial(reporte_id):
         
         reporte = Report.query.get_or_404(reporte_id)
         
-        # DETERMINAR RESPONSABLE PRINCIPAL (el que recibe mensaje COMPLETO)
-        if reporte.tipo in ["Agua potable", "Drenaje"]:
-            responsable = User.query.filter_by(
-                area='agua',
-                rol_especifico='jefe_area_tecnica',
-                is_active=True
-            ).first()
-        else:
-            mapeo = {
-                "Aseo público": "aseo",
-                "Alumbrado público": "alumbrado",
-                "Parques y jardines": "parques",
-                "Ecología": "ecologia",
-                "Seguridad pública": "seguridad",
-                "Obras públicas": "obras",
-                "Bomberos": "bomberos"
-            }
-            area = mapeo.get(reporte.tipo)
+        # Configuración por departamento: (rol_principal, area)
+        CONFIG_DEPARTAMENTOS = {
+            "Agua potable": ("jefe_area_tecnica", "agua"),
+            "Drenaje": ("jefe_area_tecnica", "agua"),
+            "Aseo público": ("jefe_area", "aseo"),
+            "Alumbrado público": ("jefe_area", "alumbrado"),
+            "Parques y jardines": ("jefe_area", "parques"),
+            "Ecología": ("jefe_area", "ecologia"),
+            "Seguridad pública": ("jefe_area", "seguridad"),
+            "Obras públicas": ("jefe_area", "obras"),
+            "Bomberos": ("jefe_area", "bomberos"),
+        }
+        
+        config = CONFIG_DEPARTAMENTOS.get(reporte.tipo)
+        
+        if config:
+            rol_principal, area = config
+            # Buscar primero el rol principal (jefe_area, jefe_area_tecnica, etc.)
             responsable = User.query.filter_by(
                 area=area,
-                rol_especifico='director',
+                rol_especifico=rol_principal,
                 is_active=True
-            ).first() if area else None
-        
-        if not responsable or not responsable.telegram_id:
-            flash(f'❌ No se encontró responsable principal para {reporte.tipo}', 'error')
+            ).first()
+            
+            # Si no encuentra el rol principal, buscar director como fallback
+            if not responsable:
+                responsable = User.query.filter_by(
+                    area=area,
+                    rol_especifico='director',
+                    is_active=True
+                ).first()
+        else:
+            flash(f'❌ Departamento no configurado: {reporte.tipo}', 'error')
             return redirect(url_for('admin.dashboard'))
         
-        # LLAMAR UNA SOLA VEZ a notificar_director_nuevo_reporte
-        # Esta función ya envía a Jefe Técnico (completo) y Director (informativo) automáticamente
+        if not responsable or not responsable.telegram_id:
+            flash(f'❌ No se encontró responsable para {reporte.tipo} (área: {area})', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # Enviar notificación
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         success = loop.run_until_complete(
@@ -1089,7 +1117,7 @@ def test_notificar_inicial(reporte_id):
         loop.close()
         
         if success:
-            flash(f'✅ Notificación inicial enviada a {responsable.nombre} (y a Director si aplica)', 'success')
+            flash(f'✅ Notificación enviada a {responsable.nombre} ({rol_principal} de {area})', 'success')
         else:
             flash('❌ Error al enviar notificación', 'error')
         

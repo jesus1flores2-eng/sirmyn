@@ -1,351 +1,412 @@
 """
-Maneja el flujo de rechazo de usuario (simplificado)
+Maneja los callbacks de rechazo del usuario
 """
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data, limpiar_estado
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data, limpiar_estado
 from app.services.db_manager import DatabaseManager
 from app.models.report import Report, Assignment
 from app.models.user import User
+from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
-from app.telegram.keyboards import construir_botones_reporte
 from datetime import datetime
 import logging
 
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# MANEJAR SELECCIÓN DE MOTIVO DE RECHAZO (NUEVO PATRÓN)
-# ============================================================
-
 async def rechazo_motivo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Maneja la selección de un motivo de rechazo por parte del usuario.
-    Ahora usa el patrón 'usuario_rechazo_motivo_*' para evitar conflictos.
-    """
+    """Maneja la selección de motivo de rechazo del usuario"""
     query = update.callback_query
     try:
         await query.answer()
     except:
         pass
-    
+
     callback_data = query.data
-    logger.info(f"🔍 [RECHAZO USUARIO] Callback recibido: {callback_data}")
-    
+    user_id = query.from_user.id
+
     if not callback_data.startswith('usuario_rechazo_motivo_'):
-        logger.warning(f"⚠️ Callback no coincide con el patrón esperado: {callback_data}")
         return
-    
-    # Extraer reporte_id y motivo_key
-    partes = callback_data.split('_')
-    logger.info(f"🔍 Partes del callback: {partes}")
-    
-    # El reporte_id es el último elemento
-    try:
-        reporte_id = int(partes[-1])
-    except ValueError:
-        logger.error(f"❌ No se pudo extraer el reporte_id de: {partes}")
-        await query.answer("❌ Error: ID de reporte inválido", show_alert=True)
-        return
-    
-    # El motivo está entre 'usuario_rechazo_motivo_' y el ID
-    # Ejemplo: usuario_rechazo_motivo_problema_persiste_123
-    # partes = ['usuario', 'rechazo', 'motivo', 'problema', 'persiste', '123']
-    # motivo_key = '_'.join(partes[3:-1]) -> 'problema_persiste'
-    if len(partes) >= 4:
-        motivo_key = '_'.join(partes[3:-1])
-    else:
-        logger.error(f"❌ Formato inesperado: {partes}")
-        await query.answer("❌ Error: formato de motivo inválido", show_alert=True)
-        return
-    
-    logger.info(f"🔍 Motivo extraído: {motivo_key} para reporte {reporte_id}")
-    
-    # Diccionario de motivos predefinidos
-    motivos_predefinidos = {
-        'problema_persiste': 'El problema persiste igual, no se resolvió nada.',
-        'reparacion_incompleta': 'La reparación está incompleta, faltan cosas por hacer.',
-        'no_termino_tapar': 'No terminaron de tapar el hueco / zanja.',
-        'causo_otro': 'La reparación causó otro problema adicional.'
-    }
-    
-    # Si es "otro", pedir texto personalizado
-    if motivo_key == 'otro':
-        user_data[query.from_user.id] = {
+
+    reporte_id = int(callback_data.split('_')[-1])
+
+    # Mapeo de callbacks a texto del motivo
+    motivo = None
+
+    # Motivos de Aseo
+    if "basura_incompleta" in callback_data:
+        motivo = "No recogieron toda la basura"
+    elif "no_paso_camion" in callback_data:
+        motivo = "No pasó el camión recolector"
+    elif "escombros" in callback_data:
+        motivo = "Dejaron escombros tirados"
+    elif "mal_olor" in callback_data:
+        motivo = "El mal olor persiste"
+    # Motivos de Alumbrado
+    elif "lampara_sigue_mal" in callback_data:
+        motivo = "La lámpara sigue sin funcionar"
+    elif "cables_sueltos" in callback_data:
+        motivo = "Los cables siguen sueltos/pelados"
+    elif "poste_danado" in callback_data:
+        motivo = "El poste sigue dañado"
+    # Motivos de Parques y Jardines
+    elif "no_podaron" in callback_data:
+        motivo = "No podaron correctamente"
+    elif "area_sucia" in callback_data:
+        motivo = "El área verde sigue sucia"
+    elif "no_regaron" in callback_data:
+        motivo = "No regaron las plantas"
+    elif "juegos_rotos" in callback_data:
+        motivo = "Los juegos siguen rotos"
+    # Motivos de Seguridad Pública
+    elif "sin_respuesta" in callback_data:
+        motivo = "No hubo respuesta policial"
+    elif "no_resuelto" in callback_data:
+        motivo = "No se resolvió el problema"
+    # Motivos de Bomberos
+    elif "incendio" in callback_data:
+        motivo = "El incendio no fue controlado"
+    elif "no_llego" in callback_data:
+        motivo = "No llegó la unidad de emergencia"
+    elif "falta_atencion" in callback_data:
+        motivo = "Falta atención en la emergencia"
+    # Motivos generales (Agua, Drenaje, etc.)
+    elif "problema_persiste" in callback_data:
+        motivo = "El problema persiste igual que antes"
+    elif "reparacion_incompleta" in callback_data:
+        motivo = "La reparación está incompleta"
+    elif "no_termino_tapar" in callback_data:
+        motivo = "No terminaron de tapar el área reparada"
+    elif "causo_otro" in callback_data:
+        motivo = "Causaron otro problema adicional"
+    elif "otro" in callback_data:
+        # Modo para escribir motivo personalizado
+        user_data[user_id] = {
             'modo_rechazo_usuario': True,
             'reporte_id': reporte_id,
-            'paso_actual': 'escribir_motivo'
+            'paso_actual': 'escribir_motivo',
+            'motivo_seleccionado': 'Otro motivo'
         }
         await query.edit_message_text(
-            text="✍️ *Escribe tu motivo de rechazo:*\n\n"
-                 "Describe por qué rechazas la reparación.\n"
-                 "(Máximo 200 caracteres)",
-            parse_mode=ParseMode.MARKDOWN
+            text="📝 *ESCRIBE TU MOTIVO*\n\n"
+                 "Por favor, describe detalladamente el motivo del rechazo:\n\n"
+                 "📌 *Tu comentario será enviado al responsable para mejorar el servicio.*",
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("↩️ Volver", callback_data=f"rech_volver_{reporte_id}")
+            ]])
         )
+        await query.answer("Escribe tu motivo", show_alert=False)
         return
-    
-    # Motivo predefinido
-    motivo = motivos_predefinidos.get(motivo_key, 'Motivo no especificado')
-    logger.info(f"✅ Motivo asignado: {motivo}")
-    
-    # Ejecutar rechazo con el motivo
-    await ejecutar_rechazo_usuario(query, context, reporte_id, motivo)
 
-
-# ============================================================
-# MANEJAR "OTRO MOTIVO" (TEXTO PERSONALIZADO)
-# ============================================================
-
-async def rechazo_otro_motivo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Recibe el texto personalizado del usuario cuando selecciona "OTRO MOTIVO".
-    """
-    user_id = update.effective_user.id
-    texto = update.message.text.strip()
-    
-    if not texto:
-        await update.message.reply_text("❌ El motivo no puede estar vacío. Escribe el motivo o usa /cancelar.")
+    if not motivo:
+        await query.answer("❌ Motivo no reconocido", show_alert=True)
         return
-    
-    # Verificar que esté en modo rechazo y reporte_id
-    datos = user_data.get(user_id, {})
-    reporte_id = datos.get('reporte_id')
-    
-    if not reporte_id:
-        await update.message.reply_text("❌ No se encontró el reporte. Usa /start para comenzar.")
-        limpiar_estado(user_id)
-        return
-    
-    # Ejecutar rechazo con el texto personalizado
-    # Simulamos un query para reutilizar la función
-    class FakeQuery:
-        def __init__(self, user_id):
-            self.from_user = type('obj', (object,), {'id': user_id})()
-        async def edit_message_text(self, *args, **kwargs):
-            pass
-        async def answer(self, *args, **kwargs):
-            pass
-    
-    fake_query = FakeQuery(user_id)
-    await ejecutar_rechazo_usuario(fake_query, context, reporte_id, texto)
+
+    # Guardar motivo y proceder a notificar
+    await procesar_rechazo_usuario(update, context, reporte_id, motivo, user_id)
 
 
-# ============================================================
-# EJECUTAR RECHAZO DE USUARIO (ACCIÓN PRINCIPAL)
-# ============================================================
-
-async def ejecutar_rechazo_usuario(query, context, reporte_id, motivo):
-    """
-    Ejecuta el rechazo del usuario: cambia estado a "En proceso" (ID 2), notifica a cuadrilla y responsable.
-    """
-    logger.info(f"🔧 [RECHAZO USUARIO] Iniciando ejecución para reporte {reporte_id} con motivo: {motivo}")
-    
+async def procesar_rechazo_usuario(update: Update, context: ContextTypes.DEFAULT_TYPE, reporte_id: int, motivo: str, user_id: int):
+    """Procesa el rechazo: notifica al responsable y cambia estado"""
     try:
         app = DatabaseManager.get_app()
         with app.app_context():
-            from app.services.notification_service import notificar_responsable_rechazo_usuario
-            
             reporte = Report.query.get(reporte_id)
             if not reporte:
-                await query.edit_message_text("❌ Reporte no encontrado.")
+                if update.callback_query:
+                    await update.callback_query.edit_message_text("❌ Reporte no encontrado.")
+                else:
+                    await update.message.reply_text("❌ Reporte no encontrado.")
                 return
-            
-            usuario_reportante = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
-            nombre_reportante = usuario_reportante.nombre if usuario_reportante else "Usuario reportante"
-            logger.info(f"👤 [RECHAZO USUARIO] Reportante: {nombre_reportante}")
-            
-            # Obtener la asignación actual
+
             asignacion = Assignment.query.filter_by(
                 report_id=reporte_id
             ).order_by(Assignment.timestamp.desc()).first()
-            
-            if not asignacion or not asignacion.team_id:
-                await query.edit_message_text("❌ No hay cuadrilla asignada a este reporte.")
+
+            if not asignacion:
+                if update.callback_query:
+                    await update.callback_query.edit_message_text("❌ No hay asignación para este reporte.")
                 return
-            
-            logger.info(f"📋 [RECHAZO USUARIO] Asignación encontrada ID {asignacion.id}, status actual: {asignacion.status_id}")
-            
-            # ⭐ CAMBIAR ESTADO A "En proceso" (ID 2)
-            estado_en_proceso = Status.query.get(2)
-            if not estado_en_proceso:
-                logger.error("❌ No se encontró el estado con ID 2 (En proceso)")
-                await query.edit_message_text("❌ Error: No se encontró el estado 'En proceso'.")
-                return
-            
-            logger.info(f"✅ [RECHAZO USUARIO] Estado 'En proceso' encontrado con ID {estado_en_proceso.id}")
-            
-            # Asignar el estado a la asignación
-            asignacion.status_id = estado_en_proceso.id
-            asignacion.observaciones = f"Rechazado por usuario {nombre_reportante} el {datetime.now().strftime('%d/%m/%Y %H:%M')}. Motivo: {motivo}"
+
+            # Cambiar estado a "Rechazado por usuario"
+            estado_rechazado = Status.query.filter_by(descripcion="Rechazado por usuario").first()
+            if not estado_rechazado:
+                estado_rechazado = Status(descripcion="Rechazado por usuario")
+                db.session.add(estado_rechazado)
+                db.session.commit()
+
+            asignacion.status_id = estado_rechazado.id
+            asignacion.observaciones = f"❌ Rechazado por usuario. Motivo: {motivo} - {datetime.now().strftime('%d/%m/%Y %H:%M')}"
             db.session.commit()
-            
-            logger.info(f"✅ [RECHAZO USUARIO] Estado cambiado a 'En proceso' (ID: {estado_en_proceso.id}) para reporte {reporte_id}")
-            logger.info(f"✅ [RECHAZO USUARIO] Asignación {asignacion.id} actualizada -> status_id {asignacion.status_id}")
-            
-            # ============================================================
-            # NOTIFICAR A LA CUADRILLA (CON MENSAJE COMPLETO Y BOTÓN REPARACIÓN)
-            # ============================================================
-            cuadrilla_id = asignacion.team_id
-            bot = context.bot
-            
-            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
-            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
-            
-            mensaje_base = (
-                f"🚨 *REPORTE RECHAZADO POR USUARIO - REQUIERE CORRECCIÓN*\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
-                f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
-                f"📞 *Reportante:* {reporte.reportante}\n"
-                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
-                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
-            )
-            
-            # Agregar evidencia si existe
-            if reporte.evidencia:
-                from app.services.notification_service import construir_enlace_evidencia
-                enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
-                mensaje_base += f"📎 *Evidencia:* {enlace}\n\n"
-            
-            # Agregar mapa si hay coordenadas
-            if reporte.latitud and reporte.longitud:
-                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
-                mensaje_base += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
-            
-            mensaje_base += (
-                f"❌ *RECHAZADO POR USUARIO*\n"
-                f"*Motivo:* {motivo}\n\n"
-                f"*📌 Acción requerida:* Corrige el trabajo y vuelve a subir evidencia.\n\n"
-                f"*📋 Acciones rápidas:*"
-            )
-            
-            # Notificar a la cuadrilla
-            usuarios_cuadrilla = User.query.filter_by(team_id=cuadrilla_id, is_active=True).all()
-            notificados = 0
-            for usuario in usuarios_cuadrilla:
-                if usuario.telegram_id:
-                    try:
-                        reply_markup = construir_botones_reporte(
-                            reporte_id,
-                            confirmado=True,
-                            problema_reportado=False,
-                            context=context,
-                            user_id=usuario.telegram_id
-                        )
-                        await bot.send_message(
-                            chat_id=int(usuario.telegram_id),
-                            text=mensaje_base,
-                            parse_mode=ParseMode.MARKDOWN,
-                            reply_markup=reply_markup,
-                            disable_web_page_preview=True
-                        )
-                        notificados += 1
-                        logger.info(f"✅ Rechazo enviado a {usuario.nombre}")
-                    except Exception as e:
-                        logger.error(f"❌ Error notificando a {usuario.nombre}: {e}")
-            
-            logger.info(f"📤 [RECHAZO USUARIO] Notificados {notificados} miembros de la cuadrilla")
-            
-            # ============================================================
-            # NOTIFICAR AL RESPONSABLE (SUPERVISOR/DIRECTOR)
-            # ============================================================
-            await notificar_responsable_rechazo_usuario(reporte_id, motivo, nombre_reportante)
-            
-            # ============================================================
-            # CONFIRMAR AL USUARIO
-            # ============================================================
-            await query.edit_message_text(
-                f"✅ *Rechazo enviado correctamente*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+
+            # Confirmar al usuario
+            mensaje_usuario = (
+                f"❌ *RECHAZO REGISTRADO*\n\n"
+                f"📋 *Reporte:* #{reporte_id}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
-                f"*📌 La cuadrilla ha sido notificada para corregir el trabajo.*\n"
-                f"*Recibirás una nueva notificación cuando la reparación sea reenviada.*",
-                parse_mode=ParseMode.MARKDOWN
+                f"*El responsable ha sido notificado.*\n"
+                f"Se tomarán las medidas necesarias para resolver el problema."
             )
-            
-            logger.info(f"✅ [RECHAZO USUARIO] Usuario {nombre_reportante} rechazó reporte #{reporte_id}, estado cambiado a 'En proceso' (ID 2)")
-            
+
+            if update.callback_query:
+                await update.callback_query.edit_message_text(
+                    mensaje_usuario,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            else:
+                await update.message.reply_text(
+                    mensaje_usuario,
+                    parse_mode=ParseMode.MARKDOWN
+                )
+
+            # Notificar al responsable según departamento
+            responsable = None
+            rol_nombre = "Responsable"
+
+            if reporte.tipo in ["Agua potable", "Drenaje"]:
+                responsable = User.query.filter_by(
+                    area='agua',
+                    rol_especifico='jefe_area_tecnica',
+                    is_active=True
+                ).first()
+                rol_nombre = "Jefe Técnico de Agua/Drenaje"
+            elif reporte.tipo == "Aseo público":
+                responsable = User.query.filter_by(
+                    area='aseo',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='aseo',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Aseo"
+            elif reporte.tipo == "Alumbrado público":
+                responsable = User.query.filter_by(
+                    area='alumbrado',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='alumbrado',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Alumbrado"
+            elif reporte.tipo == "Parques y jardines":
+                responsable = User.query.filter_by(
+                    area='parques',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='parques',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Parques"
+            elif reporte.tipo == "Ecología":
+                responsable = User.query.filter_by(
+                    area='ecologia',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='ecologia',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Ecología"
+            elif reporte.tipo == "Seguridad pública":
+                responsable = User.query.filter_by(
+                    area='seguridad',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='seguridad',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Seguridad"
+            elif reporte.tipo == "Obras públicas":
+                responsable = User.query.filter_by(
+                    area='obras',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='obras',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Obras"
+            elif reporte.tipo == "Bomberos":
+                responsable = User.query.filter_by(
+                    area='bomberos',
+                    rol_especifico='jefe_area',
+                    is_active=True
+                ).first()
+                if not responsable:
+                    responsable = User.query.filter_by(
+                        area='bomberos',
+                        rol_especifico='director',
+                        is_active=True
+                    ).first()
+                rol_nombre = "Jefe de Área de Bomberos"
+
+            if responsable and responsable.telegram_id:
+                try:
+                    calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+                    localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+
+                    mensaje_responsable = (
+                        f"🚨 *RECHAZO DE USUARIO - Reporte #{reporte.id}*\n\n"
+                        f"📋 *Folio:* #{reporte.id}\n"
+                        f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                        f"👤 *Reportante:* {reporte.reportante}\n"
+                        f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                        f"👷 *Cuadrilla:* {asignacion.team.nombre if asignacion.team else 'N/D'}\n\n"
+                        f"📝 *MOTIVO DEL RECHAZO:*\n_{motivo}_\n\n"
+                        f"*⚠️ ACCIÓN REQUERIDA:* Revisar y reasignar o corregir el trabajo."
+                    )
+
+                    # Notificar también a la cuadrilla con botones para subir evidencia
+                    if asignacion.team_id:
+                        from app.telegram.common.keyboards import construir_botones_reporte
+                        usuarios_cuadrilla = User.query.filter_by(
+                            team_id=asignacion.team_id,
+                            is_active=True
+                        ).all()
+
+                        for usuario_cuadrilla in usuarios_cuadrilla:
+                            if usuario_cuadrilla.telegram_id:
+                                try:
+                                    # Construir mensaje con datos del reporte
+                                    calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+                                    localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+                                    
+                                    mensaje_cuadrilla = (
+                                        f"❌ *REPORTE RECHAZADO POR EL USUARIO*\n"
+                                        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                                        f"📋 *Folio:* #{reporte.id}\n"
+                                        f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                                        f"📞 *Reportante:* {reporte.reportante}\n"
+                                        f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                                        f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
+                                        f"📝 *Motivo del rechazo:* {motivo}\n\n"
+                                        f"*📌 ACCIÓN REQUERIDA:* Corrige el trabajo y vuelve a subir evidencia.\n\n"
+                                        f"*📋 Acciones rápidas:*"
+                                    )
+                                    
+                                    # Solo botón de subir evidencia para corrección
+                                    keyboard_simple = [[
+                                        InlineKeyboardButton(
+                                            "🔧 Subir evidencia reparación",
+                                            callback_data=f"reparacion_{reporte_id}"
+                                        )
+                                    ]]
+                                    reply_markup = InlineKeyboardMarkup(keyboard_simple)
+                                    
+                                    await context.bot.send_message(
+                                        chat_id=int(usuario_cuadrilla.telegram_id),
+                                        text=mensaje_cuadrilla,
+                                        parse_mode=ParseMode.MARKDOWN,
+                                        reply_markup=reply_markup
+                                    )
+                                except Exception as e:
+                                    logger.error(f"❌ Error notificando a cuadrilla: {e}")
+
+                    await context.bot.send_message(
+                        chat_id=int(responsable.telegram_id),
+                        text=mensaje_responsable,
+                        parse_mode=ParseMode.MARKDOWN
+                    )
+                    logger.info(f"✅ {rol_nombre} {responsable.nombre} notificado sobre rechazo de reporte #{reporte_id}")
+                except Exception as e:
+                    logger.error(f"❌ Error notificando responsable: {e}")
+
+            logger.info(f"✅ Rechazo de usuario procesado para reporte #{reporte_id}: {motivo}")
+
     except Exception as e:
-        logger.error(f"❌ Error en ejecutar_rechazo_usuario: {e}", exc_info=True)
-        await query.edit_message_text("❌ Error al procesar el rechazo. Intenta nuevamente.")
-    
-    finally:
-        limpiar_estado(query.from_user.id)
+        logger.error(f"❌ Error en procesar_rechazo_usuario: {e}", exc_info=True)
+        try:
+            if update.callback_query:
+                await update.callback_query.edit_message_text("❌ Error al procesar el rechazo.")
+            else:
+                await update.message.reply_text("❌ Error al procesar el rechazo.")
+        except:
+            pass
 
-
-# ============================================================
-# MANEJAR VOLVER DESDE RECHAZO (BOTÓN "↩️ Volver")
-# ============================================================
 
 async def rechazo_volver_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """
-    Maneja el botón "↩️ Volver" en el flujo de rechazo del usuario.
-    Regresa al mensaje de validación original.
-    """
+    """Permite al usuario volver atrás desde el formulario de rechazo"""
     query = update.callback_query
-    await query.answer()
-    
+    try:
+        await query.answer()
+    except:
+        pass
+
     callback_data = query.data
+    user_id = query.from_user.id
+
     if not callback_data.startswith('rech_volver_'):
         return
-    
+
     reporte_id = int(callback_data.split('_')[-1])
-    user_id = query.from_user.id
-    
-    try:
-        app = DatabaseManager.get_app()
-        with app.app_context():
-            from app.models.team import Team
-            
-            reporte = Report.query.get(reporte_id)
-            if not reporte:
-                await query.edit_message_text("❌ Reporte no encontrado.")
-                limpiar_estado(user_id)
-                return
-            
-            # Obtener la asignación y la cuadrilla
-            asignacion = Assignment.query.filter_by(
-                report_id=reporte_id
-            ).order_by(Assignment.timestamp.desc()).first()
-            cuadrilla = Team.query.get(asignacion.team_id) if asignacion else None
-            
-            # ⭐ RECONSTRUIR EL MENSAJE DE VALIDACIÓN ORIGINAL
-            mensaje = f"""
-✅ *¡TU REPORTE HA SIDO ATENDIDO!*
 
-📋 *Folio:* #{reporte.id}
-📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
-🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
-👷 *Cuadrilla:* {cuadrilla.nombre if cuadrilla else 'N/D'}
+    # Volver a mostrar opciones de aceptar/rechazar
+    keyboard = [
+        [
+            InlineKeyboardButton("✅ Sí, está resuelto", callback_data=f"usuario_aceptar_{reporte_id}"),
+            InlineKeyboardButton("❌ No, persiste el problema", callback_data=f"usuario_rechazar_{reporte_id}")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
-*¿La reparación fue satisfactoria?*
+    await query.edit_message_text(
+        text="✅ *¡TU REPORTE HA SIDO ATENDIDO!*\n\n"
+             "*¿La reparación fue satisfactoria?*\n\n"
+             "⚠️ Tienes 48 horas para responder.",
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=reply_markup
+    )
+    await query.answer("↩️ Volviendo...", show_alert=False)
 
-⚠️ Tienes 48 horas para responder. Si no respondes, se considerará aceptada automáticamente.
-"""
-            keyboard = [
-                [
-                    InlineKeyboardButton("✅ Sí, está resuelto", callback_data=f"usuario_aceptar_{reporte.id}"),
-                    InlineKeyboardButton("❌ No, persiste el problema", callback_data=f"usuario_rechazar_{reporte.id}")
-                ]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await query.edit_message_text(
-                text=mensaje,
-                parse_mode=ParseMode.MARKDOWN,
-                reply_markup=reply_markup
-            )
-            
-            # ⭐ LIMPIAR ESTADO DE RECHAZO
-            limpiar_estado(user_id)
-            
-            await query.answer("↩️ Volviendo a la validación", show_alert=False)
-            logger.info(f"↩️ Usuario volvió desde rechazo al reporte {reporte_id}")
-            
-    except Exception as e:
-        logger.error(f"❌ Error en rechazo_volver_handler: {e}")
-        await query.answer("❌ Error al volver", show_alert=True)
+
+async def rechazo_otro_motivo_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Maneja cuando el usuario escribe su propio motivo de rechazo"""
+    user_id = update.effective_user.id
+    motivo = update.message.text.strip()
+
+    if user_id not in user_data or not user_data[user_id].get('modo_rechazo_usuario'):
+        return
+
+    reporte_id = user_data[user_id].get('reporte_id')
+
+    if not reporte_id:
+        await update.message.reply_text("❌ No se encontró el reporte.")
+        limpiar_estado(user_id)
+        return
+
+    # Procesar rechazo con el motivo personalizado
+    await procesar_rechazo_usuario(update, context, reporte_id, motivo, user_id)
+
+    # Limpiar estado
+    if user_id in user_data:
+        user_data[user_id].pop('modo_rechazo_usuario', None)
+        user_data[user_id].pop('reporte_id', None)
+        user_data[user_id].pop('paso_actual', None)
+        user_data[user_id].pop('motivo_seleccionado', None)

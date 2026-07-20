@@ -1,10 +1,12 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
-from app.telegram.states import *
-from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
+from app.telegram.emergencias.handlers import emergencia_start
 import logging, time, asyncio
 
 logger = logging.getLogger(__name__)
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("🔴🔴🔴 START EJECUTADO 🔴🔴🔴")
@@ -12,14 +14,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = user.id
     limpiar_estado(user_id)
     nombre_telegram = user.first_name or user.username or "Usuario"
-    
+
     user_data[user_id] = {
         "nombre_telegram": nombre_telegram,
         "user_id": user_id,
         "telegram_username": user.username,
         "_timestamp": time.time()
     }
-    
+
     mensaje = (
         "🏛️ *Sistema Integral de Reportes Municipales y Notificaciones*\n"
         "*SIRMYN*\n\n"
@@ -34,12 +36,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "👉 https://municipio.gob.mx/aviso-de-privacidad/\n\n"
         "*¿Aceptas continuar?*"
     )
-    
+
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton("✅ Aceptar", callback_data="aceptar_privacidad"),
          InlineKeyboardButton("❌ No aceptar", callback_data="rechazar_privacidad")]
     ])
-    
+
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=mensaje,
@@ -54,7 +56,7 @@ async def manejar_aceptacion(update: Update, context: ContextTypes.DEFAULT_TYPE)
     query = update.callback_query
     await query.answer()
     user_id = update.effective_user.id
-    
+
     if query.data == "rechazar_privacidad":
         await query.edit_message_text(
             "❌ *Lamentamos no poder ayudarle*\n\n"
@@ -65,24 +67,24 @@ async def manejar_aceptacion(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         limpiar_estado(user_id)
         return ConversationHandler.END
-    
+
     nombre_capturado = user_data[user_id].get("nombre_telegram", "Usuario")
     user_data[user_id]["nombre"] = nombre_capturado
-    
+
     await query.edit_message_text(
         f"✅ *Aceptación registrada*\n\n"
         f"*Bienvenido, {nombre_capturado}* al sistema de reportes municipal.",
         parse_mode="Markdown"
     )
     await asyncio.sleep(1)
-    
+
     keyboard = [
         ["📋 REPORTE NORMAL", "🚨 EMERGENCIA"],
         ["📊 CONSULTAR REPORTE"],
         ["❌ CANCELAR"]
     ]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-    
+
     mensaje_menu = (
         f"🤖 *Estimado - {nombre_capturado}*\n\n"
         f"*Seleccione una opción:*\n\n"
@@ -91,7 +93,7 @@ async def manejar_aceptacion(update: Update, context: ContextTypes.DEFAULT_TYPE)
         f"• 📊 CONSULTAR REPORTE: Ver estatus de reporte existente\n"
         f"• ❌ CANCELAR: Salir del sistema"
     )
-    
+
     await context.bot.send_message(
         chat_id=user_id,
         text=mensaje_menu,
@@ -100,11 +102,12 @@ async def manejar_aceptacion(update: Update, context: ContextTypes.DEFAULT_TYPE)
     )
     return MENU_PRINCIPAL
 
+
 async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("🟢 MENU_PRINCIPAL_HANDLER EJECUTADO")
     user_id = update.effective_user.id
     opcion = update.message.text.strip()
-    
+
     if opcion == "❌ CANCELAR":
         await update.message.reply_text(
             "Operación cancelada. Use /start para comenzar de nuevo.",
@@ -112,16 +115,17 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
         )
         limpiar_estado(user_id)
         return ConversationHandler.END
-    
+
     elif opcion == "📋 REPORTE NORMAL":
         nombre = user_data[user_id].get("nombre_telegram", "Usuario")
         user_data[user_id]["nombre"] = nombre
-        
+
         keyboard = [
             ["1️⃣ Agua potable", "2️⃣ Drenaje"],
             ["3️⃣ Aseo público", "4️⃣ Alumbrado público"],
             ["5️⃣ Parques y jardines", "6️⃣ Ecología"],
-            ["7️⃣ Obra pública", "8️⃣ Checar un reporte"]
+            ["7️⃣ Seguridad pública", "8️⃣ Obras públicas"],
+            ["9️⃣ Bomberos", "🔟 Checar un reporte"]
         ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(
@@ -130,30 +134,17 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
             reply_markup=reply_markup
         )
         return TIPO
-    
+
     elif opcion == "🚨 EMERGENCIA":
-        bot_username = "SIRMYNEmergenciasBot"
-        enlace_directo = f"https://t.me/{bot_username}?start=redirigido"
-        await update.message.reply_text(
-            f"🚨 *EMERGENCIA REPORTADA*\n\n"
-            f"Para atención inmediata:\n\n"
-            f"🔗 [👉 PRESIONA AQUÍ para iniciar tu reporte de emergencia]({enlace_directo})",
-            parse_mode="Markdown",
-            disable_web_page_preview=False,
-            reply_markup=ReplyKeyboardRemove()
-        )
-        keyboard = [["↩️ VOLVER AL MENÚ"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
-        await update.message.reply_text("¿Deseas volver al menú principal?", reply_markup=reply_markup)
-        return MENU_PRINCIPAL
-    
+        return await emergencia_start(update, context)
+
     elif opcion == "📊 CONSULTAR REPORTE":
         await update.message.reply_text(
             "Ingresa el número de folio de tu reporte:",
             reply_markup=ReplyKeyboardRemove()
         )
         return CONSULTA_ID
-    
+
     elif opcion == "↩️ VOLVER AL MENÚ":
         nombre = user_data[user_id].get("nombre_telegram", "Usuario")
         keyboard = [
@@ -169,7 +160,7 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
             reply_markup=reply_markup
         )
         return MENU_PRINCIPAL
-    
+
     else:
         await update.message.reply_text(
             "❌ Opción no reconocida. Usa /start para comenzar de nuevo.",

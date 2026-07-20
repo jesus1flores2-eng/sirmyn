@@ -1,24 +1,66 @@
-#app/telegram/handlers/confirmacion.py
-from telegram import Update, ReplyKeyboardRemove
+import logging
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import ContextTypes, ConversationHandler
-from app.telegram.states import *
-from app.telegram.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
+from telegram.constants import ParseMode
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
 from app.services.db_manager import DatabaseManager
 from app.services.cloudinary_service import subir_archivo
-import logging
-import os
 from datetime import datetime
+import os
 
 logger = logging.getLogger(__name__)
 
+
+# ============================================================
+# HANDLER: ENTRE CALLES
+# ============================================================
+
+async def entre_calles_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    actualizar_timestamp_usuario(user_id)
+    user_data[user_id]["entre_calles"] = update.message.text
+
+    await update.message.reply_text(
+        "Descríbeme un poco el problema:",
+        reply_markup=ReplyKeyboardRemove()
+    )
+    return DESCRIPCION
+
+
+# ============================================================
+# HANDLER: DESCRIPCIÓN
+# ============================================================
+
+async def descripcion_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    actualizar_timestamp_usuario(user_id)
+    user_data[user_id]["descripcion"] = update.message.text
+
+    keyboard = [["📸 Subir foto/video", "➡️ Omitir evidencia"]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+
+    await update.message.reply_text(
+        "📸 ¿Deseas subir una foto o video del problema?\n"
+        "Puedes enviar la imagen/video directamente o presionar 'Omitir evidencia' para continuar.",
+        reply_markup=reply_markup
+    )
+    return EVIDENCIA
+
+
+# ============================================================
+# HANDLER: CONFIRMACIÓN (GUARDADO COMPLETO)
+# ============================================================
+
 async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Maneja la confirmación del reporte y guarda en BD"""
     user_id = update.effective_user.id
     actualizar_timestamp_usuario(user_id)
     opcion = update.message.text.lower()
-    
+
     if opcion in ["confirmar", "✅ confirmar", "si", "sí"]:
         datos = user_data[user_id]
-        
+
         try:
             app = DatabaseManager.get_app()
             with app.app_context():
@@ -27,13 +69,11 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 from app.models.status import Status
                 from app.models.user import User
                 from app.extensions import db
-                
-                # ============================================================
-                # 🎯 OBTENER COORDENADAS (PRIORIDAD: GPS > OSM)
-                # ============================================================
+
+                # OBTENER COORDENADAS (PRIORIDAD: GPS > OSM)
                 latitud = datos.get("latitud")
                 longitud = datos.get("longitud")
-                
+
                 if latitud is None or longitud is None:
                     try:
                         from app.services.geocoding import obtener_coordenadas_osm
@@ -48,10 +88,8 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                         latitud, longitud = None, None
                 else:
                     logger.info(f"📍 Usando coordenadas GPS del usuario: {latitud}, {longitud}")
-                
-                # ============================================================
+
                 # CREAR REPORTE
-                # ============================================================
                 nuevo_reporte = Report(
                     telefono=str(user_id),
                     reportante=datos["nombre"],
@@ -69,32 +107,29 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     latitud=latitud,
                     longitud=longitud
                 )
-                
+
                 db.session.add(nuevo_reporte)
                 db.session.commit()
-                
-                # ============================================================
-                # ⭐ PROCESAR EVIDENCIA CON CLOUDINARY (CON FALLBACK LOCAL)
-                # ============================================================
+
+                # PROCESAR EVIDENCIA CON CLOUDINARY (CON FALLBACK LOCAL)
                 if "evidencia_filename" in datos:
                     extension = datos["evidencia_filename"].split(".")[-1]
                     nuevo_nombre = f"reporte_{nuevo_reporte.id}.{extension}"
-                    
-                    from app.telegram.keyboards import obtener_carpeta_departamento
+
+                    from app.telegram.common.keyboards import obtener_carpeta_departamento
                     carpeta_departamento = obtener_carpeta_departamento(datos.get("tipo", "general"))
                     carpeta_completa = os.path.join("uploads", carpeta_departamento)
                     os.makedirs(carpeta_completa, exist_ok=True)
-                    
+
                     origen = os.path.join("uploads", datos["evidencia_filename"])
                     destino = os.path.join(carpeta_completa, nuevo_nombre)
-                    
-                    # ⭐ Intentar subir a Cloudinary con public_id personalizado
+
+                    # Intentar subir a Cloudinary
                     public_id = f"reporte_{nuevo_reporte.id}"
                     url = subir_archivo(origen, folder=carpeta_departamento, public_id=public_id)
                     if url:
                         nuevo_reporte.evidencia = url
                         logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
-                        # Eliminar archivo temporal (ya no lo necesitamos)
                         try:
                             os.remove(origen)
                         except:
@@ -107,16 +142,14 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                             logger.info(f"✅ Evidencia guardada localmente: {nuevo_reporte.evidencia}")
                         except Exception as e:
                             logger.error(f"❌ Error renombrando evidencia: {e}")
-                            nuevo_reporte.evidencia = nuevo_nombre  # Último intento
-                    
+                            nuevo_reporte.evidencia = nuevo_nombre
+
                     db.session.commit()
-                
-                # ============================================================
+
                 # ASIGNACIÓN INICIAL
-                # ============================================================
                 equipo_sin_asignar = Team.query.filter_by(nombre="Sin asignar").first()
                 status_sin_asignar = Status.query.filter_by(descripcion="Sin Asignar").first()
-                
+
                 if equipo_sin_asignar and status_sin_asignar:
                     asignacion_inicial = Assignment(
                         report_id=nuevo_reporte.id,
@@ -126,20 +159,16 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     )
                     db.session.add(asignacion_inicial)
                     db.session.commit()
-                
-                # ============================================================
+
                 # NOTIFICAR A RESPONSABLES
-                # ============================================================
                 from app.services.notification_service import notificar_director_nuevo_reporte
                 await notificar_director_nuevo_reporte(
                     reporte_id=nuevo_reporte.id,
                     telegram_id=user_id,
                     tipo_reporte=datos["tipo"]
                 )
-                
-                # ============================================================
+
                 # CONFIRMACIÓN AL USUARIO
-                # ============================================================
                 await update.message.reply_text(
                     f"✅ ¡Gracias {datos['nombre']}!\n\n"
                     f"📋 *Tu reporte ha sido registrado con el folio:*\n"
@@ -154,7 +183,7 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     parse_mode="Markdown",
                     reply_markup=ReplyKeyboardRemove()
                 )
-                
+
         except Exception as e:
             logger.error(f"❌ Error en confirmacion: {e}", exc_info=True)
             await update.message.reply_text(
@@ -166,6 +195,6 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
             "❌ Reporte cancelado. Usa /start para comenzar de nuevo.",
             reply_markup=ReplyKeyboardRemove()
         )
-    
+
     limpiar_estado(user_id)
     return ConversationHandler.END

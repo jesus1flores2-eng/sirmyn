@@ -1,6 +1,6 @@
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
-from app.telegram.utils import user_data, get_saludo
+from app.telegram.common.utils import user_data, get_saludo
 from app.telegram.dicts import TIPOS_DEPENDENCIAS
 import logging
 
@@ -99,17 +99,21 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
     """
     user_id = update.effective_user.id
     
+    # Las fotos/videos NO se procesan aquí, las manejan los ConversationHandler
+    if update.message and (update.message.photo or update.message.video):
+        return
+    
     if not update.message or not update.message.text:
         return
     
     texto = update.message.text
     logger.info(f"📱 Router texto: user_id={user_id}, texto='{texto[:50]}...'")
-    
-    # ⭐ 1. MODO REPARACIÓN - SIMPLE
-    if user_id in user_data and user_data[user_id].get('modo_reparacion'):
-        logger.info(f"🔧 Router: Enviando a manejar_modo_reparacion para user_id {user_id}")
-        from .reparacion import manejar_modo_reparacion
-        await manejar_modo_reparacion(update, context, user_id)
+        
+    # ⭐ 1.4 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE ASEO)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_aseo'):
+        logger.info(f"❌ Router: Jefe de Aseo {user_id} enviando motivo de rechazo")
+        from app.telegram.aseo.callbacks import manejar_motivo_rechazo_jefe_aseo
+        await manejar_motivo_rechazo_jefe_aseo(update, context)
         return
         
     # ⭐ 1.5 MODO ESPERANDO MOTIVO DE RECHAZO (SUPERVISOR)
@@ -118,7 +122,48 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
         from app.telegram.callbacks.supervisor import manejar_motivo_rechazo_supervisor
         await manejar_motivo_rechazo_supervisor(update, context)
         return
-        
+
+    # ⭐ 1.7 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE ALUMBRADO)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_alumbrado'):
+        logger.info(f"❌ Router: Jefe de Alumbrado {user_id} enviando motivo de rechazo")
+        from app.telegram.alumbrado.callbacks import manejar_motivo_rechazo_jefe_alumbrado
+        await manejar_motivo_rechazo_jefe_alumbrado(update, context)
+        return
+
+    # ⭐ 1.8 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE PARQUES)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_parques'):
+        logger.info(f"❌ Router: Jefe de Parques {user_id} enviando motivo de rechazo")
+        from app.telegram.parques.callbacks import manejar_motivo_rechazo_jefe_parques
+        await manejar_motivo_rechazo_jefe_parques(update, context)
+        return
+
+    # ⭐ 1.9 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE ECOLOGÍA)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_ecologia'):
+        logger.info(f"❌ Router: Jefe de Ecología {user_id} enviando motivo de rechazo")
+        from app.telegram.ecologia.callbacks import manejar_motivo_rechazo_jefe_ecologia
+        await manejar_motivo_rechazo_jefe_ecologia(update, context)
+        return
+
+    # ⭐ 2.0 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE SEGURIDAD)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_seguridad'):
+        logger.info(f"❌ Router: Jefe de Seguridad {user_id} enviando motivo de rechazo")
+        from app.telegram.seguridad.callbacks import manejar_motivo_rechazo_jefe_seguridad
+        await manejar_motivo_rechazo_jefe_seguridad(update, context)
+        return
+
+    # ⭐ 2.1 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE OBRAS)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_obras'):
+        logger.info(f"❌ Router: Jefe de Obras {user_id} enviando motivo de rechazo")
+        from app.telegram.obras.callbacks import manejar_motivo_rechazo_jefe_obras
+        await manejar_motivo_rechazo_jefe_obras(update, context)
+        return
+
+    # ⭐ 2.2 MODO ESPERANDO MOTIVO DE RECHAZO (JEFE DE BOMBEROS)
+    if user_id in user_data and user_data[user_id].get('modo_esperando_motivo_rechazo_bomberos'):
+        logger.info(f"❌ Router: Jefe de Bomberos {user_id} enviando motivo de rechazo")
+        from app.telegram.bomberos.callbacks import manejar_motivo_rechazo_jefe_bomberos
+        await manejar_motivo_rechazo_jefe_bomberos(update, context)
+        return
     
     # 2. MODO COMENTARIO RECHAZO (DIRECTOR)
     if user_id in user_data and user_data[user_id].get('modo_comentario_rechazo'):
@@ -158,7 +203,6 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
             await rechazo_otro_motivo_handler(update, context)
             return
         else:
-            # Si no está en paso 'escribir_motivo', pero está en modo rechazo, mostrar mensaje de ayuda
             await update.message.reply_text(
                 "❌ Para rechazar, selecciona un motivo de la lista o escribe tu propio motivo.\n"
                 "Si deseas cancelar, usa /cancelar."

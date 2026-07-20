@@ -2,10 +2,10 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
-from app.telegram.states import *
-from app.telegram.utils import user_data
+from app.telegram.common.states import *
+from app.telegram.common.utils import user_data
 from app.services.db_manager import DatabaseManager
-from app.telegram.keyboards import construir_botones_reporte
+from app.telegram.common.keyboards import construir_botones_reporte
 from app.models.report import Report, Assignment, Localidad, Calle
 from app.models.user import User
 from app.models.team import Team

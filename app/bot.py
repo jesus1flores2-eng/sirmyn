@@ -1,3 +1,4 @@
+# app/bot.py
 """
 Servicio principal del bot de emergencias SIRMYN - VERSIÓN CORREGIDA
 """

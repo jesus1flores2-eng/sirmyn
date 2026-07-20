@@ -1,7 +1,7 @@
 from telegram import Update, ReplyKeyboardRemove
 from telegram.ext import ContextTypes
-from app.telegram.states import NOMBRE
-from app.telegram.utils import user_data
+from app.telegram.common.states import NOMBRE
+from app.telegram.common.utils import user_data
 
 async def nombre_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id

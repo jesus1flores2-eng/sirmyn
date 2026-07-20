@@ -1,7 +1,7 @@
 from telegram import Update
 from telegram.ext import ContextTypes
 from app.services.db_manager import DatabaseManager
-from app.telegram.utils import actualizar_timestamp_usuario, user_data
+from app.telegram.common.utils import actualizar_timestamp_usuario, user_data
 from datetime import datetime
 import logging
 
