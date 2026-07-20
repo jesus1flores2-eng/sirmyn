@@ -113,11 +113,26 @@ async def mostrar_cuadrillas_para_asignar_urgente(query, reporte_id: int):
                 await query.edit_message_text("❌ Reporte no encontrado.")
                 return
             
-            # Obtener todas las cuadrillas excepto "Sin asignar"
-            cuadrillas = Team.query.filter(
-                Team.nombre != "Sin asignar"
-            ).order_by(Team.nombre).all()
-            
+            # Mapear tipo de reporte a área
+            mapeo = {
+                "Agua potable": "agua", "Drenaje": "agua",
+                "Aseo público": "aseo", "Alumbrado público": "alumbrado",
+                "Parques y jardines": "parques", "Ecología": "ecologia",
+                "Seguridad pública": "seguridad", "Obras públicas": "obras",
+                "Bomberos": "bomberos"
+            }
+            area = mapeo.get(reporte.tipo, None)
+
+            if area:
+                cuadrillas = Team.query.filter(
+                    Team.area == area,
+                    Team.nombre != "Sin asignar"
+                ).order_by(Team.nombre).all()
+            else:
+                cuadrillas = Team.query.filter(
+                    Team.nombre != "Sin asignar"
+                ).order_by(Team.nombre).all()
+        
             if not cuadrillas:
                 await query.edit_message_text("❌ No hay cuadrillas disponibles en este momento.")
                 return
