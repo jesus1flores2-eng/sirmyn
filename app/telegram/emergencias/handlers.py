@@ -240,6 +240,7 @@ async def emergencia_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
     """Maneja evidencia y muestra resumen antes de confirmar"""
     user_id = update.effective_user.id
     
+    # Si es foto/video, guardarla y mostrar resumen
     if update.message.photo or update.message.video:
         file = await (update.message.photo[-1].get_file() if update.message.photo else update.message.video.get_file())
         ext = 'jpg' if update.message.photo else 'mp4'
@@ -249,22 +250,8 @@ async def emergencia_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
         await file.download_to_drive(f"uploads/emergencias/{filename}")
         user_data[user_id]['evidencia'] = f"uploads/emergencias/{filename}"
         await update.message.reply_text("✅ Evidencia recibida.")
-        
-        # Mostrar resumen directamente
-        datos = user_data[user_id]
-        resumen = (
-            f"🚨 *RESUMEN DE EMERGENCIA*\n\n"
-            f"🏛️ *Depto:* {datos.get('emergencia_depto_nombre', 'N/A')}\n"
-            f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
-            f"📍 *GPS:* {datos.get('latitud')}, {datos.get('longitud')}\n"
-            f"⚠️ *Incidente:* {datos.get('subtipo', 'N/A')}\n"
-            f"📸 *Evidencia:* {'Sí' if datos.get('evidencia') else 'No'}\n\n"
-            f"¿Confirmar envío de emergencia?"
-        )
-        keyboard = [["🚨 CONFIRMAR EMERGENCIA", "❌ Cancelar"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        await update.message.reply_text(resumen, parse_mode="Markdown", reply_markup=reply_markup)
-        return EMERGENCIA_CONFIRMAR
+        # Mostrar resumen
+        return await _mostrar_resumen(update, user_id)
     
     texto = update.message.text.strip() if update.message.text else ""
     
@@ -273,28 +260,39 @@ async def emergencia_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
         limpiar_estado(user_id)
         return ConversationHandler.END
     
-    if texto in ["➡️ Omitir", "📸 Subir evidencia"]:
-        if texto == "➡️ Omitir":
-            user_data[user_id]['evidencia'] = None
-        
-        # Mostrar resumen directamente
-        datos = user_data[user_id]
-        resumen = (
-            f"🚨 *RESUMEN DE EMERGENCIA*\n\n"
-            f"🏛️ *Depto:* {datos.get('emergencia_depto_nombre', 'N/A')}\n"
-            f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
-            f"📍 *GPS:* {datos.get('latitud')}, {datos.get('longitud')}\n"
-            f"⚠️ *Incidente:* {datos.get('subtipo', 'N/A')}\n"
-            f"📸 *Evidencia:* {'Sí' if datos.get('evidencia') else 'No'}\n\n"
-            f"¿Confirmar envío de emergencia?"
+    # Si presiona "Subir evidencia", pedir la foto
+    if texto == "📸 Subir evidencia":
+        await update.message.reply_text(
+            "Envía la foto o video ahora 📸",
+            reply_markup=ReplyKeyboardRemove()
         )
-        keyboard = [["🚨 CONFIRMAR EMERGENCIA", "❌ Cancelar"]]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        await update.message.reply_text(resumen, parse_mode="Markdown", reply_markup=reply_markup)
-        return EMERGENCIA_CONFIRMAR
+        return EMERGENCIA_EVIDENCIA
+    
+    # Si presiona "Omitir", saltar a resumen
+    if texto == "➡️ Omitir":
+        user_data[user_id]['evidencia'] = None
+        return await _mostrar_resumen(update, user_id)
     
     await update.message.reply_text("Envía una foto/video o presiona 'Omitir'.")
     return EMERGENCIA_EVIDENCIA
+
+
+async def _mostrar_resumen(update: Update, user_id: int):
+    """Función auxiliar para mostrar resumen"""
+    datos = user_data[user_id]
+    resumen = (
+        f"🚨 *RESUMEN DE EMERGENCIA*\n\n"
+        f"🏛️ *Depto:* {datos.get('emergencia_depto_nombre', 'N/A')}\n"
+        f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
+        f"📍 *GPS:* {datos.get('latitud')}, {datos.get('longitud')}\n"
+        f"⚠️ *Incidente:* {datos.get('subtipo', 'N/A')}\n"
+        f"📸 *Evidencia:* {'Sí' if datos.get('evidencia') else 'No'}\n\n"
+        f"¿Confirmar envío de emergencia?"
+    )
+    keyboard = [["🚨 CONFIRMAR EMERGENCIA", "❌ Cancelar"]]
+    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+    await update.message.reply_text(resumen, parse_mode="Markdown", reply_markup=reply_markup)
+    return EMERGENCIA_CONFIRMAR
 
 async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Envía la emergencia a cabina y notifica"""
