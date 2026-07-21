@@ -336,7 +336,7 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             
             nuevo_reporte = Report(
                 telefono=datos.get('telefono', str(user_id)),
-                reportante=datos.get('nombre_telegram', 'Ciudadano'),
+                reportante=update.effective_user.first_name or update.effective_user.username or 'Ciudadano',
                 tipo=f"EMERGENCIA - {depto_nombre}",
                 subtipo=datos.get('subtipo', 'Emergencia'),
                 numero="S/N",
