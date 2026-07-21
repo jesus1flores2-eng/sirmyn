@@ -29,6 +29,7 @@ async def emergencia_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     es_patrullero = True
     
     user_data[user_id] = {'modo_emergencia': True, 'es_patrullero': es_patrullero}
+    user_data[user_id]['nombre_telegram'] = update.effective_user.first_name or update.effective_user.username or 'Ciudadano'
     
     keyboard = [
         ["👮 Seguridad Pública", "🚒 Bomberos"],
@@ -336,7 +337,7 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             
             nuevo_reporte = Report(
                 telefono=datos.get('telefono', str(user_id)),
-                reportante=update.effective_user.first_name or update.effective_user.username or 'Ciudadano',
+                reportante=datos.get('nombre_telegram', 'Ciudadano'),
                 tipo=f"EMERGENCIA - {depto_nombre}",
                 subtipo=datos.get('subtipo', 'Emergencia'),
                 numero="S/N",
