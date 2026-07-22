@@ -1539,3 +1539,77 @@ def actualizar_ubicacion(reporte_id):
         db.session.rollback()
         logger.error(f"❌ Error actualizando ubicación: {e}")
         return jsonify({'success': False, 'message': f'Error: {str(e)}'}), 500
+# ============================================================
+# DASHBOARD DE ENCUESTAS DE SATISFACCIÓN
+# ============================================================
+@admin_bp.route('/encuestas')
+@login_required
+@admin_required
+def encuestas_dashboard():
+    """Dashboard de encuestas de satisfacción"""
+    from app.models.feedback import EncuestaSatisfaccion
+    from app.models.report import Report
+    
+    # Filtros
+    dias = request.args.get('dias', 30, type=int)
+    tipo = request.args.get('tipo', '')
+    fecha_limite = datetime.utcnow() - timedelta(days=dias)
+    
+    # Query base
+    query = db.session.query(EncuestaSatisfaccion).join(
+        Report, EncuestaSatisfaccion.reporte_id == Report.id
+    ).filter(EncuestaSatisfaccion.fecha >= fecha_limite)
+    
+    if tipo:
+        query = query.filter(Report.tipo == tipo)
+    
+    encuestas = query.order_by(EncuestaSatisfaccion.fecha.desc()).all()
+    
+    # Métricas generales
+    total_encuestas = len(encuestas)
+    promedio_calificacion = round(sum(e.calificacion for e in encuestas) / total_encuestas, 1) if total_encuestas > 0 else 0
+    promedio_velocidad = round(sum(e.velocidad for e in encuestas) / total_encuestas, 1) if total_encuestas > 0 else 0
+    
+    # Por departamento
+    por_depto_query = db.session.query(
+        Report.tipo,
+        func.count(EncuestaSatisfaccion.id).label('total'),
+        func.round(func.avg(EncuestaSatisfaccion.calificacion), 1).label('promedio_calif'),
+        func.round(func.avg(EncuestaSatisfaccion.velocidad), 1).label('promedio_vel')
+    ).join(Report, EncuestaSatisfaccion.reporte_id == Report.id).filter(
+        EncuestaSatisfaccion.fecha >= fecha_limite
+    )
+    
+    if tipo:
+        por_depto_query = por_depto_query.filter(Report.tipo == tipo)
+    
+    por_depto = por_depto_query.group_by(Report.tipo).order_by(func.avg(EncuestaSatisfaccion.calificacion).desc()).all()
+    
+    # Mejor y peor departamento
+    mejor_depto = por_depto[0] if por_depto else None
+    peor_depto = por_depto[-1] if por_depto else None
+    
+    # Distribución de calificaciones (1-5)
+    distribucion = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+    for e in encuestas:
+        if e.calificacion in distribucion:
+            distribucion[e.calificacion] += 1
+    
+    # Tipos para filtro
+    tipos_disponibles = db.session.query(Report.tipo).distinct().filter(Report.tipo.isnot(None)).all()
+    tipos_disponibles = [t[0] for t in tipos_disponibles if t[0]]
+    
+    return render_template(
+        'admin/encuestas.html',
+        total_encuestas=total_encuestas,
+        promedio_calificacion=promedio_calificacion,
+        promedio_velocidad=promedio_velocidad,
+        mejor_depto=mejor_depto,
+        peor_depto=peor_depto,
+        por_depto=por_depto,
+        distribucion=distribucion,
+        encuestas=encuestas,
+        dias=dias,
+        tipo_seleccionado=tipo,
+        tipos_disponibles=tipos_disponibles
+    )
