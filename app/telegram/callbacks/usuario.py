@@ -69,9 +69,10 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
         # ============================================================
         if accion == 'aceptar':
             # Cambiar estado a "Aceptado por usuario"
-            estado_aceptado = Status.query.filter_by(descripcion="Aceptado por usuario").first()
+            estado_aceptado = Status.query.filter_by(descripcion="Finalizado").first()
             if not estado_aceptado:
-                estado_aceptado = Status(descripcion="Aceptado por usuario")
+                estado_aceptado = Status.query.filter_by(descripcion="Aceptado por usuario").first()
+
                 db.session.add(estado_aceptado)
                 db.session.commit()
             
