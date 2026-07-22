@@ -5,7 +5,7 @@ import io
 import os
 import asyncio
 import nest_asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 from app.models.report import Report, Assignment
 from app.models.team import Team
 from app.models.status import Status
