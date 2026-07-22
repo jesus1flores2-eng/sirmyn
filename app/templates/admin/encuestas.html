@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                <i class="fas fa-star text-warning me-2"></i>Encuestas de Satisfacción
+            </h1>
+            <p class="mb-0">Análisis de la percepción ciudadana sobre los servicios municipales</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Departamento</label>
+                    <select name="tipo" class="form-select form-select-sm">
+                        <option value="">Todos los departamentos</option>
+                        {% for t in tipos_disponibles %}
+                            <option value="{{ t }}" {% if t == tipo_seleccionado %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Período</label>
+                    <select name="dias" class="form-select form-select-sm">
+                        <option value="7" {% if dias == 7 %}selected{% endif %}>Últimos 7 días</option>
+                        <option value="30" {% if dias == 30 %}selected{% endif %}>Últimos 30 días</option>
+                        <option value="90" {% if dias == 90 %}selected{% endif %}>Últimos 90 días</option>
+                        <option value="365" {% if dias == 365 %}selected{% endif %}>Último año</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-dark btn-sm">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Métricas Rápidas -->
+    <div class="row mb-4">
+        <!-- Calificación Promedio -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">⭐ Calificación Promedio</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ promedio_calificacion }} / 5</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-star fa-2x text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Encuestas -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Encuestas</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_encuestas }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mejor Departamento -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">🏆 Mejor Calificado</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if mejor_depto %}
+                                    {{ mejor_depto[0][:20] }} ({{ mejor_depto[2] }})
+                                {% else %}
+                                    Sin datos
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-trophy fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Velocidad Promedio -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">⚡ Velocidad Atención</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ promedio_velocidad }} / 5</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-tachometer-alt fa-2x text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfica y Tabla -->
+    <div class="row">
+        <!-- Gráfica de Calificación por Departamento -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>Calificación por Departamento
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if por_depto %}
+                    <canvas id="calificacionChart" height="300"></canvas>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-chart-bar fa-3x mb-3"></i>
+                        <p>No hay datos para mostrar</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribución de Calificaciones -->
+        <div class="col-xl-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>Distribución de Calificaciones
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if total_encuestas > 0 %}
+                    <canvas id="distribucionChart" height="300"></canvas>
+                    {% else %}
+                    <div class="text-center py-5 text-muted">
+                        <i class="fas fa-chart-pie fa-3x mb-3"></i>
+                        <p>No hay datos para mostrar</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Últimas Encuestas -->
+    <div class="card border-0 shadow">
+        <div class="card-header bg-info text-white py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-list me-2"></i>Últimas Encuestas
+                <span class="badge bg-light text-dark ms-2">{{ encuestas|length }}</span>
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Folio</th>
+                            <th>Departamento</th>
+                            <th>⭐ Calificación</th>
+                            <th>⚡ Velocidad</th>
+                            <th>💬 Comentario</th>
+                            <th>📅 Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in encuestas %}
+                        <tr>
+                            <td><span class="badge bg-secondary">#{{ e.reporte_id }}</span></td>
+                            <td>{{ e.reporte.tipo if e.reporte else 'N/A' }}</td>
+                            <td>
+                                {% for i in range(e.calificacion) %}⭐{% endfor %}
+                                <small class="text-muted">({{ e.calificacion }}/5)</small>
+                            </td>
+                            <td>
+                                {% for i in range(e.velocidad) %}🚀{% endfor %}
+                                <small class="text-muted">({{ e.velocidad }}/5)</small>
+                            </td>
+                            <td>
+                                {% if e.comentario %}
+                                <small>"{{ e.comentario[:80] }}{% if e.comentario|length > 80 %}...{% endif %}"</small>
+                                {% else %}
+                                <span class="text-muted">Sin comentario</span>
+                                {% endif %}
+                            </td>
+                            <td><small>{{ e.fecha.strftime('%d/%m/%Y %H:%M') if e.fecha else 'N/A' }}</small></td>
+                        </tr>
+                        {% endfor %}
+                        {% if not encuestas %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3"></i>
+                                <p>No hay encuestas registradas en este período</p>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+{% if por_depto %}
+// Gráfica de Calificación por Departamento
+var ctx1 = document.getElementById('calificacionChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: [{% for d in por_depto %}"{{ d[0][:15] }}",{% endfor %}],
+        datasets: [{
+            label: '⭐ Calificación',
+            data: [{% for d in por_depto %}{{ d[2] }},{% endfor %}],
+            backgroundColor: [
+                '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+                '#6f42c1', '#fd7e14', '#20c997', '#0dcaf0', '#6c757d'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 5,
+                ticks: { stepSize: 1 }
+            }
+        },
+        plugins: {
+            legend: { display: false }
+        }
+    }
+});
+{% endif %}
+
+{% if total_encuestas > 0 %}
+// Gráfica de Distribución
+var ctx2 = document.getElementById('distribucionChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ['1 ⭐', '2 ⭐⭐', '3 ⭐⭐⭐', '4 ⭐⭐⭐⭐', '5 ⭐⭐⭐⭐⭐'],
+        datasets: [{
+            data: [{{ distribucion[1] }}, {{ distribucion[2] }}, {{ distribucion[3] }}, {{ distribucion[4] }}, {{ distribucion[5] }}],
+            backgroundColor: ['#e74a3b', '#f6c23e', '#f39c12', '#1cc88a', '#4e73df'],
+            borderWidth: 2
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom' }
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}
