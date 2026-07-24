@@ -222,19 +222,26 @@ async def maquinaria_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             ).order_by(Assignment.timestamp.desc()).first()
             
             if asignacion:
+                nombre_maq = "Retroexcavadora" if datos['tipo_maquinaria'] == 'retro' else "Camión de volteo"
+                
+                # ⭐ CREAR NUEVA ASIGNACIÓN (para que quede en el historial sin sobreescribir)
+                nueva_asignacion = Assignment(
+                    report_id=datos['reporte_id'],
+                    team_id=asignacion.team_id,
+                    status_id=asignacion.status_id,
+                    timestamp=datetime.utcnow(),
+                    observaciones=f"{nombre_maq} completó el trabajo. Evidencia disponible."
+                )
+                
                 # Guardar foto "antes" como evidencia de cuadrilla
                 if datos.get('foto_antes'):
-                    if asignacion.evidencia_cuadrilla:
-                        asignacion.evidencia_cuadrilla += f",{datos['foto_antes']}"
-                    else:
-                        asignacion.evidencia_cuadrilla = datos['foto_antes']
+                    nueva_asignacion.evidencia_cuadrilla = datos['foto_antes']
                 
                 # Guardar foto "después" como materiales utilizados
                 if datos.get('foto_despues'):
-                    asignacion.materiales_utilizados = datos['foto_despues']
+                    nueva_asignacion.materiales_utilizados = datos['foto_despues']
                 
-                nombre_maq = "Retroexcavadora" if datos['tipo_maquinaria'] == 'retro' else "Camión de volteo"
-                asignacion.observaciones = f"{nombre_maq} completó el trabajo. Evidencia disponible."
+                db.session.add(nueva_asignacion)
                 db.session.commit()
                 
                 # Notificar a la cuadrilla que solicitó
