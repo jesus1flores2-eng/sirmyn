@@ -672,10 +672,17 @@ async def manejar_solicitar_retro(query, context, reporte_id):
                 mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
             bot_app = get_telegram_app()
+            
+            keyboard = [[
+                InlineKeyboardButton("📸 Subir evidencia de trabajo", callback_data=f"maq_retro_{reporte_id}")
+            ]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
             await bot_app.bot.send_message(
                 chat_id=int(operador.telegram_id),
                 text=mensaje,
-                parse_mode=ParseMode.MARKDOWN
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
             )
 
             await query.message.reply_text(
@@ -819,10 +826,17 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
                 mensaje += f"\n\n🗺️ [Ver en Google Maps]({maps_url})"
 
             bot_app = get_telegram_app()
+            
+            keyboard = [[
+                InlineKeyboardButton("📸 Subir evidencia de entrega", callback_data=f"maq_camion_{reporte_id}")
+            ]]
+            reply_markup = InlineKeyboardMarkup(keyboard)
+            
             await bot_app.bot.send_message(
                 chat_id=int(operador.telegram_id),
                 text=mensaje,
-                parse_mode=ParseMode.MARKDOWN
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
             )
 
             await query.message.reply_text(
