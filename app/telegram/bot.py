@@ -18,6 +18,10 @@ from app.telegram.commands.dashboard import dashboard_command
 from app.telegram.callbacks.aceptacion import aceptar_privacidad_callback
 from app.telegram.callbacks.general import button_callback_handler
 from app.telegram.callbacks.director import director_callback_handler
+from app.telegram.handlers.evidencia_maquinaria import (
+    maquinaria_start, maquinaria_foto_antes, maquinaria_foto_despues, maquinaria_confirmar,
+    MAQ_FOTO_ANTES, MAQ_FOTO_DESPUES, MAQ_CONFIRMAR
+)
 from app.telegram.comunicacion.handlers import (
     comunicado_start, seleccionar_localidad, escribir_mensaje,
     manejar_imagen, confirmar_envio,
@@ -162,6 +166,25 @@ def build_telegram_app(token):
     )
     app.add_handler(conv_handler_comunicado)
 
+    # ============================================================
+    # CONVERSATIONHANDLER PRINCIPAL PARA REPARACIÓN
+    # ============================================================
+    conv_handler_maquinaria = ConversationHandler(
+        entry_points=[CallbackQueryHandler(maquinaria_start, pattern="^maq_")],
+        states={
+            MAQ_FOTO_ANTES: [MessageHandler(filters.PHOTO, maquinaria_foto_antes), MessageHandler(filters.TEXT & ~filters.COMMAND, maquinaria_foto_antes)],
+            MAQ_FOTO_DESPUES: [MessageHandler(filters.PHOTO, maquinaria_foto_despues), MessageHandler(filters.TEXT & ~filters.COMMAND, maquinaria_foto_despues)],
+            MAQ_CONFIRMAR: [MessageHandler(filters.TEXT & ~filters.COMMAND, maquinaria_confirmar)],
+        },
+        fallbacks=[CommandHandler('cancelar', cancelar_command)],
+        name="evidencia_maquinaria",
+        persistent=False,
+        per_user=True,
+        per_chat=True,
+    )
+    app.add_handler(conv_handler_maquinaria)
+
+    
     # ============================================================
     # CONVERSATIONHANDLER PRINCIPAL PARA REPARACIÓN
     # ============================================================
