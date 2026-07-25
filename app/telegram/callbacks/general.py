@@ -92,6 +92,14 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
+    # DETECCIÓN PARA LLEGADA AL LUGAR (SEGURIDAD)
+    # ============================================================
+    if callback_data.startswith('llegada_'):
+        reporte_id = int(callback_data.split('_')[1])
+        await manejar_llegada_lugar(query, context, reporte_id)
+        return
+    
+    # ============================================================
     # DETECCIÓN PARA VOLVER AL REPORTE
     # ============================================================
     if callback_data.startswith('volver_reporte_'):
@@ -100,6 +108,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
             logger.error(f"❌ ID inválido en volver_reporte: {callback_data}")
             await query.answer("❌ Error: ID de reporte inválido", show_alert=True)
             return
+            
         reporte_id = int(reporte_id_str)
         await manejar_volver_reporte(query, context, reporte_id)
         return
