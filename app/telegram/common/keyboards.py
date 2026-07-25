@@ -136,32 +136,54 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
 
                     if usuario_actual and usuario_actual.team_id == asignacion.team_id:
                         if estado_actual not in ["Finalizado", "Aceptado por usuario", "Aceptado automáticamente"]:
-                            # SUBIR EVIDENCIA (todos los departamentos)
-                            keyboard.append([
-                                InlineKeyboardButton(
-                                    "🔧 Subir evidencia reparación",
-                                    callback_data=f"reparacion_{reporte_id}"
-                                )
-                            ])
+                            
+                            # ⭐ SEGURIDAD PÚBLICA: Botones personalizados
+                            if reporte and reporte.tipo == "Seguridad pública":
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "🚨 Llegamos al lugar",
+                                        callback_data=f"llegada_{reporte_id}"
+                                    )
+                                ])
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "📸 Subir evidencia de escena",
+                                        callback_data=f"reparacion_{reporte_id}"
+                                    )
+                                ])
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "📋 Reportar resultado final",
+                                        callback_data=f"seg_resultado_{reporte_id}"
+                                    )
+                                ])
+                            else:
+                                # SUBIR EVIDENCIA (todos los demás departamentos)
+                                keyboard.append([
+                                    InlineKeyboardButton(
+                                        "🔧 Subir evidencia reparación",
+                                        callback_data=f"reparacion_{reporte_id}"
+                                    )
+                                ])
 
-                            # SOLO para Agua/Drenaje: Retroexcavadora, Camión, Apoyo
-                            if reporte.tipo in ["Agua potable", "Drenaje"]:
-                                keyboard.append([
-                                    InlineKeyboardButton(
-                                        "🛠️ Solicitar retroexcavadora",
-                                        callback_data=f"solicitar_retro_{reporte_id}"
-                                    ),
-                                    InlineKeyboardButton(
-                                        "🚛 Solicitar camión de material",
-                                        callback_data=f"solicitar_camion_{reporte_id}"
-                                    )
-                                ])
-                                keyboard.append([
-                                    InlineKeyboardButton(
-                                        "👷 Solicitar apoyo de otra cuadrilla",
-                                        callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
-                                    )
-                                ])
+                                # SOLO para Agua/Drenaje: Retroexcavadora, Camión, Apoyo
+                                if reporte.tipo in ["Agua potable", "Drenaje"]:
+                                    keyboard.append([
+                                        InlineKeyboardButton(
+                                            "🛠️ Solicitar retroexcavadora",
+                                            callback_data=f"solicitar_retro_{reporte_id}"
+                                        ),
+                                        InlineKeyboardButton(
+                                            "🚛 Solicitar camión de material",
+                                            callback_data=f"solicitar_camion_{reporte_id}"
+                                        )
+                                    ])
+                                    keyboard.append([
+                                        InlineKeyboardButton(
+                                            "👷 Solicitar apoyo de otra cuadrilla",
+                                            callback_data=f"solicitar_apoyo_cuadrilla_{reporte_id}"
+                                        )
+                                    ])
 
             return InlineKeyboardMarkup(keyboard)
 
