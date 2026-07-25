@@ -169,19 +169,16 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 )
 
                 # CONFIRMACIÓN AL USUARIO
+                keyboard = [["📋 Nuevo reporte", "📊 Consultar estado"]]
+                reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
                 await update.message.reply_text(
                     f"✅ ¡Gracias {datos['nombre']}!\n\n"
                     f"📋 *Tu reporte ha sido registrado con el folio:*\n"
                     f"*#{nuevo_reporte.id}*\n\n"
-                    f"🔐 *La información proporcionada será tratada de forma confidencial.*\n"
-                    f"⚖️ *El uso de datos falsos puede conllevar acciones legales.*\n\n"
-                    f"📌 *Próximos pasos:*\n"
-                    f"• Un responsable revisará tu reporte.\n"
-                    f"• Recibirás notificaciones de avance.\n"
-                    f"• Usa /estado para consultar el progreso.\n\n"
-                    f"📱 *¿Necesitas ayuda?* Usa /ayuda",
+                    f"📌 ¿Qué deseas hacer ahora?",
                     parse_mode="Markdown",
-                    reply_markup=ReplyKeyboardRemove()
+                    reply_markup=reply_markup
                 )
 
         except Exception as e:
