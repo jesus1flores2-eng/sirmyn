@@ -331,11 +331,8 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             from app.models.report import Report, Assignment, Localidad
             from app.models.team import Team
             from app.models.status import Status
-            from app.models.user import User
             from app.extensions import db
             from datetime import datetime
-            from app.routes.telegram_routes import get_telegram_app
-            from app.telegram.common.keyboards import construir_botones_reporte
             
             depto = datos.get('emergencia_depto', 'seguridad')
             depto_nombre = datos.get('emergencia_depto_nombre', 'Seguridad Pública')
@@ -388,49 +385,14 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             db.session.add(asignacion)
             db.session.commit()
             
-            bot_app = get_telegram_app()
-            maps_url = f"https://www.google.com/maps?q={datos.get('latitud')},{datos.get('longitud')}"
+            # ⭐ Usar la misma función de notificación que el test del panel (FUNCIONA)
+            from app.services.notification_service import notificar_director_nuevo_reporte
             
-            # ⭐ 1. CABINA - Mensaje COMPLETO con botón "Asignar a Cuadrilla"
-            cabina = User.query.filter_by(area=depto, rol_especifico='jefe_area', is_active=True).first()
-            
-            if cabina and cabina.telegram_id:
-                mensaje_cabina = (
-                    f"🚨 *EMERGENCIA - {depto_nombre.upper()}*\n"
-                    f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                    f"📋 *Folio:* #{nuevo_reporte.id}\n"
-                    f"⚠️ *Incidente:* {datos.get('subtipo', 'Emergencia')}\n"
-                    f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
-                    f"📍 *Ver ubicación:* [Google Maps]({maps_url})\n\n"
-                    f"*👷 ACCIONES RÁPIDAS:*"
-                )
-                
-                reply_markup_cabina = construir_botones_reporte(nuevo_reporte.id, es_director=True)
-                
-                await bot_app.bot.send_message(
-                    chat_id=int(cabina.telegram_id),
-                    text=mensaje_cabina,
-                    parse_mode=ParseMode.MARKDOWN,
-                    reply_markup=reply_markup_cabina
-                )
-            
-            # ⭐ 2. DIRECTOR - Mensaje INFORMATIVO simple
-            director = User.query.filter_by(area=depto, rol_especifico='director', is_active=True).first()
-            if director and director.telegram_id:
-                if not cabina or director.id != cabina.id:
-                    mensaje_director = (
-                        f"ℹ️ *INFORMACIÓN - NUEVA EMERGENCIA {depto_nombre.upper()}*\n\n"
-                        f"📋 *Folio:* #{nuevo_reporte.id}\n"
-                        f"⚠️ *Incidente:* {datos.get('subtipo', 'Emergencia')}\n"
-                        f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
-                        f"📍 *Ver ubicación:* [Google Maps]({maps_url})\n\n"
-                        f"*Cabina ha sido notificada para atención inmediata.*"
-                    )
-                    await bot_app.bot.send_message(
-                        chat_id=int(director.telegram_id),
-                        text=mensaje_director,
-                        parse_mode=ParseMode.MARKDOWN
-                    )
+            await notificar_director_nuevo_reporte(
+                reporte_id=nuevo_reporte.id,
+                telegram_id=user_id,
+                tipo_reporte=depto_nombre
+            )
             
             await update.message.reply_text(
                 f"✅ *EMERGENCIA ENVIADA - Folio #{nuevo_reporte.id}*\n\n"
