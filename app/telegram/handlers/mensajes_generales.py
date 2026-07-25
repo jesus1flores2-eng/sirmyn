@@ -55,23 +55,26 @@ async def mensaje_general_handler(update: Update, context: ContextTypes.DEFAULT_
     # ========== SALUDO ==========
     if any(palabra in texto for palabra in palabras_saludo):
         saludo = get_saludo()
-        if dependencia:
-            saludo_especifico = {
-                "Agua potable": f"👋 {saludo}! Soy tu asistente de Agua Potable y alcantarillado. ¿En qué puedo ayudarte? 💧",
-                "Drenaje": f"👋 {saludo}! Soy tu asistente de Drenaje. ¿En qué puedo ayudarte? 🚰",
-                "Aseo público": f"👋 {saludo}! Soy tu asistente de Aseo Público. ¿En qué puedo ayudarte? 🗑️",
-                "Alumbrado público": f"👋 {saludo}! Soy tu asistente de Alumbrado. ¿En qué puedo ayudarte? 💡",
-                "Parques y jardines": f"👋 {saludo}! Soy tu asistente de Parques y Jardines. ¿En qué puedo ayudarte? 🌳",
-                "Ecología": f"👋 {saludo}! Soy tu asistente de Ecología. ¿En qué puedo ayudarte? 🌍",
-                "Seguridad pública": f"👋 {saludo}! Soy tu asistente de Seguridad Pública. ¿En qué puedo ayudarte? 👮",
-                "Obras públicas": f"👋 {saludo}! Soy tu asistente de Obras Públicas. ¿En qué puedo ayudarte? 🏗️"
-            }
-            mensaje = saludo_especifico.get(dependencia, 
-                f"👋 {saludo}! Soy tu asistente de {dependencia}. ¿En qué puedo ayudarte?")
-        else:
-            mensaje = f"👋 {saludo}! Para iniciar un reporte, usa el comando /start"
+        nombre = update.effective_user.first_name or "Usuario"
         
-        await update.message.reply_text(mensaje, reply_markup=ReplyKeyboardRemove())
+        # Verificar si tiene reportes activos
+        try:
+            app = DatabaseManager.get_app()
+            with app.app_context():
+                from app.models.report import Report
+                reportes_activos = Report.query.filter_by(telefono=str(user_id)).count()
+        except:
+            reportes_activos = 0
+        
+        keyboard = [["📋 Nuevo reporte", "🚨 Emergencia"], ["📊 Mis reportes"]]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        
+        mensaje = f"👋 *¡{saludo}, {nombre}!*\n\n"
+        if reportes_activos > 0:
+            mensaje += f"Tienes *{reportes_activos}* reporte(s) registrado(s).\n\n"
+        mensaje += "¿Qué deseas hacer?"
+        
+        await update.message.reply_text(mensaje, parse_mode="Markdown", reply_markup=reply_markup)
         return
     
     # ========== DESPEDIDA ==========
@@ -208,6 +211,38 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
                 "Si deseas cancelar, usa /cancelar."
             )
             return
+            
+    # ⭐ NUEVO: Manejar opciones del menú rápido
+    if texto == "📋 Nuevo reporte":
+        nombre = update.effective_user.first_name or "Usuario"
+        keyboard = [
+            ["1️⃣ Agua potable", "2️⃣ Drenaje"],
+            ["3️⃣ Aseo público", "4️⃣ Alumbrado público"],
+            ["5️⃣ Parques y jardines", "6️⃣ Ecología"],
+            ["7️⃣ Seguridad pública", "8️⃣ Obras públicas"],
+            ["9️⃣ Bomberos", "🔟 Checar un reporte"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await update.message.reply_text(
+            f"✅ *{nombre}*, selecciona la dependencia municipal para tu reporte:",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return
+    
+    if texto == "📊 Mis reportes":
+        await update.message.reply_text(
+            "Para consultar el estado de un reporte, usa /estado\n"
+            "O ingresa el número de folio:",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return
+    
+    if texto == "🚨 Emergencia":
+        from app.telegram.emergencias.handlers import emergencia_start
+        await emergencia_start(update, context)
+        return
+    
     
     # 5. SI NADA DE LO ANTERIOR, USAR EL MANEJADOR GENERAL
     logger.info(f"🤖 Router: Enviando a mensaje_general_handler")
