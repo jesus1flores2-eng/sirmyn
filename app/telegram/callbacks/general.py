@@ -1344,3 +1344,62 @@ async def manejar_volver_reporte(query, context, reporte_id):
     except Exception as e:
         logger.error(f"❌ Error en manejar_volver_reporte: {e}")
         await query.answer("❌ Error al volver", show_alert=True)
+        
+# ============================================================
+# MANEJAR LLEGADA AL LUGAR (SEGURIDAD PÚBLICA)
+# ============================================================
+
+async def manejar_llegada_lugar(query, context, reporte_id):
+    """Notifica a cabina que la patrulla llegó al lugar"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            from app.models.user import User
+            from app.routes.telegram_routes import get_telegram_app
+            
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            reporte = Report.query.get(reporte_id)
+            
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado.", show_alert=True)
+                return
+            
+            cuadrilla_nombre = usuario.team.nombre if usuario and usuario.team else "Patrulla"
+            calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
+            localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
+            
+            # Notificar a cabina
+            cabina = User.query.filter_by(area='seguridad', rol_especifico='jefe_area', is_active=True).first()
+            if not cabina:
+                cabina = User.query.filter_by(area='seguridad', rol_especifico='director', is_active=True).first()
+            
+            if cabina and cabina.telegram_id:
+                maps_url = ""
+                if reporte.latitud and reporte.longitud:
+                    maps_url = f"\n📍 [Ver en Google Maps](https://www.google.com/maps?q={reporte.latitud},{reporte.longitud})"
+                
+                await context.bot.send_message(
+                    chat_id=int(cabina.telegram_id),
+                    text=(
+                        f"🚨 *PATRULLA EN SITIO - Reporte #{reporte_id}*\n"
+                        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                        f"👮 *Patrulla:* {cuadrilla_nombre}\n"
+                        f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}"
+                        f"{maps_url}\n\n"
+                        f"✅ *Atendiendo en este momento*"
+                    ),
+                    parse_mode=ParseMode.MARKDOWN
+                )
+            
+            await query.message.reply_text(
+                f"✅ *Llegada reportada a cabina*\n\n"
+                f"👮 {cuadrilla_nombre}\n"
+                f"📍 {calle_nombre} #{reporte.numero}",
+                parse_mode=ParseMode.MARKDOWN
+            )
+            await query.answer("📍 Llegada reportada", show_alert=False)
+            
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_llegada_lugar: {e}")
+        await query.answer("❌ Error", show_alert=True)
