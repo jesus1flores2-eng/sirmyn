@@ -40,9 +40,10 @@ def actualizar_timestamp_usuario(user_id: int):
 
 
 def get_saludo() -> str:
-    """Retorna saludo según la hora del día"""
-    from datetime import datetime
-    h = datetime.now().hour
+    from datetime import datetime, timezone, timedelta
+    # Ajustar a hora de México (UTC-6)
+    tz_mexico = timezone(timedelta(hours=-6))
+    h = datetime.now(tz_mexico).hour
     if h < 12:
         return "Buenos días"
     elif h < 19:
