@@ -72,13 +72,25 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
             estado_aceptado = Status.query.filter_by(descripcion="Finalizado").first()
             if not estado_aceptado:
                 estado_aceptado = Status.query.filter_by(descripcion="Aceptado por usuario").first()
-
+            if not estado_aceptado:
+                estado_aceptado = Status(descripcion="Aceptado por usuario")
                 db.session.add(estado_aceptado)
                 db.session.commit()
             
             asignacion.status_id = estado_aceptado.id
             asignacion.observaciones = f"✅ Aceptado por el usuario reportante el {datetime.now().strftime('%d/%m/%Y %H:%M')}"
             db.session.commit()
+            
+            # ⭐ Si es Seguridad Pública, no enviar encuesta
+            if reporte.tipo == "Seguridad pública":
+                await query.edit_message_text(
+                    text=f"✅ *Reporte cerrado*\n\n"
+                         f"Gracias por tu reporte #{reporte_id}.\n"
+                         f"Las autoridades han sido notificadas del resultado.",
+                    parse_mode=ParseMode.MARKDOWN
+                )
+                logger.info(f"✅ Reporte de Seguridad #{reporte_id} cerrado sin encuesta")
+                return ConversationHandler.END
             
             await query.edit_message_text(
                 text=f"✅ *¡Gracias por tu confirmación!*\n\nEl reporte #{reporte_id} ha sido marcado como RESUELTO.\n\n📞 Para nuevos reportes, usa /start.",
