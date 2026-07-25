@@ -129,8 +129,11 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
             "Seguridad pública": ("jefe_area", "seguridad"),
             "Obras públicas": ("jefe_area", "obras"),
             "Bomberos": ("jefe_area", "bomberos"),
+            # ⭐ Agregar estos:
+            "Protección Civil": ("jefe_area", "proteccion_civil"),
+            "Punto Violeta": ("jefe_area", "punto_violeta"),
         }
-        
+                
         config = CONFIG_DEPARTAMENTOS.get(tipo_reporte)
         
         if config:
