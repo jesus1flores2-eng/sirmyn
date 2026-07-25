@@ -249,8 +249,21 @@ async def emergencia_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
         import uuid, os
         filename = f"emergencia_{user_id}_{uuid.uuid4().hex[:8]}.{ext}"
         os.makedirs("uploads/emergencias", exist_ok=True)
-        await file.download_to_drive(f"uploads/emergencias/{filename}")
-        user_data[user_id]['evidencia'] = f"uploads/emergencias/{filename}"
+        filepath = f"uploads/emergencias/{filename}"
+        await file.download_to_drive(filepath)
+        
+        # Subir a Cloudinary
+        from app.services.cloudinary_service import subir_archivo
+        url = subir_archivo(filepath, folder="emergencias", public_id=f"emergencia_{user_id}_{uuid.uuid4().hex[:4]}")
+        if url:
+            user_data[user_id]['evidencia'] = url
+            try:
+                os.remove(filepath)
+            except:
+                pass
+        else:
+            user_data[user_id]['evidencia'] = filepath
+        
         await update.message.reply_text("✅ Evidencia recibida.")
         # Mostrar resumen
         return await _mostrar_resumen(update, user_id)
