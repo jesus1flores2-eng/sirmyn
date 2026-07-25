@@ -338,10 +338,10 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             nuevo_reporte = Report(
                 telefono=datos.get('telefono', str(user_id)),
                 reportante=datos.get('nombre_telegram', 'Ciudadano'),
-                tipo=f"EMERGENCIA - {depto_nombre}",
+                tipo=depto_nombre,  # "Seguridad pública", "Bomberos", etc.
                 subtipo=datos.get('subtipo', 'Emergencia'),
                 numero="S/N",
-                descripcion_problema=f"EMERGENCIA: {datos.get('subtipo', '')}",
+                descripcion_problema=f"🚨 EMERGENCIA: {datos.get('subtipo', '')}",
                 evidencia=datos.get('evidencia'),
                 timestamp=datetime.utcnow(),
                 calle_id=calle_id,
@@ -350,6 +350,7 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
                 latitud=datos.get('latitud'),
                 longitud=datos.get('longitud')
             )
+            
             db.session.add(nuevo_reporte)
             db.session.commit()
             
