@@ -69,19 +69,20 @@ async def emergencia_departamento(update: Update, context: ContextTypes.DEFAULT_
         return await boton_panico(update, context)
     
     departamentos = {
-        "👮 Seguridad Pública": "seguridad",
-        "🚒 Bomberos": "bomberos",
-        "🛡️ Protección Civil": "proteccion_civil",
-        "💜 Punto Violeta": "punto_violeta"
+        "👮 Seguridad Pública": ("seguridad", "Seguridad pública"),
+        "🚒 Bomberos": ("bomberos", "Bomberos"),
+        "🛡️ Protección Civil": ("proteccion_civil", "Protección Civil"),
+        "💜 Punto Violeta": ("punto_violeta", "Punto Violeta")
     }
     
-    depto = departamentos.get(texto)
-    if not depto:
+    resultado = departamentos.get(texto)
+    if not resultado:
         await update.message.reply_text("Selecciona una opción del teclado.")
         return EMERGENCIA_DEPARTAMENTO
     
+    depto, depto_nombre = resultado
     user_data[user_id]['emergencia_depto'] = depto
-    user_data[user_id]['emergencia_depto_nombre'] = texto
+    user_data[user_id]['emergencia_depto_nombre'] = depto_nombre
     
     await update.message.reply_text(
         f"⚠️ *{texto} - EMERGENCIA*\n\n"
