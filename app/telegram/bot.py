@@ -27,6 +27,10 @@ from app.telegram.comunicacion.handlers import (
     manejar_imagen, confirmar_envio,
     COM_LOCALIDAD, COM_MENSAJE, COM_IMAGEN, COM_CONFIRMAR
 )
+from app.telegram.handlers.resultado_seguridad import (
+    resultado_seguridad_start, resultado_seleccion, resultado_folio, resultado_documento,
+    SEG_RESULTADO, SEG_FOLIO, SEG_DOCUMENTO
+)
 from app.telegram.callbacks.supervisor import (
     supervisor_callback_handler,
     rechazo_opciones_handler,
@@ -167,7 +171,7 @@ def build_telegram_app(token):
     app.add_handler(conv_handler_comunicado)
 
     # ============================================================
-    # CONVERSATIONHANDLER PRINCIPAL PARA REPARACIÓN
+    # CONVERSATIONHANDLER PRINCIPAL PARA MAQUINARIA
     # ============================================================
     conv_handler_maquinaria = ConversationHandler(
         entry_points=[CallbackQueryHandler(maquinaria_start, pattern="^maq_")],
@@ -183,6 +187,28 @@ def build_telegram_app(token):
         per_chat=True,
     )
     app.add_handler(conv_handler_maquinaria)
+
+    # ============================================================
+    # CONVERSATIONHANDLER PRINCIPAL PARA SEGURIDAD
+    # ============================================================
+
+    conv_handler_resultado_seguridad = ConversationHandler(
+        entry_points=[CallbackQueryHandler(resultado_seguridad_start, pattern="^seg_resultado_")],
+        states={
+            SEG_RESULTADO: [MessageHandler(filters.TEXT & ~filters.COMMAND, resultado_seleccion)],
+            SEG_FOLIO: [MessageHandler(filters.TEXT & ~filters.COMMAND, resultado_folio)],
+            SEG_DOCUMENTO: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, resultado_documento),
+                MessageHandler(filters.PHOTO, resultado_documento)
+            ],
+        },
+        fallbacks=[CommandHandler('cancelar', cancelar_command)],
+        name="resultado_seguridad",
+        persistent=False,
+        per_user=True,
+        per_chat=True,
+    )
+    app.add_handler(conv_handler_resultado_seguridad)
 
     
     # ============================================================
