@@ -211,6 +211,36 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
                 "Si deseas cancelar, usa /cancelar."
             )
             return
+            
+    # ⭐ MENÚ RÁPIDO - NUEVO REPORTE / MIS REPORTES
+    if texto == "📋 Nuevo reporte":
+        nombre = update.effective_user.first_name or "Usuario"
+        keyboard = [
+            ["1️⃣ Agua potable", "2️⃣ Drenaje"],
+            ["3️⃣ Aseo público", "4️⃣ Alumbrado público"],
+            ["5️⃣ Parques y jardines", "6️⃣ Ecología"],
+            ["7️⃣ Seguridad pública", "8️⃣ Obras públicas"],
+            ["9️⃣ Bomberos", "🔟 Checar un reporte"]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await update.message.reply_text(
+            f"✅ *{nombre}*, selecciona la dependencia municipal para tu reporte:",
+            parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
+        return
+    
+    if texto == "📊 Mis reportes":
+        await update.message.reply_text(
+            "Para consultar tus reportes, usa /estado\nO ingresa el número de folio:",
+            reply_markup=ReplyKeyboardRemove()
+        )
+        return
+    
+    if texto == "🚨 Emergencia":
+        from app.telegram.emergencias.handlers import emergencia_start
+        await emergencia_start(update, context)
+        return
     
     # 5. SI NADA DE LO ANTERIOR, USAR EL MANEJADOR GENERAL
     logger.info(f"🤖 Router: Enviando a mensaje_general_handler")
