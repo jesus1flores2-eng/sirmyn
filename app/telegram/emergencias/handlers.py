@@ -352,7 +352,7 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             nuevo_reporte = Report(
                 telefono=datos.get('telefono', str(user_id)),
                 reportante=datos.get('nombre_telegram', 'Ciudadano'),
-                tipo=depto_nombre,  # "Seguridad pública", "Bomberos", etc.
+                tipo=depto_nombre,
                 subtipo=datos.get('subtipo', 'Emergencia'),
                 numero="S/N",
                 descripcion_problema=f"🚨 EMERGENCIA: {datos.get('subtipo', '')}",
@@ -387,14 +387,13 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             db.session.add(asignacion)
             db.session.commit()
             
+            bot_app = get_telegram_app()
+            maps_url = f"https://www.google.com/maps?q={datos.get('latitud')},{datos.get('longitud')}"
+            
+            # ⭐ 1. Notificar a CABINA (Jefe de Área) - Mensaje COMPLETO
             cabina = User.query.filter_by(area=depto, rol_especifico='jefe_area', is_active=True).first()
-            if not cabina:
-                cabina = User.query.filter_by(area=depto, rol_especifico='director', is_active=True).first()
             
             if cabina and cabina.telegram_id:
-                bot_app = get_telegram_app()
-                maps_url = f"https://www.google.com/maps?q={datos.get('latitud')},{datos.get('longitud')}"
-                
                 mensaje_cabina = (
                     f"🚨 *EMERGENCIA - {depto_nombre.upper()}*\n"
                     f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -410,6 +409,25 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
                     text=mensaje_cabina,
                     parse_mode=ParseMode.MARKDOWN
                 )
+            
+            # ⭐ 2. Notificar al DIRECTOR - Mensaje INFORMATIVO
+            director = User.query.filter_by(area=depto, rol_especifico='director', is_active=True).first()
+            if director and director.telegram_id:
+                # No notificar si es la misma persona que cabina
+                if not cabina or director.id != cabina.id:
+                    mensaje_director = (
+                        f"ℹ️ *INFORMACIÓN - NUEVA EMERGENCIA {depto_nombre.upper()}*\n\n"
+                        f"📋 *Folio:* #{nuevo_reporte.id}\n"
+                        f"⚠️ *Incidente:* {datos.get('subtipo', 'Emergencia')}\n"
+                        f"📱 *Teléfono:* {datos.get('telefono', 'N/A')}\n"
+                        f"📍 *Ver ubicación:* [Google Maps]({maps_url})\n\n"
+                        f"*Cabina ha sido notificada para atención inmediata.*"
+                    )
+                    await bot_app.bot.send_message(
+                        chat_id=int(director.telegram_id),
+                        text=mensaje_director,
+                        parse_mode=ParseMode.MARKDOWN
+                    )
             
             await update.message.reply_text(
                 f"✅ *EMERGENCIA ENVIADA - Folio #{nuevo_reporte.id}*\n\n"
