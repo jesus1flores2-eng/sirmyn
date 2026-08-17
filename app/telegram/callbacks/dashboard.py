@@ -21,12 +21,17 @@ async def dashboard_callback_handler(update: Update, context: ContextTypes.DEFAU
             return
         
         parts = callback_data.split('_')
-        if len(parts) < 3:
+        
+        # Permitir dash_salir con solo 2 partes
+        if len(parts) == 2 and parts[1] == 'salir':
+            accion = 'salir'
+            tipo_reporte = None
+        elif len(parts) < 3:
             await query.answer("❌ Error en formato", show_alert=True)
             return
-        
-        accion = parts[1]
-        tipo_reporte = parts[2]
+        else:
+            accion = parts[1]
+            tipo_reporte = parts[2]
         
         user_id = query.from_user.id
         app = DatabaseManager.get_app()
@@ -38,6 +43,16 @@ async def dashboard_callback_handler(update: Update, context: ContextTypes.DEFAU
             usuario = User.query.filter_by(telegram_id=str(user_id)).first()
             if not usuario:
                 await query.answer("❌ Usuario no encontrado", show_alert=True)
+                return
+            
+            if accion == 'salir':
+                await query.edit_message_text(
+                    "👋 *Has salido del dashboard.*\n\n"
+                    "Usa `/dashboard` cuando quieras volver a entrar.\n"
+                    "Usa `/ayuda` para ver todos los comandos disponibles.",
+                    parse_mode="Markdown",
+                    reply_markup=None
+                )
                 return
             
             if accion == 'ver':

@@ -135,14 +135,19 @@ async def generar_teclado_por_rol(usuario):
     rol = usuario.rol_especifico or usuario.role
     area = usuario.area
     
+    keyboard = []
+    
     if area == 'agua' or rol in ['jefe_area_tecnica', 'jefe_area_comercial', 'supervisor']:
         keyboard = [
             [
                 InlineKeyboardButton("💧 Ver reportes Agua", callback_data=f"dash_ver_agua_{area}"),
                 InlineKeyboardButton("🚰 Ver reportes Drenaje", callback_data=f"dash_ver_drenaje_{area}")
+            ],
+            [
+                InlineKeyboardButton("🚪 Salir del dashboard", callback_data="dash_salir")
             ]
         ]
-    elif rol == 'director':
+    elif rol == 'director' or rol == 'jefe_area':
         area_nombres = {
             'alumbrado': '💡 Alumbrado',
             'aseo': '🗑️ Aseo',
@@ -153,9 +158,10 @@ async def generar_teclado_por_rol(usuario):
             'ecologia': '🌍 Ecología'
         }
         nombre_boton = area_nombres.get(area, area.title())
-        keyboard = [[
-            InlineKeyboardButton(f"{nombre_boton}", callback_data=f"dash_ver_{area}_{area}")
-        ]]
+        keyboard = [
+            [InlineKeyboardButton(f"{nombre_boton}", callback_data=f"dash_ver_{area}_{area}")],
+            [InlineKeyboardButton("🚪 Salir del dashboard", callback_data="dash_salir")]
+        ]
     else:
         return None
     

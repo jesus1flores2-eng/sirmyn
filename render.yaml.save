@@ -1,0 +1,65 @@
+services:
+  - type: web
+    name: sirmyn
+    env: python
+    buildCommand: |
+      echo "============================================="
+      echo "🚀 INICIANDO BUILD DE SIRMYN"
+      echo "============================================="
+      echo "📂 Directorio actual: $(pwd)"
+      echo "📂 Archivos: $(ls -la)"
+      echo "============================================="
+      pip install -r requirements.txt
+      echo "✅ Dependencias instaladas"
+      echo "============================================="
+      echo "🔄 Creando tablas en la base de datos..."
+      python -c "from app import create_app; app = create_app(); app.app_context().push(); from app.extensions import db; db.create_all()"
+      echo "✅ Tablas creadas correctamente"
+      echo "============================================="
+      echo "📥 Cargando datos de ejemplo..."
+      python cargar_datos_municipio.py
+      echo "✅ Datos cargados correctamente"
+      echo "============================================="
+    startCommand: gunicorn run:app
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://postgres:Sirmyn2024!@db.nvcmhqgxeustddzqnyrl.supabase.co:5432/postgres
+      - key: FLASK_SECRET_KEY
+        value: ef51fb421046c299e2deab95704766a31007670d9a79696ad377b5832474a5f1
+      - key: TELEGRAM_TOKEN
+        value: 8576103288:AAH_t7HYHvgat_CxZTGzDqrbUCdes4qhrjg
+      - key: TELEGRAM_EMERGENCIAS_TOKEN
+        value: 7835638805:AAH5jGWBjPPX58kF3W89hVI3pqOJatnLqGA
+      - key: TELEGRAM_ADMIN_ID
+        value: "7008236243"
+      - key: SERVER_URL
+        value: https://sirmyn.onrender.com
+      - key: UPLOAD_FOLDER
+        value: uploads
+      - key: CLOUDINARY_CLOUD_NAME
+        value: mqyejrhd
+      - key: CLOUDINARY_API_KEY
+        value: "526356711456913"
+      - key: CLOUDINARY_API_SECRET
+        value: IFpw1w8ecO2ezizc4XGDoSDj6zc
+      - key: CLOUDINARY_COMUNICACION_CLOUD_NAME
+        value: hs9zhmwe
+      - key: CLOUDINARY_COMUNICACION_API_KEY
+        value: "955727587294812"
+      - key: CLOUDINARY_COMUNICACION_API_SECRET
+        value: y6ycLSS08WXu-zghH-JGQcRc1FM
+      - key: TWILIO_ACCOUNT_SID
+        value: ACd304825224d6915da795be5af6069e91
+      - key: TWILIO_AUTH_TOKEN
+        value: feb53b6258b722cc2132666396f0279a
+      - key: TWILIO_PHONE_NUMBER
+        value: whatsapp:+14155238886
+      - key: OPERADOR_NUMERO
+        value: whatsapp:+523314882778
+      - key: TRACKSOLID_APP_KEY
+        value: 8FB345B8693CCD008DA552F0C2183C5D
+      - key: TRACKSOLID_APP_SECRET
+        value: dc1a84286cff4cadb95779173996782d
+      - key: TRACKSOLID_USER_PWD_MD5
+        value: 2eac08a380bbb24d1d893a8a0c006626
+|

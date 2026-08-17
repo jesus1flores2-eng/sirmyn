@@ -1613,3 +1613,78 @@ def encuestas_dashboard():
         tipo_seleccionado=tipo,
         tipos_disponibles=tipos_disponibles
     )
+
+# ============================================================
+# GESTIÓN DE DISPOSITIVOS GPS
+# ============================================================
+
+@admin_bp.route('/gestionar_gps', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def gestionar_gps():
+    """Gestión de dispositivos GPS"""
+    from app.models.gps_dispositivo import GpsDispositivo
+    
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        imei = request.form.get('imei')
+        team_id = request.form.get('team_id') or None
+        telefono_chip = request.form.get('telefono_chip') or None
+        compania = request.form.get('compania') or None
+        plan_datos = request.form.get('plan_datos') or None
+        fecha_vencimiento = request.form.get('fecha_vencimiento') or None
+        
+        if nombre and imei:
+            if GpsDispositivo.query.filter_by(imei=imei).first():
+                flash("El IMEI ya está registrado.", "error")
+            else:
+                dispositivo = GpsDispositivo(
+                    nombre=nombre, imei=imei, team_id=int(team_id) if team_id else None,
+                    telefono_chip=telefono_chip, compania=compania,
+                    plan_datos=plan_datos,
+                    fecha_vencimiento=datetime.strptime(fecha_vencimiento, '%Y-%m-%d') if fecha_vencimiento else None
+                )
+                db.session.add(dispositivo)
+                db.session.commit()
+                flash(f'GPS {nombre} registrado exitosamente.', 'success')
+        else:
+            flash("Nombre e IMEI son obligatorios.", "warning")
+        return redirect(url_for('admin.gestionar_gps'))
+    
+    dispositivos = GpsDispositivo.query.all()
+    all_teams = Team.query.all()
+    return render_template('admin/gestionar_gps.html', dispositivos=dispositivos, all_teams=all_teams)
+
+
+@admin_bp.route('/gps/<int:id>/actualizar', methods=['POST'])
+@login_required
+@admin_required
+def actualizar_gps(id):
+    from app.models.gps_dispositivo import GpsDispositivo
+    dispositivo = GpsDispositivo.query.get_or_404(id)
+    
+    dispositivo.nombre = request.form.get('nombre')
+    dispositivo.telefono_chip = request.form.get('telefono_chip') or None
+    dispositivo.compania = request.form.get('compania') or None
+    dispositivo.plan_datos = request.form.get('plan_datos') or None
+    team_id = request.form.get('team_id')
+    dispositivo.team_id = int(team_id) if team_id else None
+    fecha = request.form.get('fecha_vencimiento')
+    dispositivo.fecha_vencimiento = datetime.strptime(fecha, '%Y-%m-%d') if fecha else None
+    
+    db.session.commit()
+    flash(f'GPS {dispositivo.nombre} actualizado.', 'success')
+    return redirect(url_for('admin.gestionar_gps'))
+
+
+@admin_bp.route('/gps/<int:id>/eliminar', methods=['POST'])
+@login_required
+@admin_required
+def eliminar_gps(id):
+    from app.models.gps_dispositivo import GpsDispositivo
+    dispositivo = GpsDispositivo.query.get_or_404(id)
+    nombre = dispositivo.nombre
+    db.session.delete(dispositivo)
+    db.session.commit()
+    flash(f'GPS {nombre} eliminado.', 'warning')
+    return redirect(url_for('admin.gestionar_gps'))

@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                <i class="fas fa-satellite me-2"></i>Gestión de Dispositivos GPS
+            </h1>
+            <p class="mb-0">Administra los rastreadores GPS vinculados a las cuadrillas</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <!-- Tarjeta para agregar GPS -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-success text-white py-3">
+            <h6 class="m-0 font-weight-bold"><i class="fas fa-plus-circle me-2"></i>Registrar Nuevo GPS</h6>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Nombre del Dispositivo *</label>
+                        <input type="text" name="nombre" class="form-control" required placeholder="Ej: Patrulla Norte">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">IMEI *</label>
+                        <input type="text" name="imei" class="form-control" required placeholder="15 dígitos">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Departamento</label>
+                        <select name="area" id="area_gps" class="form-select" onchange="filtrarCuadrillasGPS()">
+                            <option value="">-- Todos --</option>
+                            <option value="agua">💧 Agua Potable</option>
+                            <option value="aseo">🗑️ Aseo Público</option>
+                            <option value="alumbrado">💡 Alumbrado Público</option>
+                            <option value="parques">🌳 Parques y Jardines</option>
+                            <option value="ecologia">🌍 Ecología</option>
+                            <option value="seguridad">👮 Seguridad Pública</option>
+                            <option value="obras">🏗️ Obras Públicas</option>
+                            <option value="bomberos">🚒 Bomberos</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Cuadrilla Asignada</label>
+                        <select name="team_id" id="team_id_gps" class="form-select">
+                            <option value="">-- Sin cuadrilla --</option>
+                            {% for team in all_teams %}
+                            <option value="{{ team.id }}" data-area="{{ team.area }}">{{ team.nombre }} ({{ team.area or 'Sin área' }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Teléfono del Chip</label>
+                        <input type="text" name="telefono_chip" class="form-control" placeholder="10 dígitos">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Compañía</label>
+                        <select name="compania" class="form-select">
+                            <option value="">-- Seleccionar --</option>
+                            <option value="Telcel">Telcel</option>
+                            <option value="Movistar">Movistar</option>
+                            <option value="AT&T">AT&T</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Plan de Datos</label>
+                        <input type="text" name="plan_datos" class="form-control" placeholder="Ej: Plan Amigo 100MB">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Fecha Vencimiento Plan</label>
+                        <input type="date" name="fecha_vencimiento" class="form-control">
+                    </div>
+                    <div class="col-md-4 mb-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-success w-100"><i class="fas fa-save me-2"></i>Registrar GPS</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de GPS registrados -->
+    <div class="card border-0 shadow">
+        <div class="card-header bg-info text-white py-3">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-list me-2"></i>Dispositivos GPS Registrados
+                <span class="badge bg-light text-dark ms-2">{{ dispositivos|length }}</span>
+            </h6>
+        </div>
+        <div class="card-body">
+            {% if dispositivos %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>IMEI</th>
+                            <th>Cuadrilla</th>
+                            <th>Teléfono Chip</th>
+                            <th>Compañía</th>
+                            <th>Plan</th>
+                            <th>Vence</th>
+                            <th>Última Ubicación</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in dispositivos %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ d.id }}</span></td>
+                            <td><strong>{{ d.nombre }}</strong></td>
+                            <td><code>{{ d.imei }}</code></td>
+                            <td>{{ d.team.nombre if d.team else '<span class="text-muted">Sin asignar</span>'|safe }}</td>
+                            <td>{{ d.telefono_chip or '—' }}</td>
+                            <td>{{ d.compania or '—' }}</td>
+                            <td>{{ d.plan_datos or '—' }}</td>
+                            <td>
+                                {% if d.fecha_vencimiento %}
+                                    {% set dias = (d.fecha_vencimiento - today.date()).days if today else 0 %}
+                                    <span class="badge {% if dias <= 0 %}bg-danger{% elif dias <= 3 %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                        {{ d.fecha_vencimiento.strftime('%d/%m/%Y') }}
+                                        {% if dias <= 0 %}🔴{% elif dias <= 3 %}⚠️{% else %}✅{% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if d.ultima_latitud and d.ultima_longitud %}
+                                <a href="https://www.google.com/maps?q={{ d.ultima_latitud }},{{ d.ultima_longitud }}" target="_blank" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-map-marker-alt"></i> Ver
+                                </a>
+                                <br><small class="text-muted">{{ d.ultima_actualizacion.strftime('%d/%m %H:%M') if d.ultima_actualizacion else 'N/A' }}</small>
+                                {% else %}
+                                <span class="text-muted">Sin datos</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex justify-content-center gap-1">
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#modalEditarGPS{{ d.id }}" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#modalEliminarGPS{{ d.id }}" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="fas fa-satellite fa-3x mb-3"></i>
+                <p>No hay dispositivos GPS registrados</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- MODALES: EDITAR Y ELIMINAR -->
+{% for d in dispositivos %}
+<div class="modal fade" id="modalEditarGPS{{ d.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Editar: {{ d.nombre }}</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.actualizar_gps', id=d.id) }}">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nombre *</label>
+                            <input type="text" name="nombre" class="form-control" value="{{ d.nombre }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Departamento</label>
+                            <select name="area" class="form-select area_gps_edit" data-id="{{ d.id }}" onchange="filtrarCuadrillasGPSEdit({{ d.id }})">
+                                <option value="">-- Todos --</option>
+                                <option value="agua" {% if d.team and d.team.area=='agua' %}selected{% endif %}>💧 Agua</option>
+                                <option value="aseo" {% if d.team and d.team.area=='aseo' %}selected{% endif %}>🗑️ Aseo</option>
+                                <option value="alumbrado" {% if d.team and d.team.area=='alumbrado' %}selected{% endif %}>💡 Alumbrado</option>
+                                <option value="parques" {% if d.team and d.team.area=='parques' %}selected{% endif %}>🌳 Parques</option>
+                                <option value="ecologia" {% if d.team and d.team.area=='ecologia' %}selected{% endif %}>🌍 Ecología</option>
+                                <option value="seguridad" {% if d.team and d.team.area=='seguridad' %}selected{% endif %}>👮 Seguridad</option>
+                                <option value="obras" {% if d.team and d.team.area=='obras' %}selected{% endif %}>🏗️ Obras</option>
+                                <option value="bomberos" {% if d.team and d.team.area=='bomberos' %}selected{% endif %}>🚒 Bomberos</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Cuadrilla</label>
+                            <select name="team_id" class="form-select team_id_gps_edit" data-id="{{ d.id }}">
+                                <option value="">-- Sin cuadrilla --</option>
+                                {% for team in all_teams %}
+                                <option value="{{ team.id }}" data-area="{{ team.area }}" {% if d.team_id == team.id %}selected{% endif %}>{{ team.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Teléfono Chip</label>
+                            <input type="text" name="telefono_chip" class="form-control" value="{{ d.telefono_chip or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Compañía</label>
+                            <select name="compania" class="form-select">
+                                <option value="">-- Seleccionar --</option>
+                                <option value="Telcel" {% if d.compania=='Telcel' %}selected{% endif %}>Telcel</option>
+                                <option value="Movistar" {% if d.compania=='Movistar' %}selected{% endif %}>Movistar</option>
+                                <option value="AT&T" {% if d.compania=='AT&T' %}selected{% endif %}>AT&T</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Plan de Datos</label>
+                            <input type="text" name="plan_datos" class="form-control" value="{{ d.plan_datos or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fecha Vencimiento</label>
+                            <input type="date" name="fecha_vencimiento" class="form-control" value="{{ d.fecha_vencimiento.strftime('%Y-%m-%d') if d.fecha_vencimiento else '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarGPS{{ d.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Eliminar GPS</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Eliminar <strong>{{ d.nombre }}</strong> (IMEI: {{ d.imei }})?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_gps', id=d.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+// Filtrar cuadrillas en formulario de creación
+function filtrarCuadrillasGPS() {
+    const area = document.getElementById('area_gps').value;
+    const select = document.getElementById('team_id_gps');
+    const opciones = select.querySelectorAll('option');
+    select.value = '';
+    opciones.forEach(opt => {
+        if (opt.value === '') return;
+        opt.style.display = (!area || opt.dataset.area === area) ? '' : 'none';
+    });
+}
+
+// Filtrar cuadrillas en modal de edición
+function filtrarCuadrillasGPSEdit(id) {
+    const areaSelect = document.querySelector(`.area_gps_edit[data-id="${id}"]`);
+    const teamSelect = document.querySelector(`.team_id_gps_edit[data-id="${id}"]`);
+    if (!areaSelect || !teamSelect) return;
+    const area = areaSelect.value;
+    const opciones = teamSelect.querySelectorAll('option');
+    teamSelect.value = '';
+    opciones.forEach(opt => {
+        if (opt.value === '') return;
+        opt.style.display = (!area || opt.dataset.area === area) ? '' : 'none';
+    });
+}
+
+// Aplicar filtro al cargar modales de edición
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.area_gps_edit').forEach(select => {
+        const id = select.dataset.id;
+        filtrarCuadrillasGPSEdit(id);
+    });
+});
+</script>
+
+{% endblock %}

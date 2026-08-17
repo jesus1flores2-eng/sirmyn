@@ -27,6 +27,11 @@ from app.telegram.comunicacion.handlers import (
     manejar_imagen, confirmar_envio,
     COM_LOCALIDAD, COM_MENSAJE, COM_IMAGEN, COM_CONFIRMAR
 )
+from app.telegram.comunicacion.video_handler import (
+    comunicado_video_start, video_localidad, video_fotos,
+    video_titulo, video_musica, video_mensaje, video_confirmar,
+    COMVIDEO_LOCALIDAD, COMVIDEO_FOTOS, COMVIDEO_TITULO, COMVIDEO_MUSICA, COMVIDEO_MENSAJE, COMVIDEO_CONFIRMAR
+)
 from app.telegram.handlers.resultado_seguridad import (
     resultado_seguridad_start, resultado_seleccion, resultado_folio, resultado_documento,
     SEG_RESULTADO, SEG_FOLIO, SEG_DOCUMENTO
@@ -169,6 +174,35 @@ def build_telegram_app(token):
         per_chat=True,
     )
     app.add_handler(conv_handler_comunicado)
+
+    # ============================================================
+    # CONVERSATIONHANDLER COMUNICACION VIDEO
+    # ============================================================
+
+    conv_handler_comunicado_video = ConversationHandler(
+        entry_points=[CommandHandler('comunicado_video', comunicado_video_start)],
+        states={
+            COMVIDEO_LOCALIDAD: [MessageHandler(filters.TEXT & ~filters.COMMAND, video_localidad)],
+            COMVIDEO_FOTOS: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, video_fotos),
+                MessageHandler(filters.PHOTO | filters.VIDEO, video_fotos)
+            ],
+            COMVIDEO_TITULO: [MessageHandler(filters.TEXT & ~filters.COMMAND, video_titulo)],
+            COMVIDEO_MUSICA: [
+                MessageHandler(filters.TEXT & ~filters.COMMAND, video_musica),
+                MessageHandler(filters.AUDIO, video_musica),
+                MessageHandler(filters.Document.MP3, video_musica)
+            ],
+            COMVIDEO_MENSAJE: [MessageHandler(filters.TEXT & ~filters.COMMAND, video_mensaje)],
+            COMVIDEO_CONFIRMAR: [MessageHandler(filters.TEXT & ~filters.COMMAND, video_confirmar)],
+        },
+        fallbacks=[CommandHandler('cancelar', cancelar_command)],
+        name="comunicado_video",
+        persistent=False,
+        per_user=True,
+        per_chat=True,
+    )
+    app.add_handler(conv_handler_comunicado_video)
 
     # ============================================================
     # CONVERSATIONHANDLER PRINCIPAL PARA MAQUINARIA

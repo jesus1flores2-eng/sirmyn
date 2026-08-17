@@ -8,6 +8,7 @@ from app.routes import register_blueprints
 import pytz
 from app.utils import permisos
 
+
 csrf = CSRFProtect()
 LOCAL_TZ = pytz.timezone('America/Mexico_City')
 

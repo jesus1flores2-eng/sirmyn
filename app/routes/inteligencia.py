@@ -218,3 +218,33 @@ def obtener_departamentos():
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+        
+@inteligencia_bp.route('/api/gps/cuadrillas')
+@login_required
+def api_gps_cuadrillas():
+    """API: Ubicaciones GPS en tiempo real"""
+    try:
+        from app.models.gps_dispositivo import GpsDispositivo
+        from datetime import datetime, timedelta
+        
+        # Solo dispositivos actualizados en los últimos 5 minutos
+        limite = datetime.utcnow() - timedelta(minutes=5)
+        dispositivos = GpsDispositivo.query.filter(
+            GpsDispositivo.ultima_actualizacion >= limite
+        ).all()
+        
+        return jsonify({
+            'success': True,
+            'dispositivos': [{
+                'id': d.id,
+                'nombre': d.nombre,
+                'imei': d.imei,
+                'lat': d.ultima_latitud,
+                'lng': d.ultima_longitud,
+                'velocidad': d.ultima_velocidad,
+                'cuadrilla': d.team.nombre if d.team else 'Sin asignar',
+                'actualizado': d.ultima_actualizacion.strftime('%H:%M:%S') if d.ultima_actualizacion else None
+            } for d in dispositivos if d.ultima_latitud and d.ultima_longitud]
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500

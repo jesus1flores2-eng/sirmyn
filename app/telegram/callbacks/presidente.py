@@ -27,10 +27,15 @@ async def presidencia_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             alumbrado = Report.query.filter(Report.tipo == 'Alumbrado público').count()
             drenaje = Report.query.filter(Report.tipo == 'Drenaje').count()
             aseo = Report.query.filter(Report.tipo == 'Aseo público').count()
+            parques = Report.query.filter(Report.tipo == 'Parques y jardines').count()
+            obras = Report.query.filter(Report.tipo == 'Obras públicas').count()
+            seguridad = Report.query.filter(Report.tipo == 'Seguridad pública').count()
+            bomberos = Report.query.filter(Report.tipo == 'Bomberos').count()
+            ecologia = Report.query.filter(Report.tipo == 'Ecología').count()
             
             fecha = datetime.now().strftime('%d/%m/%Y')
             hora = datetime.now().strftime('%H:%M')
-            
+
             mensaje = f"""🏛️ *DASHBOARD PRESIDENCIAL*
 📅 {fecha} | 🕐 {hora}
 ━━━━━━━━━━━━━━━━━━━━━━
@@ -38,22 +43,28 @@ async def presidencia_command(update: Update, context: ContextTypes.DEFAULT_TYPE
 📊 *REPORTES EN SISTEMA:*
 • 📋 Total: {total}
 • 💧 Agua: {agua}
-• 💡 Alumbrado: {alumbrado}
 • 🚰 Drenaje: {drenaje}
+• 💡 Alumbrado: {alumbrado}
 • 🗑️ Aseo: {aseo}
+• 🌳 Parques: {parques}
+• 🏗️ Obras: {obras}
+• 👮 Seguridad: {seguridad}
+• 🚒 Bomberos: {bomberos}
+• 🌍 Ecología: {ecologia}
 
 *Selecciona un área:*
 """
             
             keyboard = [
                 [InlineKeyboardButton("💧 Agua", callback_data="pres_agua"),
-                 InlineKeyboardButton("💡 Alumbrado", callback_data="pres_alumbrado")],
-                [InlineKeyboardButton("🚰 Drenaje", callback_data="pres_drenaje"),
+                 InlineKeyboardButton("🚰 Drenaje", callback_data="pres_drenaje")],
+                [InlineKeyboardButton("💡 Alumbrado", callback_data="pres_alumbrado"),
                  InlineKeyboardButton("🗑️ Aseo", callback_data="pres_aseo")],
                 [InlineKeyboardButton("🌳 Parques", callback_data="pres_parques"),
                  InlineKeyboardButton("🏗️ Obras", callback_data="pres_obra")],
                 [InlineKeyboardButton("👮 Seguridad", callback_data="pres_seguridad"),
                  InlineKeyboardButton("🚒 Bomberos", callback_data="pres_bomberos")],
+                [InlineKeyboardButton("🌍 Ecología", callback_data="pres_ecologia")],
                 [InlineKeyboardButton("🔄 Actualizar", callback_data="pres_refresh")],
                 [InlineKeyboardButton("🚪 Salir del dashboard", callback_data="pres_salir")]
             ]
@@ -336,7 +347,12 @@ async def recargar_dashboard_presidencial_simple(query):
             alumbrado = Report.query.filter(Report.tipo == 'Alumbrado público').count()
             drenaje = Report.query.filter(Report.tipo == 'Drenaje').count()
             aseo = Report.query.filter(Report.tipo == 'Aseo público').count()
-            
+            parques = Report.query.filter(Report.tipo == 'Parques y jardines').count()
+            obras = Report.query.filter(Report.tipo == 'Obras públicas').count()
+            seguridad = Report.query.filter(Report.tipo == 'Seguridad pública').count()
+            bomberos = Report.query.filter(Report.tipo == 'Bomberos').count()
+            ecologia = Report.query.filter(Report.tipo == 'Ecología').count()
+
             fecha = datetime.now().strftime('%d/%m/%Y')
             hora = datetime.now().strftime('%H:%M')
             
@@ -347,22 +363,28 @@ async def recargar_dashboard_presidencial_simple(query):
 📊 *REPORTES EN SISTEMA:*
 • 📋 Total: {total}
 • 💧 Agua: {agua}
-• 💡 Alumbrado: {alumbrado}
 • 🚰 Drenaje: {drenaje}
+• 💡 Alumbrado: {alumbrado}
 • 🗑️ Aseo: {aseo}
+• 🌳 Parques: {parques}
+• 🏗️ Obras: {obras}
+• 👮 Seguridad: {seguridad}
+• 🚒 Bomberos: {bomberos}
+• 🌍 Ecología: {ecologia}
 
 *Selecciona un área:*
 """
             
             keyboard = [
                 [InlineKeyboardButton("💧 Agua", callback_data="pres_agua"),
-                 InlineKeyboardButton("💡 Alumbrado", callback_data="pres_alumbrado")],
-                [InlineKeyboardButton("🚰 Drenaje", callback_data="pres_drenaje"),
+                 InlineKeyboardButton("🚰 Drenaje", callback_data="pres_drenaje")],
+                [InlineKeyboardButton("💡 Alumbrado", callback_data="pres_alumbrado"),
                  InlineKeyboardButton("🗑️ Aseo", callback_data="pres_aseo")],
                 [InlineKeyboardButton("🌳 Parques", callback_data="pres_parques"),
                  InlineKeyboardButton("🏗️ Obras", callback_data="pres_obra")],
                 [InlineKeyboardButton("👮 Seguridad", callback_data="pres_seguridad"),
                  InlineKeyboardButton("🚒 Bomberos", callback_data="pres_bomberos")],
+                [InlineKeyboardButton("🌍 Ecología", callback_data="pres_ecologia")],
                 [InlineKeyboardButton("🔄 Actualizar", callback_data="pres_refresh")],
                 [InlineKeyboardButton("🚪 Salir del dashboard", callback_data="pres_salir")]
             ]

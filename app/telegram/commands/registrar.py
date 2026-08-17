@@ -196,6 +196,52 @@ async def registro_confirmacion_handler(update: Update, context: ContextTypes.DE
             usuario.telegram_id = user_id
             db.session.commit()
             
+            # Comandos personalizados según rol
+            rol = usuario.rol_especifico
+            
+            if rol == 'presidente':
+                comandos = (
+                    "• `/presidencia` - Dashboard presidencial\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol == 'director':
+                comandos = (
+                    "• `/dashboard` - Panel de tu área\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol and 'jefe_area' in rol:
+                comandos = (
+                    "• `/dashboard` - Panel de tu área\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol == 'supervisor':
+                comandos = (
+                    "• `/dashboard` - Panel de supervisión\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol == 'cuadrilla':
+                comandos = (
+                    "• `/pendientes` - Todos tus reportes activos\n"
+                    "• `/miestado` - Reportes de últimas 24h\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol in ['retro', 'camion', 'camion_7m', 'volteo', 'vactor', 'pipa']:
+                comandos = (
+                    "• `/viajes` - Tus viajes pendientes\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            elif rol == 'comunicacion_social':
+                comandos = (
+                    "• `/comunicado` - Enviar comunicado\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+            else:
+                comandos = (
+                    "• `/start` - Nuevo reporte\n"
+                    "• `/estado` - Ver tus reportes\n"
+                    "• `/ayuda` - Todos los comandos"
+                )
+
             await update.message.reply_text(
                 f"🎉 *¡VINCULACIÓN EXITOSA!*\n\n"
                 f"*👤 Nombre:* {usuario.nombre}\n"
@@ -203,10 +249,7 @@ async def registro_confirmacion_handler(update: Update, context: ContextTypes.DE
                 f"*📱 Telegram vinculado:* @{update.effective_user.username or 'N/A'}\n\n"
                 f"*🔔 Recibirás notificaciones de reportes asignados.*\n\n"
                 f"*📊 Comandos disponibles:*\n"
-                f"• `/miestado` - Ver tus reportes\n"
-                f"• `/dashboard` - Panel según tu rol\n"
-                f"• `/presidencia` - Panel presidencial\n"
-                f"• `/ayuda` - Todos los comandos",
+                f"{comandos}",
                 parse_mode="Markdown",
                 reply_markup=ReplyKeyboardRemove()
             )
