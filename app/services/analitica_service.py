@@ -398,7 +398,6 @@ class AnaliticaService:
                 func.extract('epoch', Assignment.timestamp) -
                 func.extract('epoch', Report.timestamp)
             )
-        )
         ).join(
             Assignment, Assignment.report_id == Report.id
         ).join(
