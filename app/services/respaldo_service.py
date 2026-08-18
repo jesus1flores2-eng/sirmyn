@@ -34,36 +34,41 @@ class RespaldoService:
     def __init__(self):
         self.supabase_url = os.getenv('SUPABASE_URL')
         self.supabase_key = os.getenv('SUPABASE_SECRET_KEY')
-
+        self.app = current_app._get_current_object() if current_app else None
+        
     def ejecutar_respaldo(self):
         """Ejecuta el respaldo completo"""
         try:
             logger.info("🔄 Iniciando respaldo de base de datos...")
 
+            from app import create_app
             from app.extensions import db
+
+            app = create_app()
 
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             carpeta_zip = f"respaldo_{timestamp}"
             archivos_subidos = []
 
-            for tabla in self.TABLAS:
-                try:
-                    csv_data = self._exportar_tabla_csv(tabla, db)
-                    if csv_data:
-                        ruta_remota = f"{carpeta_zip}/{tabla}.csv"
-                        url = self._subir_archivo(
-                            bucket='respaldos',
-                            ruta_remota=ruta_remota,
-                            contenido=csv_data,
-                            content_type='text/csv'
-                        )
-                        if url:
-                            archivos_subidos.append(tabla)
-                            logger.info(f"✅ {tabla}.csv subido")
-                        else:
-                            logger.warning(f"⚠️ No se pudo subir {tabla}.csv")
-                except Exception as e:
-                    logger.error(f"❌ Error con tabla {tabla}: {e}")
+            with app.app_context():
+                for tabla in self.TABLAS:
+                    try:
+                        csv_data = self._exportar_tabla_csv(tabla, db)
+                        if csv_data:
+                            ruta_remota = f"{carpeta_zip}/{tabla}.csv"
+                            url = self._subir_archivo(
+                                bucket='respaldos',
+                                ruta_remota=ruta_remota,
+                                contenido=csv_data,
+                                content_type='text/csv'
+                            )
+                            if url:
+                                archivos_subidos.append(tabla)
+                                logger.info(f"✅ {tabla}.csv subido")
+                            else:
+                                logger.warning(f"⚠️ No se pudo subir {tabla}.csv")
+                    except Exception as e:
+                        logger.error(f"❌ Error con tabla {tabla}: {e}")
 
             logger.info(f"📦 Respaldo completado: {len(archivos_subidos)} archivos")
             return len(archivos_subidos) > 0
@@ -140,8 +145,13 @@ class RespaldoService:
 def crear_respaldo_automatico():
     """Función para ejecutar desde el scheduler"""
     try:
-        servicio = RespaldoService()
-        resultado = servicio.ejecutar_respaldo()
+        from app import create_app
+        app = create_app()
+        
+        with app.app_context():
+            servicio = RespaldoService()
+            resultado = servicio.ejecutar_respaldo()
+        
         if resultado:
             logger.info("✅ Respaldo automático completado exitosamente")
         else:
