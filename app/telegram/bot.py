@@ -387,6 +387,7 @@ def build_telegram_app(token):
     app.add_handler(CallbackQueryHandler(encuesta_velocidad_handler, pattern="^enc_vel_"))
     app.add_handler(CallbackQueryHandler(rechazo_motivo_handler, pattern="^usuario_rechazo_motivo_"))
     app.add_handler(CallbackQueryHandler(rechazo_volver_handler, pattern="^rech_volver_"))
+    app.add_handler(CallbackQueryHandler(manejar_aceptacion, pattern="^(aceptar|rechazar)_privacidad$"))
     app.add_handler(CallbackQueryHandler(button_callback_handler, pattern="^(?!.*privacidad).*"))
 
     # ============================================================
