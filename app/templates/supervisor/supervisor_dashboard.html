@@ -3,8 +3,34 @@
 
 {% block content %}
 
+<!-- Encabezado -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="mb-0 fw-bold text-primary">
+            <i class="fas fa-clipboard-list me-2"></i>Panel del Supervisor
+        </h3>
+        <small class="text-muted">
+            {% if current_user.area == 'agua' %}
+                Vista de Agua Potable y Drenaje
+            {% else %}
+                Vista de {{ current_user.area|replace('_', ' ')|title if current_user.area else 'General' }}
+            {% endif %}
+        </small>
+    </div>
+    <div>
+        <span class="badge bg-success bg-opacity-10 text-success fs-6">
+            <i class="fas fa-user-check me-1"></i>{{ current_user.nombre }}
+        </span>
+    </div>
+</div>
+
 <!-- Filtros -->
 <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 text-secondary">
+            <i class="fas fa-filter me-2"></i>Filtros de búsqueda
+        </h5>
+    </div>
     <div class="card-body p-4">
         <form method="get" class="row g-3 align-items-end">
             <!-- Tipo -->
@@ -52,14 +78,14 @@
             </div>
 
             <!-- Botón Filtrar -->
-            <div class="col-md-1 d-grid">
+            <div class="col-md-2 d-grid">
                 <button type="submit" class="btn btn-dark btn-sm">
                     <i class="fas fa-filter me-1"></i> Filtrar
                 </button>
             </div>
 
             <!-- Botón Exportar -->
-            <div class="col-md-1 d-grid">
+            <div class="col-md-2 d-grid">
                 <a href="{{ url_for('supervisor.exportar_excel_supervisor',
                                     tipo=tipo_seleccionado,
                                     subtipo=subtipo_seleccionado,
@@ -75,6 +101,14 @@
 
 <!-- Tabla de reportes -->
 <div class="card border-0 shadow">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-secondary">
+            <i class="fas fa-table me-2"></i>Reportes
+        </h5>
+        <span class="badge bg-primary bg-opacity-10 text-primary">
+            {{ reportes|length }} reportes
+        </span>
+    </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover table-borderless mb-0" id="reportsTable">
@@ -96,55 +130,82 @@
                 <tbody>
                     {% for r in reportes %}
                     <tr {% if r.estado_color %} style="background-color: {{ r.estado_color }};" {% endif %}>
-                        <td>{{ r.id }}</td>
+                        <td class="fw-bold">{{ r.id }}</td>
                         <td>{{ r.timestamp|localtime if r.timestamp else '—' }}</td>
-                        <td>{{ r.reportante }}<br><small>{{ r.telefono }}</small></td>
-                        <td>{{ r.tipo }} / {{ r.subtipo }}</td>
-                        <td>{{ r.calle }} {{ r.numero }}<br><small>{{ r.localidad }}</small></td>
-                        <td>{{ r.descripcion_problema or '—' }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ r.reportante }}</div>
+                            <small class="text-muted">{{ r.telefono }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-info bg-opacity-10 text-info d-block mb-1">{{ r.tipo }}</span>
+                            <small>{{ r.subtipo }}</small>
+                        </td>
+                        <td>
+                            <div>{{ r.calle }} {{ r.numero }}</div>
+                            <small class="text-muted">{{ r.localidad }}</small>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 200px;" title="{{ r.descripcion_problema or '' }}">
+                                {{ r.descripcion_problema or '—' }}
+                            </div>
+                        </td>
                         <td>
                             {% if r.evidencia %}
-                                {% set ev_user = r.evidencia.split('/')[-1] %}
-                                <a href="{{ url_for('supervisor.uploaded_file', filename=ev_user) }}" target="_blank" class="evidence-link d-block mb-1">
-                                    <i class="fas fa-paperclip"></i> Evidencia usuario
+                                <a href="{{ url_for('supervisor.uploaded_file', filename=r.evidencia.split('/')[-1]) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                    <i class="fas fa-paperclip me-1"></i> Evidencia usuario
                                 </a>
                             {% endif %}
 
                             {% if r.evidencia_cuadrilla %}
-                                {% set ev_cuad = r.evidencia_cuadrilla.split('/')[-1] %}
-                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ ev_cuad) }}" target="_blank" class="evidence-link d-block mb-1">
-                                    <i class="fas fa-hard-hat"></i> Evidencia cuadrilla
+                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ r.evidencia_cuadrilla.split('/')[-1]) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                    <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla
                                 </a>
                             {% endif %}
 
                             {% if r.materiales_utilizados %}
-                                {% set ev_mat = r.materiales_utilizados.split('/')[-1] %}
-                                <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ ev_mat) }}" target="_blank" class="evidence-link d-block">
-                                    <i class="fas fa-boxes"></i> Materiales utilizados
+                                <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ r.materiales_utilizados.split('/')[-1]) }}" target="_blank" class="evidence-link d-block text-decoration-none">
+                                    <i class="fas fa-boxes me-1"></i> Materiales
                                 </a>
                             {% endif %}
 
                             {% if not r.evidencia and not r.evidencia_cuadrilla and not r.materiales_utilizados %}
-                                —
+                                <span class="text-muted">—</span>
                             {% endif %}
                         </td>
-                        <td>{{ r.cuadrilla }}</td>
-                        <td>{{ r.estado }}</td>
-                        <td>{{ r.observaciones or '—' }}</td>
                         <td>
-                            <!-- Ver historial -->
-                            <a href="{{ url_for('supervisor.historial_reporte_supervisor', report_id=r.id) }}" class="btn btn-outline-primary btn-sm mb-1">
-                                <i class="fas fa-history"></i> Ver
-                            </a>
+                            <span class="badge bg-secondary bg-opacity-10 text-dark">{{ r.cuadrilla }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success bg-opacity-10 text-success">{{ r.estado }}</span>
+                        </td>
+                        <td>
+                            <div class="text-truncate" style="max-width: 180px;" title="{{ r.observaciones or '' }}">
+                                {{ r.observaciones or '—' }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                <!-- Ver historial -->
+                                <a href="{{ url_for('supervisor.historial_reporte_supervisor', report_id=r.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-history me-1"></i> Ver
+                                </a>
 
-                            <!-- Botón Aprobado -->
-                            {% if r.estado.lower() != 'finalizado' %}
-                            <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', assignment_id=r.asignaciones[-1].id) }}" class="d-inline">
-                                <button type="submit" class="btn btn-success btn-sm mb-1">
-                                    <i class="fas fa-check"></i> Aprobado
-                                </button>
-                            </form>
-                            {% endif %}
+                                <!-- Botón Aprobado -->
+                                {% if r.estado.lower() != 'finalizado' %}
+                                <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', assignment_id=r.asignaciones[-1].id) }}" class="d-inline">
+                                    <button type="submit" class="btn btn-success btn-sm w-100">
+                                        <i class="fas fa-check me-1"></i> Aprobado
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="11" class="text-center text-muted py-5">
+                            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                            No hay reportes para mostrar
                         </td>
                     </tr>
                     {% endfor %}
@@ -164,7 +225,21 @@ $(document).ready(function() {
     if (!$.fn.DataTable.isDataTable('#reportsTable')) {
         $('#reportsTable').DataTable({
             order: [[1, 'desc']],
-            pageLength: 25
+            pageLength: 25,
+            language: {
+                lengthMenu: "Mostrar _MENU_ reportes por página",
+                zeroRecords: "No se encontraron reportes",
+                info: "Mostrando _START_ a _END_ de _TOTAL_ reportes",
+                infoEmpty: "No hay reportes disponibles",
+                infoFiltered: "(filtrados de _MAX_ reportes totales)",
+                search: "Buscar:",
+                paginate: {
+                    first: "Primero",
+                    last: "Último",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            }
         });
     }
 });

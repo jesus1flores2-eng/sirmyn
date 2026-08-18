@@ -70,8 +70,23 @@ class User(UserMixin, db.Model):
     def es_jefe_area(self):
         return 'jefe_area' in str(self.rol_especifico) if self.rol_especifico else False
     
-    def es_supervisor(self):
-        return self.nivel == 'supervisor' or self.role == 'supervisor'
+    def es_supervisor():
+        if not current_user.is_authenticated:
+            return False
+
+        # Validar por nivel o rol
+        if getattr(current_user, 'nivel', None) == 'supervisor':
+            return True
+        if getattr(current_user, 'role', None) == 'supervisor':
+            return True
+        if getattr(current_user, 'rol_especifico', None) == 'supervisor':
+            return True
+
+        # Validar por equipo
+        if current_user.team and current_user.team.nombre:
+            return current_user.team.nombre.strip().lower() == 'supervisor'
+
+        return False
     
     def es_cuadrilla(self):
         return self.nivel == 'cuadrilla' or self.role == 'cuadrilla'
