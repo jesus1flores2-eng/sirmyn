@@ -124,6 +124,7 @@ class RespaldoService:
             url = f"{self.supabase_url}/storage/v1/object/{bucket}/{ruta_remota}"
 
             headers = {
+                "apikey": self.supabase_key,
                 "Authorization": f"Bearer {self.supabase_key}",
                 "Content-Type": content_type,
                 "x-upsert": "true"
