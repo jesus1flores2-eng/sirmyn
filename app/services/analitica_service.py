@@ -311,10 +311,10 @@ class AnaliticaService:
         """Obtiene tendencia de los últimos meses"""
         fecha_inicio = datetime.utcnow() - timedelta(days=meses*30)
         status_subquery = self._obtener_status_actual_subquery()
-        
-        # Consulta por mes
+    
+        # Consulta por mes compatible con PostgreSQL
         query = self.session.query(
-            func.strftime('%Y-%m', Report.timestamp).label('mes'),
+            func.to_char(Report.timestamp, 'YYYY-MM').label('mes'),
             func.count(Report.id).label('total'),
             func.sum(
                 case((status_subquery.c.status_id == self.FINALIZADO_STATUS_ID, 1), else_=0)
@@ -324,21 +324,21 @@ class AnaliticaService:
         ).filter(
             Report.timestamp >= fecha_inicio
         ).group_by(
-            func.strftime('%Y-%m', Report.timestamp)
+            func.to_char(Report.timestamp, 'YYYY-MM')
         ).order_by('mes')
-        
+    
         tendencias = []
         for mes, total, atendidos in query.all():
             atendidos = atendidos or 0
             eficiencia = round((atendidos / total * 100), 1) if total > 0 else 0
-            
+        
             tendencias.append({
                 'mes': mes,
                 'total': total,
                 'atendidos': atendidos,
                 'eficiencia': eficiencia
             })
-        
+    
         return tendencias
     
     def detalle_por_departamento(self, tipo, dias=30):
@@ -395,9 +395,10 @@ class AnaliticaService:
         # Calcular tiempo promedio de atención (solo para finalizados)
         tiempo_promedio = self.session.query(
             func.avg(
-                func.julianday(Assignment.timestamp) -
-                func.julianday(Report.timestamp)
+                func.extract('epoch', Assignment.timestamp) -
+                func.extract('epoch', Report.timestamp)
             )
+        )
         ).join(
             Assignment, Assignment.report_id == Report.id
         ).join(
@@ -434,22 +435,22 @@ class AnaliticaService:
                 }
                 for calle, localidad, total in calles_pendientes
             ],
-            'tiempo_promedio_atencion': round(tiempo_promedio * 24, 1),  # Convertir a horas
+            'tiempo_promedio_atencion': round((tiempo_promedio or 0) / 3600, 1)
             'total_por_mes': self._obtener_total_por_mes(tipo, fecha_limite)
         }
     
     def _obtener_total_por_mes(self, tipo, fecha_limite):
         """Obtiene total de reportes por mes"""
         query = self.session.query(
-            func.strftime('%Y-%m', Report.timestamp).label('mes'),
+            func.to_char(Report.timestamp, 'YYYY-MM').label('mes'),
             func.count(Report.id).label('total')
         ).filter(
             Report.tipo == tipo,
             Report.timestamp >= fecha_limite
         ).group_by(
-            func.strftime('%Y-%m', Report.timestamp)
+            func.to_char(Report.timestamp, 'YYYY-MM')
         ).order_by('mes')
-        
+    
         return [{'mes': mes, 'total': total} for mes, total in query.all()]
     
     def obtener_reportes_detallados(self, dias=30, tipo=''):
