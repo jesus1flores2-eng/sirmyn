@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<div class="container-fluid">
+    <!-- Encabezado -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-2 text-gray-800">
+                <i class="fas fa-road me-2"></i>Calles y Localidades
+            </h1>
+            <p class="mb-0">Administra las localidades y sus calles para los reportes</p>
+        </div>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Columna izquierda: Localidades -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-primary text-white py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-city me-2"></i>Localidades
+                        <span class="badge bg-light text-dark ms-2">{{ localidades|length }}</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario agregar localidad -->
+                    <form method="POST" action="{{ url_for('admin.agregar_localidad') }}" class="mb-4">
+                        <div class="mb-2">
+                            <label class="form-label small">Nombre de la localidad *</label>
+                            <input type="text" name="nombre" class="form-control form-control-sm" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-6 mb-2">
+                                <label class="form-label small">Latitud (opcional)</label>
+                                <input type="number" step="any" name="latitud" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-6 mb-2">
+                                <label class="form-label small">Longitud (opcional)</label>
+                                <input type="number" step="any" name="longitud" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="fas fa-plus me-1"></i> Agregar Localidad
+                        </button>
+                    </form>
+
+                    <!-- Lista de localidades -->
+                    {% if localidades %}
+                    <div style="max-height: 500px; overflow-y: auto;">
+                        {% for loc in localidades %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div>
+                                <strong>{{ loc.nombre }}</strong>
+                                <small class="text-muted d-block">
+                                    {{ loc.calles|length }} calles
+                                </small>
+                            </div>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditarLocalidad{{ loc.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEliminarLocalidad{{ loc.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No hay localidades registradas.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna derecha: Calles -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-success text-white py-3">
+                    <h6 class="m-0 font-weight-bold">
+                        <i class="fas fa-road me-2"></i>Calles
+                        <span class="badge bg-light text-dark ms-2">{{ calles|length }}</span>
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Formulario agregar calle -->
+                    <form method="POST" action="{{ url_for('admin.agregar_calle') }}" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-5 mb-2">
+                                <label class="form-label small">Nombre de la calle *</label>
+                                <input type="text" name="nombre" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-5 mb-2">
+                                <label class="form-label small">Localidad *</label>
+                                <select name="localidad_id" class="form-select form-select-sm" required>
+                                    <option value="">Seleccionar localidad...</option>
+                                    {% for loc in localidades %}
+                                        <option value="{{ loc.id }}">{{ loc.nombre }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2 mb-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success btn-sm w-100">
+                                    <i class="fas fa-plus me-1"></i> Agregar
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Tabla de calles -->
+                    {% if calles %}
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th>Calle</th>
+                                    <th>Localidad</th>
+                                    <th style="width: 150px;" class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for calle in calles %}
+                                <tr>
+                                    <td>{{ calle.id }}</td>
+                                    <td>{{ calle.nombre }}</td>
+                                    <td>
+                                        <span class="badge bg-info bg-opacity-10 text-info">
+                                            {{ calle.localidad.nombre }}
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalEditarCalle{{ calle.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalEliminarCalle{{ calle.id }}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-3">No hay calles registradas.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales para editar/eliminar localidades -->
+{% for loc in localidades %}
+<div class="modal fade" id="modalEditarLocalidad{{ loc.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Editar Localidad</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.editar_localidad', id=loc.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ loc.nombre }}" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label">Latitud</label>
+                            <input type="number" step="any" name="latitud" class="form-control" value="{{ loc.latitud_central or '' }}">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Longitud</label>
+                            <input type="number" step="any" name="longitud" class="form-control" value="{{ loc.longitud_central or '' }}">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarLocalidad{{ loc.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Eliminar Localidad</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de eliminar la localidad <strong>{{ loc.nombre }}</strong>?</p>
+                <p class="text-muted small">Solo se puede eliminar si no tiene calles ni reportes.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_localidad', id=loc.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Modales para editar/eliminar calles -->
+{% for calle in calles %}
+<div class="modal fade" id="modalEditarCalle{{ calle.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Editar Calle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.editar_calle', id=calle.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la calle</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ calle.nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Localidad</label>
+                        <select name="localidad_id" class="form-select" required>
+                            {% for loc in localidades %}
+                                <option value="{{ loc.id }}" {% if loc.id == calle.localidad_id %}selected{% endif %}>
+                                    {{ loc.nombre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarCalle{{ calle.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Eliminar Calle</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de eliminar la calle <strong>{{ calle.nombre }}</strong>?</p>
+                <p class="text-muted small">Solo se puede eliminar si no tiene reportes.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('admin.eliminar_calle', id=calle.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

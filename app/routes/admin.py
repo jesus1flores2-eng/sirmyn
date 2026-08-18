@@ -1688,3 +1688,174 @@ def eliminar_gps(id):
     db.session.commit()
     flash(f'GPS {nombre} eliminado.', 'warning')
     return redirect(url_for('admin.gestionar_gps'))
+
+# ============================================================
+# GESTIÓN DE CALLES Y LOCALIDADES
+# ============================================================
+
+@admin_bp.route('/calles', methods=['GET'])
+@login_required
+@admin_required
+def gestionar_calles():
+    """Página de gestión de localidades y calles"""
+    from app.models.report import Localidad, Calle
+    
+    localidades = Localidad.query.order_by(Localidad.nombre).all()
+    calles = Calle.query.order_by(Calle.nombre).all()
+    
+    return render_template(
+        'admin/gestionar_calles.html',
+        localidades=localidades,
+        calles=calles
+    )
+
+
+@admin_bp.route('/agregar_localidad', methods=['POST'])
+@login_required
+@admin_required
+def agregar_localidad():
+    from app.models.report import Localidad
+    
+    nombre = request.form.get('nombre', '').strip()
+    latitud = request.form.get('latitud', '').strip()
+    longitud = request.form.get('longitud', '').strip()
+    
+    if not nombre:
+        flash("El nombre de la localidad es obligatorio.", "warning")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    if Localidad.query.filter_by(nombre=nombre).first():
+        flash(f"Ya existe una localidad llamada '{nombre}'.", "error")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    nueva = Localidad(
+        nombre=nombre,
+        latitud_central=float(latitud) if latitud else None,
+        longitud_central=float(longitud) if longitud else None
+    )
+    db.session.add(nueva)
+    db.session.commit()
+    flash(f"Localidad '{nombre}' creada correctamente.", "success")
+    return redirect(url_for('admin.gestionar_calles'))
+
+
+@admin_bp.route('/agregar_calle', methods=['POST'])
+@login_required
+@admin_required
+def agregar_calle():
+    from app.models.report import Localidad, Calle
+    
+    nombre = request.form.get('nombre', '').strip()
+    localidad_id = request.form.get('localidad_id', type=int)
+    
+    if not nombre or not localidad_id:
+        flash("El nombre de la calle y la localidad son obligatorios.", "warning")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    localidad = Localidad.query.get(localidad_id)
+    if not localidad:
+        flash("La localidad seleccionada no existe.", "error")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    if Calle.query.filter_by(nombre=nombre, localidad_id=localidad_id).first():
+        flash(f"Ya existe la calle '{nombre}' en {localidad.nombre}.", "error")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    nueva_calle = Calle(nombre=nombre, localidad_id=localidad_id)
+    db.session.add(nueva_calle)
+    db.session.commit()
+    flash(f"Calle '{nombre}' agregada a {localidad.nombre}.", "success")
+    return redirect(url_for('admin.gestionar_calles'))
+
+
+@admin_bp.route('/editar_localidad/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def editar_localidad(id):
+    from app.models.report import Localidad
+    
+    localidad = Localidad.query.get_or_404(id)
+    nombre = request.form.get('nombre', '').strip()
+    latitud = request.form.get('latitud', '').strip()
+    longitud = request.form.get('longitud', '').strip()
+    
+    if not nombre:
+        flash("El nombre es obligatorio.", "warning")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    localidad.nombre = nombre
+    localidad.latitud_central = float(latitud) if latitud else None
+    localidad.longitud_central = float(longitud) if longitud else None
+    db.session.commit()
+    flash(f"Localidad actualizada correctamente.", "success")
+    return redirect(url_for('admin.gestionar_calles'))
+
+
+@admin_bp.route('/editar_calle/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def editar_calle(id):
+    from app.models.report import Calle
+    
+    calle = Calle.query.get_or_404(id)
+    nombre = request.form.get('nombre', '').strip()
+    localidad_id = request.form.get('localidad_id', type=int)
+    
+    if not nombre or not localidad_id:
+        flash("El nombre y la localidad son obligatorios.", "warning")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    calle.nombre = nombre
+    calle.localidad_id = localidad_id
+    db.session.commit()
+    flash(f"Calle actualizada correctamente.", "success")
+    return redirect(url_for('admin.gestionar_calles'))
+
+
+@admin_bp.route('/eliminar_calle/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def eliminar_calle(id):
+    from app.models.report import Calle
+    from app.models.report import Report
+    
+    calle = Calle.query.get_or_404(id)
+    
+    # Verificar que no haya reportes usando esta calle
+    reportes_con_calle = Report.query.filter_by(calle_id=id).count()
+    if reportes_con_calle > 0:
+        flash(f"No se puede eliminar la calle porque tiene {reportes_con_calle} reporte(s).", "danger")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    nombre = calle.nombre
+    db.session.delete(calle)
+    db.session.commit()
+    flash(f"Calle '{nombre}' eliminada.", "warning")
+    return redirect(url_for('admin.gestionar_calles'))
+
+
+@admin_bp.route('/eliminar_localidad/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def eliminar_localidad(id):
+    from app.models.report import Localidad, Calle, Report
+    
+    localidad = Localidad.query.get_or_404(id)
+    
+    # Verificar que no haya calles o reportes usando esta localidad
+    calles_count = Calle.query.filter_by(localidad_id=id).count()
+    reportes_count = Report.query.filter_by(localidad_id=id).count()
+    
+    if calles_count > 0:
+        flash(f"No se puede eliminar la localidad porque tiene {calles_count} calle(s).", "danger")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    if reportes_count > 0:
+        flash(f"No se puede eliminar la localidad porque tiene {reportes_count} reporte(s).", "danger")
+        return redirect(url_for('admin.gestionar_calles'))
+    
+    nombre = localidad.nombre
+    db.session.delete(localidad)
+    db.session.commit()
+    flash(f"Localidad '{nombre}' eliminada.", "warning")
+    return redirect(url_for('admin.gestionar_calles'))
