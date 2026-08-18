@@ -148,10 +148,12 @@
                                     <small>{{ reporte.cuadrilla or 'Sin asignar' }}</small>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" 
-                                            onclick="verDetalleReporte({{ reporte.id }})">
+                                    <a href="{{ url_for('admin.ver_historial', reporte_id=reporte.id) }}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       target="_blank"
+                                       title="Ver historial completo">
                                         <i class="fas fa-eye"></i>
-                                    </button>
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -171,7 +173,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <small class="text-muted">
                     <i class="fas fa-info-circle me-1"></i>
-                    Click en el botón de ojo para ver detalles completos
+                    Click en el botón de ojo para ver historial completo
                 </small>
                 <div class="btn-group">
                     <button class="btn btn-sm btn-outline-secondary" id="btnAnterior" disabled>
@@ -185,27 +187,6 @@
         </div>
     </div>
 </div>
-
-<!-- Modal para detalles -->
-<div class="modal fade" id="modalDetalleReporte" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Detalles Completos del Reporte</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" id="cuerpoDetalleReporte">
-                Cargando...
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                <a href="#" class="btn btn-primary" id="btnIrAReporte">
-                    <i class="fas fa-external-link-alt me-1"></i>Ir al Reporte
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 {% block scripts %}
@@ -213,57 +194,6 @@
 // Variables globales
 let currentPage = 1;
 const itemsPerPage = 10;
-
-function verDetalleReporte(id) {
-    // Aquí puedes implementar la carga de detalles del reporte
-    fetch(`/api/reportes/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('cuerpoDetalleReporte').innerHTML = `
-                <div class="row">
-                    <div class="col-md-6">
-                        <h6>Información General</h6>
-                        <table class="table table-sm">
-                            <tr><td><strong>ID:</strong></td><td>#${data.id}</td></tr>
-                            <tr><td><strong>Fecha:</strong></td><td>${data.fecha}</td></tr>
-                            <tr><td><strong>Tipo:</strong></td><td>${data.tipo}</td></tr>
-                            <tr><td><strong>Subtipo:</strong></td><td>${data.subtipo || 'N/A'}</td></tr>
-                            <tr><td><strong>Estado:</strong></td><td>${data.estado}</td></tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>Ubicación</h6>
-                        <p>${data.ubicacion}</p>
-                        <h6 class="mt-3">Reportante</h6>
-                        <p>${data.reportante || 'Anónimo'}<br>
-                        ${data.telefono || ''}</p>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6>Descripción</h6>
-                        <p class="border p-3 rounded">${data.descripcion || 'Sin descripción'}</p>
-                    </div>
-                </div>
-            `;
-            
-            // Configurar enlace
-            document.getElementById('btnIrAReporte').href = `/admin/historial?reporte_id=${id}`;
-            
-            // Mostrar modal
-            const modal = new bootstrap.Modal(document.getElementById('modalDetalleReporte'));
-            modal.show();
-        })
-        .catch(error => {
-            document.getElementById('cuerpoDetalleReporte').innerHTML = `
-                <div class="alert alert-danger">
-                    Error al cargar detalles: ${error.message}
-                </div>
-            `;
-            const modal = new bootstrap.Modal(document.getElementById('modalDetalleReporte'));
-            modal.show();
-        });
-}
 
 // Exportar CSV
 document.getElementById('btnExportar')?.addEventListener('click', function() {
