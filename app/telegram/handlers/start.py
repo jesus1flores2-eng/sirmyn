@@ -108,23 +108,6 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
     user_id = update.effective_user.id
     opcion = update.message.text.strip()
 
-    # ⭐ NUEVO: Botón "📋 INICIAR REPORTE" desde el saludo "hola"
-    if opcion == "📋 INICIAR REPORTE":
-        nombre = user_data[user_id].get("nombre_telegram", "Usuario")
-        keyboard = [
-            ["📋 REPORTE NORMAL", "🚨 EMERGENCIA"],
-            ["📊 CONSULTAR REPORTE"],
-            ["❌ CANCELAR"]
-        ]
-        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        await update.message.reply_text(
-            f"🤖 *BOT SIRMYN - {nombre}*\n\n"
-            f"¿Qué tipo de servicio necesita?",
-            parse_mode="Markdown",
-            reply_markup=reply_markup
-        )
-        return MENU_PRINCIPAL
-
     if opcion == "❌ CANCELAR":
         await update.message.reply_text(
             "Operación cancelada. Use /start para comenzar de nuevo.",

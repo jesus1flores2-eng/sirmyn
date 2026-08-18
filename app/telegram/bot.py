@@ -403,7 +403,7 @@ def build_telegram_app(token):
     # Handler central para mensajes de texto
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND & ~filters.Regex('^(📋 REPORTE NORMAL|🚨 EMERGENCIA|📊 CONSULTAR REPORTE|❌ CANCELAR|📋 INICIAR REPORTE|↩️ VOLVER AL MENÚ)$'),
+            filters.TEXT & ~filters.COMMAND & ~filters.Regex('^(📋 REPORTE NORMAL|🚨 EMERGENCIA|📊 CONSULTAR REPORTE|❌ CANCELAR|↩️ VOLVER AL MENÚ)$'),
             router_texto_completo
         )
     )

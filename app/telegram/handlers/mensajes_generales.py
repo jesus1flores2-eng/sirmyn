@@ -213,11 +213,20 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
             
-    # ⭐ BOTÓN INICIAR REPORTE (desde saludo)
+    # ⭐ BOTÓN INICIAR REPORTE: ir directo al menú principal
     if texto == "📋 INICIAR REPORTE":
-        from app.telegram.handlers.start import start
-        result = await start(update, context)
-        return result
+        from app.telegram.handlers.start import menu_principal_handler
+        from app.telegram.common.utils import limpiar_estado
+        
+        user_id = update.effective_user.id
+        limpiar_estado(user_id)
+        
+        user_data[user_id] = {
+            "nombre": update.effective_user.first_name or "Usuario",
+            "nombre_telegram": update.effective_user.first_name or "Usuario",
+        }
+        
+        return await menu_principal_handler(update, context)
     
     # 5. SI NADA DE LO ANTERIOR, USAR EL MANEJADOR GENERAL
     logger.info(f"🤖 Router: Enviando a mensaje_general_handler")
