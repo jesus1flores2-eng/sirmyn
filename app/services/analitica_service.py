@@ -434,7 +434,7 @@ class AnaliticaService:
                 }
                 for calle, localidad, total in calles_pendientes
             ],
-            'tiempo_promedio_atencion': round((tiempo_promedio or 0) / 3600, 1)
+            'tiempo_promedio_atencion': round((tiempo_promedio or 0) / 3600, 1),
             'total_por_mes': self._obtener_total_por_mes(tipo, fecha_limite)
         }
     
