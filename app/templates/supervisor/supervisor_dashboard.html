@@ -150,22 +150,61 @@
                             </div>
                         </td>
                         <td>
+                            <!-- Evidencia usuario -->
                             {% if r.evidencia %}
-                                <a href="{{ url_for('supervisor.uploaded_file', filename=r.evidencia.split('/')[-1]) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
-                                    <i class="fas fa-paperclip me-1"></i> Evidencia usuario
-                                </a>
+                                {% set ev = r.evidencia %}
+                                {% if ev.startswith('http') %}
+                                    <a href="{{ ev }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                        <i class="fas fa-paperclip me-1"></i> Evidencia usuario
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('supervisor.uploaded_file', filename=ev) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                        <i class="fas fa-paperclip me-1"></i> Evidencia usuario
+                                    </a>
+                                {% endif %}
                             {% endif %}
 
+                            <!-- Evidencia cuadrilla -->
                             {% if r.evidencia_cuadrilla %}
-                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ r.evidencia_cuadrilla.split('/')[-1]) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
-                                    <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla
-                                </a>
+                                {% set evidencias = r.evidencia_cuadrilla.split(',') %}
+                                {% for ev in evidencias %}
+                                    {% if ev.strip() %}
+                                        {% set ev_path = ev.strip() %}
+                                        {% if ev_path.startswith('http') %}
+                                            <a href="{{ ev_path }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                                <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla {{ loop.index }}
+                                            </a>
+                                        {% elif ev_path.startswith('evidencias/') %}
+                                            <a href="{{ url_for('static', filename=ev_path) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                                <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla {{ loop.index }}
+                                            </a>
+                                        {% else %}
+                                            {% set carpeta = 'agua_potable' if r.tipo in ['Agua potable', 'Drenaje'] else 'general' %}
+                                            <a href="{{ url_for('static', filename='evidencias/' ~ carpeta ~ '/cuadrilla/' ~ ev_path) }}" target="_blank" class="evidence-link d-block mb-1 text-decoration-none">
+                                                <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla {{ loop.index }}
+                                            </a>
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
                             {% endif %}
 
+                            <!-- Materiales -->
                             {% if r.materiales_utilizados %}
-                                <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ r.materiales_utilizados.split('/')[-1]) }}" target="_blank" class="evidence-link d-block text-decoration-none">
-                                    <i class="fas fa-boxes me-1"></i> Materiales
-                                </a>
+                                {% set mat = r.materiales_utilizados %}
+                                {% if mat.startswith('http') %}
+                                    <a href="{{ mat }}" target="_blank" class="evidence-link d-block text-decoration-none">
+                                        <i class="fas fa-boxes me-1"></i> Materiales
+                                    </a>
+                                {% elif mat.startswith('evidencias/') %}
+                                    <a href="{{ url_for('static', filename=mat) }}" target="_blank" class="evidence-link d-block text-decoration-none">
+                                        <i class="fas fa-boxes me-1"></i> Materiales
+                                    </a>
+                                {% else %}
+                                    {% set carpeta = 'agua_potable' if r.tipo in ['Agua potable', 'Drenaje'] else 'general' %}
+                                    <a href="{{ url_for('static', filename='evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ mat) }}" target="_blank" class="evidence-link d-block text-decoration-none">
+                                        <i class="fas fa-boxes me-1"></i> Materiales
+                                    </a>
+                                {% endif %}
                             {% endif %}
 
                             {% if not r.evidencia and not r.evidencia_cuadrilla and not r.materiales_utilizados %}
@@ -185,12 +224,10 @@
                         </td>
                         <td>
                             <div class="d-flex flex-column gap-1">
-                                <!-- Ver historial -->
                                 <a href="{{ url_for('supervisor.historial_reporte_supervisor', report_id=r.id) }}" class="btn btn-outline-primary btn-sm">
                                     <i class="fas fa-history me-1"></i> Ver
                                 </a>
 
-                                <!-- Botón Aprobado -->
                                 {% if r.estado.lower() != 'finalizado' %}
                                 <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', assignment_id=r.asignaciones[-1].id) }}" class="d-inline">
                                     <button type="submit" class="btn btn-success btn-sm w-100">

@@ -1,108 +1,127 @@
-<!-- templates/supervisor/historial_supervisor.html -->
-{% extends 'base.html' %}
-
+{% extends 'base_supervisor.html' %}
 {% block title %}Historial de Asignaciones - Supervisor{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Historial de Asignaciones - Reporte #{{ reporte.id }}</h2>
-    <p><strong>Tipo:</strong> {{ reporte.tipo }} | <strong>Subtipo:</strong> {{ reporte.subtipo }}</p>
-    <p><strong>Localidad:</strong> {{ reporte.localidad }}</p>
-    <p><strong>Calle:</strong> {{ reporte.calle }} entre {{ reporte.entre_calles }}</p>
-    <p><strong>Descripción:</strong><br>{{ reporte.descripcion_problema }}</p>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="mb-0 fw-bold text-primary">
+            <i class="fas fa-history me-2"></i>Historial del Reporte #{{ reporte.id }}
+        </h3>
+        <a href="{{ url_for('supervisor.dashboard_supervisor') }}" class="btn btn-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Volver al Dashboard
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-muted small text-uppercase fw-bold">Tipo / Subtipo</h6>
+                    <p class="mb-0">{{ reporte.tipo }} / {{ reporte.subtipo }}</p>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-muted small text-uppercase fw-bold">Ubicación</h6>
+                    <p class="mb-0">{{ reporte.calle }} {{ reporte.numero }}, {{ reporte.localidad }}</p>
+                    {% if reporte.entre_calles %}
+                        <small class="text-muted">Entre: {{ reporte.entre_calles }}</small>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <h6 class="text-muted small text-uppercase fw-bold">Descripción</h6>
+                    <p class="mb-0">{{ reporte.descripcion_problema }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     {% if asignaciones %}
-    <table class="table table-striped mt-4">
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Cuadrilla</th>
-                <th>Estado</th>
-                <th>Materiales</th>
-                <th>Observaciones</th>
-                <th>Evidencia</th>
-                <th>Motivo Reasignación</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for a in asignaciones %}
-            <tr>
-                <td>{{ a.timestamp|localtime if a.timestamp else '—' }}</td>
-                <td>{{ a.team.nombre if a.team else '—' }}</td>
-                <td>
-                    {% if a.status %}
-                        <span class="badge" style="background-color: {{ a.status.color }}">{{ a.status.descripcion }}</span>
-                    {% else %}
-                        — 
-                    {% endif %}
-                </td>
-                <td>
-                    {% if a.materiales_utilizados %}
-                        <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ a.materiales_utilizados) }}" target="_blank">Ver Foto</a>
-                    {% else %}
-                        — 
-                    {% endif %}
-                </td>
-                <td>{{ a.observaciones or '—' }}</td>
-                <td>
-                    {% if a.evidencia_cuadrilla %}
-                        <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ a.evidencia_cuadrilla) }}" target="_blank">Ver Foto</a>
-                    {% else %}
-                        — 
-                    {% endif %}
-                </td>
-                <td>{{ a.motivo_reasignacion or '—' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-        <p>No hay asignaciones registradas.</p>
-    {% endif %}
-
-    <!-- 🔹 Botones de acción para el Supervisor -->
-    {% if reporte.estado_id == 3 %}
-    <div class="mt-4">
-        <!-- Aprobar y Finalizar -->
-        <form method="POST" action="{{ url_for('supervisor.aprobar_reporte', reporte_id=reporte.id) }}" style="display:inline;">
-            <button type="submit" class="btn btn-success">
-                ✅ Aprobar y Finalizar Reporte
-            </button>
-        </form>
-
-        <!-- Rechazar / Reasignar con motivo -->
-        <form method="POST" action="{{ url_for('supervisor.rechazar_reporte', reporte_id=reporte.id) }}" style="display:inline; margin-left:10px;">
-            <div class="input-group">
-                <input type="text" name="motivo" class="form-control" placeholder="Motivo de rechazo" required>
-                <button type="submit" class="btn btn-danger">
-                    ❌ Rechazar / Reasignar
-                </button>
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-borderless mb-0">
+                    <thead class="text-white" style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);">
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Cuadrilla</th>
+                            <th>Estado</th>
+                            <th>Materiales</th>
+                            <th>Observaciones</th>
+                            <th>Evidencia</th>
+                            <th>Motivo Reasignación</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for a in asignaciones %}
+                        <tr>
+                            <td>{{ a.timestamp|localtime if a.timestamp else '—' }}</td>
+                            <td>{{ a.team.nombre if a.team else '—' }}</td>
+                            <td>
+                                {% if a.status %}
+                                    <span class="badge" style="background-color: {{ a.status.color }}">{{ a.status.descripcion }}</span>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if a.materiales_utilizados %}
+                                    {% set mat = a.materiales_utilizados %}
+                                    {% if mat.startswith('http') %}
+                                        <a href="{{ mat }}" target="_blank" class="text-decoration-none">
+                                            <i class="fas fa-image me-1"></i> Ver material
+                                        </a>
+                                    {% elif mat.startswith('evidencias/') %}
+                                        <a href="{{ url_for('static', filename=mat) }}" target="_blank" class="text-decoration-none">
+                                            <i class="fas fa-image me-1"></i> Ver material
+                                        </a>
+                                    {% else %}
+                                        {% set carpeta = 'agua_potable' if reporte.tipo in ['Agua potable', 'Drenaje'] else 'general' %}
+                                        <a href="{{ url_for('static', filename='evidencias/' ~ carpeta ~ '/materiales_utilizados/' ~ mat) }}" target="_blank" class="text-decoration-none">
+                                            <i class="fas fa-image me-1"></i> Ver material
+                                        </a>
+                                    {% endif %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ a.observaciones or '—' }}</td>
+                            <td>
+                                {% if a.evidencia_cuadrilla %}
+                                    {% set evidencias = a.evidencia_cuadrilla.split(',') %}
+                                    {% for ev in evidencias %}
+                                        {% if ev.strip() %}
+                                            {% set ev_path = ev.strip() %}
+                                            {% if ev_path.startswith('http') %}
+                                                <a href="{{ ev_path }}" target="_blank" class="text-decoration-none d-block mb-1">
+                                                    <i class="fas fa-image me-1"></i> Ver evidencia {{ loop.index }}
+                                                </a>
+                                            {% elif ev_path.startswith('evidencias/') %}
+                                                <a href="{{ url_for('static', filename=ev_path) }}" target="_blank" class="text-decoration-none d-block mb-1">
+                                                    <i class="fas fa-image me-1"></i> Ver evidencia {{ loop.index }}
+                                                </a>
+                                            {% else %}
+                                                {% set carpeta = 'agua_potable' if reporte.tipo in ['Agua potable', 'Drenaje'] else 'general' %}
+                                                <a href="{{ url_for('static', filename='evidencias/' ~ carpeta ~ '/cuadrilla/' ~ ev_path) }}" target="_blank" class="text-decoration-none d-block mb-1">
+                                                    <i class="fas fa-image me-1"></i> Ver evidencia {{ loop.index }}
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>{{ a.motivo_reasignacion or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </form>
+        </div>
     </div>
-    {% elif reporte.estado_id == 4 %}
-        <p class="text-success mt-3"><strong>✅ Este reporte ya fue finalizado.</strong></p>
+    {% else %}
+        <div class="alert alert-info">
+            No hay asignaciones registradas para este reporte.
+        </div>
     {% endif %}
-
-    <a href="{{ url_for('supervisor.dashboard_supervisor') }}" class="btn btn-secondary mt-3">⬅ Volver al Dashboard</a>
 </div>
 {% endblock %}
-
-{% if asignaciones and asignaciones[-1].status_id == 3 %}
-<div class="mt-4 text-center">
-    <!-- Botón Aprobar -->
-    <form action="{{ url_for('supervisor.aprobar_reporte', report_id=report.id) }}" method="post" style="display:inline;">
-        <button type="submit" class="btn btn-success">
-            ✅ Aprobar y Finalizar
-        </button>
-    </form>
-
-    <!-- Botón Rechazar -->
-    <form action="{{ url_for('supervisor.rechazar_reporte', report_id=report.id) }}" method="post" style="display:inline; margin-left:10px;">
-        <input type="text" name="motivo" placeholder="Motivo del rechazo" required class="form-control d-inline-block" style="width:250px;">
-        <button type="submit" class="btn btn-danger">
-            ❌ Rechazar
-        </button>
-    </form>
-</div>
-{% endif %}
