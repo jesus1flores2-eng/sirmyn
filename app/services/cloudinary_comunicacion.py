@@ -6,7 +6,6 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from cloudinary.utils import cloudinary_url
-from moviepy.video.fx import Resize
 import os
 import logging
 
