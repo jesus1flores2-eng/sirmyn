@@ -47,11 +47,22 @@
                         </button>
                     </form>
 
+                    <!-- Buscador de localidades -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="buscadorLocalidades" class="form-control" 
+                                   placeholder="Buscar localidad...">
+                        </div>
+                    </div>
+
                     <!-- Lista de localidades -->
                     {% if localidades %}
-                    <div style="max-height: 500px; overflow-y: auto;">
+                    <div style="max-height: 500px; overflow-y: auto;" id="listaLocalidades">
                         {% for loc in localidades %}
-                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2 localidad-item">
                             <div>
                                 <strong>{{ loc.nombre }}</strong>
                                 <small class="text-muted d-block">
@@ -114,10 +125,21 @@
                         </div>
                     </form>
 
+                    <!-- Buscador de calles -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white">
+                                <i class="fas fa-search text-muted"></i>
+                            </span>
+                            <input type="text" id="buscadorCalles" class="form-control" 
+                                   placeholder="Buscar calle o localidad...">
+                        </div>
+                    </div>
+
                     <!-- Tabla de calles -->
                     {% if calles %}
                     <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="table table-hover align-middle">
+                        <table class="table table-hover align-middle" id="tablaCalles">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="width: 50px;">ID</th>
@@ -278,4 +300,41 @@
 </div>
 {% endfor %}
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Buscador de localidades
+document.getElementById('buscadorLocalidades').addEventListener('keyup', function() {
+    var filtro = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var items = document.querySelectorAll('#listaLocalidades .localidad-item');
+    
+    items.forEach(function(item) {
+        var texto = item.textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        if (texto.includes(filtro)) {
+            item.style.display = '';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Buscador de calles
+document.getElementById('buscadorCalles').addEventListener('keyup', function() {
+    var filtro = this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    var filas = document.querySelectorAll('#tablaCalles tbody tr');
+    
+    filas.forEach(function(fila) {
+        var textoCalle = fila.cells[1].textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        var textoLocalidad = fila.cells[2].textContent.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        
+        if (textoCalle.includes(filtro) || textoLocalidad.includes(filtro)) {
+            fila.style.display = '';
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+});
+</script>
 {% endblock %}
