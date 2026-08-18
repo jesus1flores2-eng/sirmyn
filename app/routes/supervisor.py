@@ -12,11 +12,18 @@ supervisor_bp = Blueprint('supervisor', __name__, url_prefix='/supervisor')
 def es_supervisor():
     if not current_user.is_authenticated:
         return False
-    return (
-        current_user.team is not None and
-        current_user.team.nombre and
-        current_user.team.nombre.strip().lower() == 'supervisor'
-    )
+
+    if getattr(current_user, 'nivel', None) == 'supervisor':
+        return True
+    if getattr(current_user, 'rol_especifico', None) == 'supervisor':
+        return True
+    if getattr(current_user, 'role', None) == 'supervisor':
+        return True
+
+    if current_user.team and current_user.team.nombre:
+        return current_user.team.nombre.strip().lower() == 'supervisor'
+
+    return False
 
 
 @supervisor_bp.route('/dashboard')

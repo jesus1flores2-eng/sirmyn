@@ -20,7 +20,9 @@ def login():
         # Redirige según su rol
         if current_user.is_admin():  # ✅ CAMBIADO: De id == 1 a is_admin()
             return redirect(url_for('admin.dashboard'))
-        elif current_user.team and current_user.team.nombre.strip().lower() == 'supervisor':
+        elif (getattr(current_user, 'nivel', None) == 'supervisor' or
+              getattr(current_user, 'rol_especifico', None) == 'supervisor' or
+              getattr(current_user, 'role', None) == 'supervisor'):
             return redirect(url_for('supervisor.dashboard_supervisor'))
         elif current_user.team:  # cualquier otra cuadrilla
             return redirect(url_for('teams.cuadrilla_dashboard'))
@@ -47,7 +49,9 @@ def login():
             # Si no, redirige por rol
             if user.is_admin():  # ✅ CAMBIADO: De id == 1 a is_admin()
                 return redirect(url_for('admin.dashboard'))
-            elif user.team and user.team.nombre.strip().lower() == 'supervisor':
+            elif (getattr(user, 'nivel', None) == 'supervisor' or
+                  getattr(user, 'rol_especifico', None) == 'supervisor' or
+                  getattr(user, 'role', None) == 'supervisor'):
                 return redirect(url_for('supervisor.dashboard_supervisor'))
             elif user.team:  # cualquier otra cuadrilla
                 return redirect(url_for('teams.cuadrilla_dashboard'))

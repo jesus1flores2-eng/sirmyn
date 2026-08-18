@@ -14,7 +14,7 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)  # Cambiado de 64 a 100
     username = db.Column(db.String(64), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)
     telegram_id = db.Column(db.BigInteger, nullable=True, unique=True)
     
