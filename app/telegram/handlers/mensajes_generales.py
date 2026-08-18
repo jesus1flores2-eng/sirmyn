@@ -213,13 +213,10 @@ async def router_texto_completo(update: Update, context: ContextTypes.DEFAULT_TY
             )
             return
             
-    # ⭐ BOTÓN INICIAR REPORTE (desde saludo)
+    # ⭐ BOTÓN INICIAR REPORTE: simula el comando /start
     if texto == "📋 INICIAR REPORTE":
+        update.message.text = "/start"
         from app.telegram.handlers.start import start
-        from app.telegram.common.states import ESPERAR_ACEPTACION
-        
-        # Simular /start dentro del ConversationHandler
-        context.user_data['_conversation_state'] = ESPERAR_ACEPTACION
         await start(update, context)
         return
     
