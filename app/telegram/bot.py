@@ -402,7 +402,10 @@ def build_telegram_app(token):
 
     # Handler central para mensajes de texto
     app.add_handler(
-        MessageHandler(filters.TEXT & ~filters.COMMAND, router_texto_completo)
+        MessageHandler(
+            filters.TEXT & ~filters.COMMAND & ~filters.Regex('^(📋 REPORTE NORMAL|🚨 EMERGENCIA|📊 CONSULTAR REPORTE|❌ CANCELAR|📋 INICIAR REPORTE|↩️ VOLVER AL MENÚ)$'),
+            router_texto_completo
+        )
     )
 
     logger.info("✅ Bot de Telegram configurado correctamente con TODOS los departamentos")
