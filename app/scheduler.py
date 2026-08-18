@@ -13,6 +13,7 @@ def iniciar_scheduler():
         scheduler = BackgroundScheduler()
         
         from app.tasks import revisar_reportes_urgentes, actualizar_ubicaciones_gps, verificar_vencimiento_gps
+        from app.services.respaldo_service import crear_respaldo_automatico
         
         # Wrapper para función async
         def wrapper_verificar_gps():
@@ -42,6 +43,17 @@ def iniciar_scheduler():
             trigger=IntervalTrigger(hours=24),
             id='verificar_vencimiento_gps',
             name='Alertas de vencimiento de planes GPS',
+            replace_existing=True
+        )
+        
+        scheduler.add_job(
+            func=crear_respaldo_automatico,
+            trigger='cron',
+            day_of_week='mon',
+            hour=3,
+            minute=0,
+            id='respaldo_semanal',
+            name='Respaldo semanal de base de datos',
             replace_existing=True
         )
         
