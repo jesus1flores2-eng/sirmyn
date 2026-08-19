@@ -304,6 +304,11 @@ $(document).ready(function() {
             }
         }
     });
+
+    // Recarga automática cada 5 minutos
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
 });
 </script>
 {% endblock %}
