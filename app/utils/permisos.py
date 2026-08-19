@@ -26,7 +26,7 @@ def calcular_permisos_usuario(usuario):
     # ===== PRESIDENCIA =====
     if nivel == 'presidente' or area == 'presidencia':
         permisos.update({
-            'puede_asignar': False,  # Solo observa
+            'puede_asignar': False,
             'puede_validar': False,
             'puede_ver_todas_areas': True,
             'puede_configurar': False,
@@ -39,13 +39,13 @@ def calcular_permisos_usuario(usuario):
             'puede_asignar': False,
             'puede_validar': False,
             'puede_ver_todas_areas': True,
-            'puede_configurar': True,  # Solo administrador configura
+            'puede_configurar': True,
             'notificaciones': 'solo_configuracion'
         })
     
-    # ===== AGUA POTABLE (estructura compleja) =====
+    # ===== AGUA POTABLE =====
     elif area == 'agua':
-        if nivel == 'director' or usuario.es_director():
+        if nivel == 'director' or usuario.es_director:
             permisos.update({
                 'puede_asignar': True,
                 'puede_validar': False,
@@ -55,7 +55,7 @@ def calcular_permisos_usuario(usuario):
         
         elif rol_especifico == 'jefe_area_tecnica':
             permisos.update({
-                'puede_asignar': True,  # Asigna a cuadrillas técnicas
+                'puede_asignar': True,
                 'puede_validar': False,
                 'puede_ver_todas_areas': False,
                 'notificaciones': 'reportes_tecnicos_agua'
@@ -66,13 +66,13 @@ def calcular_permisos_usuario(usuario):
                 'puede_asignar': False,
                 'puede_validar': False,
                 'puede_ver_todas_areas': False,
-                'notificaciones': 'reportes_comerciales_agua'  # Multas, pagos
+                'notificaciones': 'reportes_comerciales_agua'
             })
         
-        elif nivel == 'supervisor' or usuario.es_supervisor():
+        elif nivel == 'supervisor' or usuario.es_supervisor:
             permisos.update({
                 'puede_asignar': False,
-                'puede_validar': True,  # Valida reparaciones
+                'puede_validar': True,
                 'puede_ver_todas_areas': False,
                 'notificaciones': 'reportes_para_validar_agua'
             })
@@ -85,7 +85,7 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'solo_asignados_especialidad'
             })
         
-        elif nivel == 'cuadrilla' or usuario.es_cuadrilla():
+        elif nivel == 'cuadrilla' or usuario.es_cuadrilla:
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': False,
@@ -93,16 +93,16 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'solo_asignados'
             })
     
-    # ===== DRENAJE (misma estructura que agua) =====
+    # ===== DRENAJE =====
     elif area == 'drenaje':
-        if nivel == 'director' or usuario.es_director():
+        if nivel == 'director' or usuario.es_director:
             permisos.update({
                 'puede_asignar': True,
                 'puede_validar': False,
                 'puede_ver_todas_areas': False,
                 'notificaciones': 'todos_reportes_drenaje'
             })
-        elif nivel == 'supervisor' or usuario.es_supervisor():
+        elif nivel == 'supervisor' or usuario.es_supervisor:
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': True,
@@ -117,17 +117,17 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'solo_asignados'
             })
     
-    # ===== ÁREAS SIMPLES (Parques, Ecología, Aseo, etc.) =====
+    # ===== ÁREAS SIMPLES =====
     elif area in ['parques', 'ecologia', 'aseo', 'alumbrado', 'obra', 'seguridad']:
-        if nivel == 'director' or usuario.es_director():
+        if nivel == 'director' or usuario.es_director:
             permisos.update({
-                'puede_asignar': True,  # Asigna directo
-                'puede_validar': True,  # Valida también
+                'puede_asignar': True,
+                'puede_validar': True,
                 'puede_ver_todas_areas': False,
                 'notificaciones': 'todos_reportes_area'
             })
         
-        elif nivel == 'cuadrilla' or usuario.es_cuadrilla():
+        elif nivel == 'cuadrilla' or usuario.es_cuadrilla:
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': False,
@@ -137,7 +137,7 @@ def calcular_permisos_usuario(usuario):
     
     # ===== BOMBEROS =====
     elif area == 'bomberos':
-        if nivel == 'director' or usuario.es_director():
+        if nivel == 'director' or usuario.es_director:
             permisos.update({
                 'puede_asignar': True,
                 'puede_validar': True,
@@ -153,7 +153,7 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'solo_emergencias_bomberos'
             })
         
-        elif nivel == 'cuadrilla' or usuario.es_cuadrilla():
+        elif nivel == 'cuadrilla' or usuario.es_cuadrilla:
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': False,
@@ -161,16 +161,16 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'solo_asignados_bomberos'
             })
     
-    # ===== POR DEFECTO (si no coincide con nada) =====
+    # ===== POR DEFECTO =====
     else:
-        if nivel == 'director' or usuario.es_director():
+        if nivel == 'director' or usuario.es_director:
             permisos.update({
                 'puede_asignar': True,
                 'puede_validar': True,
                 'puede_ver_todas_areas': False,
                 'notificaciones': 'todos_reportes_area'
             })
-        elif nivel == 'supervisor' or usuario.es_supervisor():
+        elif nivel == 'supervisor' or usuario.es_supervisor:
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': True,
@@ -178,7 +178,6 @@ def calcular_permisos_usuario(usuario):
                 'notificaciones': 'reportes_para_validar'
             })
         else:
-            # Cuadrilla o cualquier otro
             permisos.update({
                 'puede_asignar': False,
                 'puede_validar': False,
@@ -258,14 +257,11 @@ def puede_asignar_reporte(usuario, reporte):
     if not usuario:
         return False
     
-    # Usar el permiso calculado
     permisos = calcular_permisos_usuario(usuario)
     if not permisos.get('puede_asignar', False):
         return False
     
-    # Verificar área
     if usuario.area and reporte.tipo:
-        # Mapeo de tipo de reporte a área
         tipo_a_area = {
             'Agua potable': 'agua',
             'Drenaje': 'drenaje',
@@ -282,16 +278,12 @@ def puede_asignar_reporte(usuario, reporte):
         if area_reporte and area_reporte != usuario.area:
             return False
     
-    # Verificaciones adicionales por rol específico (Agua)
     if usuario.area == 'agua' and usuario.rol_especifico == 'jefe_area_tecnica':
-        # Jefe técnico solo asigna reportes técnicos de agua
         subtipos_tecnicos = ['Fuga en línea principal', 'Toma tapada', 'Válvula dañada', 
                             'Línea tapada', 'Socavón por fuga', 'Reparación de empedrado']
         return reporte.subtipo in subtipos_tecnicos
     
-    # Verificaciones adicionales por rol específico (Jefe comercial)
     if usuario.area == 'agua' and usuario.rol_especifico == 'jefe_area_comercial':
-        # Jefe comercial NO asigna (solo ve reportes comerciales)
         return False
     
     return True
