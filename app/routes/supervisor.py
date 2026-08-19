@@ -40,6 +40,25 @@ def dashboard_supervisor():
 
     reportes_query = Report.query.order_by(Report.timestamp.desc())
 
+    # Filtrar por área del supervisor
+    if current_user.area == 'agua':
+        reportes_query = reportes_query.filter(
+            Report.tipo.in_(['Agua potable', 'Drenaje'])
+        )
+    elif current_user.area:
+        mapeo_area_tipo = {
+            'aseo': ['Aseo público'],
+            'alumbrado': ['Alumbrado público'],
+            'parques': ['Parques y jardines'],
+            'ecologia': ['Ecología'],
+            'seguridad': ['Seguridad pública'],
+            'obras': ['Obras públicas'],
+            'bomberos': ['Bomberos']
+        }
+        tipos_area = mapeo_area_tipo.get(current_user.area)
+        if tipos_area:
+            reportes_query = reportes_query.filter(Report.tipo.in_(tipos_area))
+
     if tipo:
         reportes_query = reportes_query.filter(Report.tipo == tipo)
     if subtipo:
