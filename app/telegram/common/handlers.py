@@ -89,14 +89,8 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 else:
                     logger.info(f"📍 Usando coordenadas GPS del usuario: {latitud}, {longitud}")
 
-                # Generar folio
-                municipio_id = datos.get("municipio_id", 1)
-                folio = Report.generar_folio(municipio_id, datos["tipo"])
-
                 # CREAR REPORTE
                 nuevo_reporte = Report(
-                    folio=folio,
-                    municipio_id=municipio_id,
                     telefono=str(user_id),
                     reportante=datos["nombre"],
                     tipo=datos["tipo"],
@@ -107,8 +101,8 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                     evidencia=datos.get("evidencia", None),
                     numero_cuenta=datos.get("cuenta"),
                     timestamp=datetime.utcnow(),
-                    calle_id=datos.get("calle_id") or 1,
-                    localidad_id=datos.get("localidad_id") or 1,
+                    calle_id=datos["calle_id"],
+                    localidad_id=datos["localidad_id"],
                     plataforma="telegram",
                     latitud=latitud,
                     longitud=longitud
@@ -161,7 +155,6 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                         report_id=nuevo_reporte.id,
                         team_id=equipo_sin_asignar.id,
                         status_id=status_sin_asignar.id,
-                        observaciones="Reporte creado por el ciudadano",
                         timestamp=datetime.utcnow()
                     )
                     db.session.add(asignacion_inicial)
@@ -176,18 +169,14 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 )
 
                 # CONFIRMACIÓN AL USUARIO
-                keyboard = [["📋 INICIAR REPORTE", "📊 CONSULTAR REPORTE"]]
+                keyboard = [["📋 Nuevo reporte", "📊 Consultar estado"]]
                 reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
         
                 await update.message.reply_text(
                     f"✅ ¡Gracias {datos['nombre']}!\n\n"
-                    f"Tu reporte para el departamento de *{datos['tipo']}*\n"
-                    f"ha sido registrado con el folio:\n\n"
-                    f"*{nuevo_reporte.folio_display}*\n\n"
-                    f"📌 Te recordamos que puedes:\n"
-                    f"• Consultar el estado con tu folio *{nuevo_reporte.folio_display}*\n"
-                    f"• Recibir notificaciones cuando sea atendido\n\n"
-                    f"¿Qué deseas hacer ahora?",
+                    f"📋 *Tu reporte ha sido registrado con el folio:*\n"
+                    f"*#{nuevo_reporte.id}*\n\n"
+                    f"📌 ¿Qué deseas hacer ahora?",
                     parse_mode="Markdown",
                     reply_markup=reply_markup
                 )

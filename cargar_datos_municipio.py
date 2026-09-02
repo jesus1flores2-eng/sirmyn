@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Carga datos desde un archivo Excel con múltiples hojas.
-Uso: python cargar_datos_municipio.py [archivo_excel] [municipio_id]
-Si no se especifica municipio_id, usa el que viene en el Excel o 1 por defecto.
+Si el Excel no existe o falla, carga datos de ejemplo como fallback.
+Uso: python cargar_datos_municipio.py
 """
 import os
 import sys
@@ -15,37 +15,164 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 
+# ⭐ CREAR LA APP AQUÍ, FUERA DE CUALQUIER FUNCIÓN
 app = create_app()
 
-def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
-    """
-    Carga datos desde Excel.
-    Si municipio_id_default es especificado, sobreescribe el del Excel.
-    """
+# Flag para evitar ejecución múltiple
+DATOS_CARGADOS = False
+
+def cargar_datos_ejemplo():
+    """Carga datos de ejemplo si el Excel no está disponible"""
+    print("📥 CARGANDO DATOS DE EJEMPLO (fallback)...")
+    
+    with app.app_context():
+        # 1. Localidades de ejemplo
+        localidades_ejemplo = [
+            {"nombre": "Ixtlahuacán De Los Membrillos", "latitud": 20.4316, "longitud": -103.1932},
+            {"nombre": "Chapala", "latitud": 20.2969, "longitud": -103.1908},
+            {"nombre": "Ajijic", "latitud": 20.2997, "longitud": -103.2534},
+            {"nombre": "San Antonio Tlayacapan", "latitud": 20.2875, "longitud": -103.2172},
+            {"nombre": "Jocotepec", "latitud": 20.2833, "longitud": -103.4333}
+        ]
+        
+        for loc_data in localidades_ejemplo:
+            loc = Localidad.query.filter_by(nombre=loc_data["nombre"]).first()
+            if not loc:
+                loc = Localidad(
+                    nombre=loc_data["nombre"],
+                    latitud_central=loc_data["latitud"],
+                    longitud_central=loc_data["longitud"]
+                )
+                db.session.add(loc)
+        db.session.commit()
+        print(f"   ✅ {len(localidades_ejemplo)} localidades de ejemplo agregadas")
+        
+        # 2. Calles de ejemplo
+        calles_ejemplo = {
+            "Ixtlahuacán De Los Membrillos": ["Calle Principal", "Calle Juárez", "Calle Hidalgo"],
+            "Chapala": ["Calle 16 de Septiembre", "Calle Madero"],
+            "Ajijic": ["Calle Independencia", "Calle Revolución"],
+            "San Antonio Tlayacapan": ["Calle 5 de Mayo", "Calle Zaragoza"],
+            "Jocotepec": ["Calle Benito Juárez", "Calle Miguel Hidalgo"]
+        }
+        
+        for loc_nombre, calles in calles_ejemplo.items():
+            loc = Localidad.query.filter_by(nombre=loc_nombre).first()
+            if loc:
+                for calle_nombre in calles:
+                    if not Calle.query.filter_by(nombre=calle_nombre, localidad_id=loc.id).first():
+                        calle = Calle(nombre=calle_nombre, localidad_id=loc.id)
+                        db.session.add(calle)
+        db.session.commit()
+        print(f"   ✅ Calles de ejemplo agregadas")
+        
+        # 3. Estados (Status)
+        estados_ejemplo = [
+            {"descripcion": "Sin Asignar", "color": "#cccccc"},
+            {"descripcion": "Asignado", "color": "#007bff"},
+            {"descripcion": "En proceso", "color": "#ffc107"},
+            {"descripcion": "En revisión", "color": "#17a2b8"},
+            {"descripcion": "Finalizado", "color": "#28a745"},
+            {"descripcion": "Rechazado", "color": "#dc3545"},
+            {"descripcion": "Cancelado", "color": "#6c757d"},
+            {"descripcion": "Reasignado", "color": "#fd7e14"},
+            {"descripcion": "Problema ubicación", "color": "#ff6b6b"},
+            {"descripcion": "Pendiente validación usuario", "color": "#ffd93d"},
+            {"descripcion": "Aceptado por usuario", "color": "#6fcf97"},
+            {"descripcion": "Rechazado por usuario", "color": "#eb5757"},
+            {"descripcion": "Revisión administrador", "color": "#bb86fc"}
+        ]
+        
+        for estado_data in estados_ejemplo:
+            if not Status.query.filter_by(descripcion=estado_data["descripcion"]).first():
+                estado = Status(descripcion=estado_data["descripcion"], color=estado_data["color"])
+                db.session.add(estado)
+        db.session.commit()
+        print(f"   ✅ {len(estados_ejemplo)} estados agregados")
+        
+        # 4. Equipos (Teams)
+        equipos_ejemplo = [
+            {"nombre": "Sin asignar", "area": "general"},
+            {"nombre": "Cuadrilla Técnica Agua 1", "area": "agua"},
+            {"nombre": "Cuadrilla Técnica Agua 2", "area": "agua"},
+            {"nombre": "Cuadrilla Aseo 1", "area": "aseo"},
+            {"nombre": "Cuadrilla Parques 1", "area": "parques"},
+            {"nombre": "Cuadrilla Alumbrado 1", "area": "alumbrado"},
+            {"nombre": "Cuadrilla Obras 1", "area": "obras"},
+            {"nombre": "RETROESCAVADORA", "area": "agua"},
+            {"nombre": "CAMION 7M", "area": "agua"}
+        ]
+        
+        for equipo_data in equipos_ejemplo:
+            if not Team.query.filter_by(nombre=equipo_data["nombre"]).first():
+                equipo = Team(nombre=equipo_data["nombre"], area=equipo_data["area"])
+                db.session.add(equipo)
+        db.session.commit()
+        print(f"   ✅ {len(equipos_ejemplo)} equipos agregados")
+        
+        # 5. Usuario Admin
+        if not User.query.filter_by(username="admin").first():
+            admin = User(
+                nombre="Administrador",
+                username="admin",
+                password_hash="",
+                role="admin",
+                is_active=True,
+                puede_asignar=True,
+                puede_validar=True,
+                puede_ver_todas_areas=True,
+                puede_configurar=True
+            )
+            admin.set_password("admin123")
+            db.session.add(admin)
+            db.session.commit()
+            print("   ✅ Usuario admin creado (admin / admin123)")
+        
+        print("   ✅ Datos de ejemplo cargados correctamente")
+        return True
+
+def cargar_datos():
+    global DATOS_CARGADOS
+    
+    # Evitar ejecución múltiple
+    if DATOS_CARGADOS:
+        print("⚠️ Los datos ya fueron cargados, omitiendo...")
+        return
+    
+    archivo = "datos_municipio.xlsx"
+    
     print("=" * 60)
     print("🚀 CARGANDO DATOS DESDE EXCEL")
     print("=" * 60)
     
-    # Verificar que el archivo existe
-    print(f"\n📂 ¿Existe '{archivo}'? {os.path.exists(archivo)}")
+    # 1. Verificar que el archivo existe
+    print(f"\n📂 Directorio actual: {os.getcwd()}")
+    print(f"📂 Archivos en el directorio: {os.listdir('.')}")
+    print(f"📂 ¿Existe '{archivo}'? {os.path.exists(archivo)}")
     
+    # Si el archivo no existe, usar datos de ejemplo
     if not os.path.exists(archivo):
-        print(f"❌ El archivo '{archivo}' no existe.")
+        print(f"⚠️ El archivo '{archivo}' no existe. Usando datos de ejemplo...")
+        cargar_datos_ejemplo()
+        DATOS_CARGADOS = True
         return
     
-    # Verificar las hojas del Excel
+    # 2. Verificar las hojas del Excel
     try:
         xl = pd.ExcelFile(archivo)
         hojas = xl.sheet_names
-        print(f"📋 Hojas encontradas: {hojas}")
+        print(f"📋 Hojas encontradas en el Excel: {hojas}")
     except Exception as e:
-        print(f"❌ ERROR al leer el Excel: {e}")
+        print(f"❌ ERROR al leer el archivo Excel: {e}")
+        print("📥 Usando datos de ejemplo...")
+        cargar_datos_ejemplo()
+        DATOS_CARGADOS = True
         return
     
     with app.app_context():
-        print("\n📥 INICIANDO CARGA DE DATOS...")
-        if municipio_id_default:
-            print(f"   🎯 Usando municipio_id={municipio_id_default} para todos los registros")
+        print("\n" + "=" * 60)
+        print("📥 INICIANDO CARGA DE DATOS")
+        print("=" * 60)
         
         # ============================
         # 1. CARGAR LOCALIDADES
@@ -58,31 +185,19 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                 for _, row in df_loc.iterrows():
                     if pd.isna(row['nombre']):
                         continue
-                    
-                    # Obtener municipio_id
-                    if municipio_id_default:
-                        mun_id = municipio_id_default
-                    elif 'municipio_id' in row and pd.notna(row['municipio_id']):
-                        mun_id = int(row['municipio_id'])
-                    else:
-                        mun_id = 1
-                    
-                    loc = Localidad.query.filter_by(
-                        nombre=row['nombre'], 
-                        municipio_id=mun_id
-                    ).first()
-                    
+                    loc = Localidad.query.filter_by(nombre=row['nombre']).first()
                     if not loc:
                         loc = Localidad(
                             nombre=row['nombre'],
                             latitud_central=row.get('latitud_central') if pd.notna(row.get('latitud_central')) else None,
-                            longitud_central=row.get('longitud_central') if pd.notna(row.get('longitud_central')) else None,
-                            municipio_id=mun_id
+                            longitud_central=row.get('longitud_central') if pd.notna(row.get('longitud_central')) else None
                         )
                         db.session.add(loc)
                         count_loc += 1
                 db.session.commit()
                 print(f"   ✅ {count_loc} localidades agregadas")
+            else:
+                print("   ⚠️ Hoja 'localidades' no encontrada, omitiendo...")
         except Exception as e:
             print(f"   ❌ Error al cargar localidades: {e}")
             db.session.rollback()
@@ -98,40 +213,19 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                 for _, row in df_calles.iterrows():
                     if pd.isna(row['nombre']) or pd.isna(row['localidad_nombre']):
                         continue
-                    
-                    # Obtener municipio_id
-                    if municipio_id_default:
-                        mun_id = municipio_id_default
-                    elif 'municipio_id' in row and pd.notna(row['municipio_id']):
-                        mun_id = int(row['municipio_id'])
-                    else:
-                        mun_id = 1
-                    
-                    loc = Localidad.query.filter_by(
-                        nombre=row['localidad_nombre'],
-                        municipio_id=mun_id
-                    ).first()
-                    
+                    loc = Localidad.query.filter_by(nombre=row['localidad_nombre']).first()
                     if not loc:
-                        print(f"   ⚠️ Localidad '{row['localidad_nombre']}' no encontrada para municipio {mun_id}")
+                        print(f"   ⚠️ Localidad '{row['localidad_nombre']}' no encontrada para calle '{row['nombre']}'")
                         continue
-                    
-                    calle = Calle.query.filter_by(
-                        nombre=row['nombre'], 
-                        localidad_id=loc.id,
-                        municipio_id=mun_id
-                    ).first()
-                    
+                    calle = Calle.query.filter_by(nombre=row['nombre'], localidad_id=loc.id).first()
                     if not calle:
-                        calle = Calle(
-                            nombre=row['nombre'], 
-                            localidad_id=loc.id,
-                            municipio_id=mun_id
-                        )
+                        calle = Calle(nombre=row['nombre'], localidad_id=loc.id)
                         db.session.add(calle)
                         count_calles += 1
                 db.session.commit()
                 print(f"   ✅ {count_calles} calles agregadas")
+            else:
+                print("   ⚠️ Hoja 'calles' no encontrada, omitiendo...")
         except Exception as e:
             print(f"   ❌ Error al cargar calles: {e}")
             db.session.rollback()
@@ -147,31 +241,16 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                 for _, row in df_status.iterrows():
                     if pd.isna(row['descripcion']):
                         continue
-                    
-                    # Obtener municipio_id
-                    if municipio_id_default:
-                        mun_id = municipio_id_default
-                    elif 'municipio_id' in row and pd.notna(row['municipio_id']):
-                        mun_id = int(row['municipio_id'])
-                    else:
-                        mun_id = 1
-                    
-                    st = Status.query.filter_by(
-                        descripcion=row['descripcion'],
-                        municipio_id=mun_id
-                    ).first()
-                    
+                    st = Status.query.filter_by(descripcion=row['descripcion']).first()
                     if not st:
                         color = row.get('color') if pd.notna(row.get('color')) else '#cccccc'
-                        st = Status(
-                            descripcion=row['descripcion'], 
-                            color=color,
-                            municipio_id=mun_id
-                        )
+                        st = Status(descripcion=row['descripcion'], color=color)
                         db.session.add(st)
                         count_status += 1
                 db.session.commit()
                 print(f"   ✅ {count_status} estados agregados")
+            else:
+                print("   ⚠️ Hoja 'status' no encontrada, omitiendo...")
         except Exception as e:
             print(f"   ❌ Error al cargar estados: {e}")
             db.session.rollback()
@@ -187,31 +266,19 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                 for _, row in df_teams.iterrows():
                     if pd.isna(row['nombre']):
                         continue
-                    
-                    # Obtener municipio_id
-                    if municipio_id_default:
-                        mun_id = municipio_id_default
-                    elif 'municipio_id' in row and pd.notna(row['municipio_id']):
-                        mun_id = int(row['municipio_id'])
-                    else:
-                        mun_id = 1
-                    
-                    team = Team.query.filter_by(
-                        nombre=row['nombre'],
-                        municipio_id=mun_id
-                    ).first()
-                    
+                    team = Team.query.filter_by(nombre=row['nombre']).first()
                     if not team:
                         team = Team(
                             nombre=row['nombre'],
                             area=row.get('area') if pd.notna(row.get('area')) else None,
-                            descripcion=row.get('descripcion') if pd.notna(row.get('descripcion')) else None,
-                            municipio_id=mun_id
+                            descripcion=row.get('descripcion') if pd.notna(row.get('descripcion')) else None
                         )
                         db.session.add(team)
                         count_teams += 1
                 db.session.commit()
                 print(f"   ✅ {count_teams} equipos agregados")
+            else:
+                print("   ⚠️ Hoja 'teams' no encontrada, omitiendo...")
         except Exception as e:
             print(f"   ❌ Error al cargar equipos: {e}")
             db.session.rollback()
@@ -227,31 +294,23 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                 for _, row in df_users.iterrows():
                     if pd.isna(row['username']) or pd.isna(row['nombre']):
                         continue
-                    
-                    # Obtener municipio_id
-                    if municipio_id_default:
-                        mun_id = municipio_id_default
-                    elif 'municipio_id' in row and pd.notna(row['municipio_id']):
-                        mun_id = int(row['municipio_id'])
-                    else:
-                        mun_id = 1
-                    
-                    # Manejar team_nombre
+
+                    # --- Manejar team_nombre ---
                     team_id = None
                     if pd.notna(row.get('team_nombre')):
-                        team = Team.query.filter_by(
-                            nombre=row['team_nombre'],
-                            municipio_id=mun_id
-                        ).first()
+                        team = Team.query.filter_by(nombre=row['team_nombre']).first()
                         if team:
                             team_id = team.id
-                    
-                    # Manejar password_hash
+                        else:
+                            print(f"   ⚠️ Equipo '{row['team_nombre']}' no encontrado para usuario '{row['username']}'")
+
+                    # --- Manejar password_hash ---
                     password_hash = row.get('password_hash')
                     if pd.isna(password_hash) or password_hash == '':
                         password_hash = ''
-                    
-                    # Manejar telegram_id
+                        print(f"   ⚠️ Usuario '{row['username']}' sin password_hash, se asignó cadena vacía")
+
+                    # --- Manejar telegram_id ---
                     telegram_id = row.get('telegram_id')
                     if pd.isna(telegram_id):
                         telegram_id = None
@@ -260,15 +319,16 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                             telegram_id = int(telegram_id)
                         except (ValueError, TypeError):
                             telegram_id = None
-                    
-                    # Campos opcionales
+                            print(f"   ⚠️ telegram_id inválido para '{row['username']}', se asignó None")
+
+                    # --- Manejar campos opcionales ---
                     nivel = row.get('nivel') if pd.notna(row.get('nivel')) else None
                     rol_especifico = row.get('rol_especifico') if pd.notna(row.get('rol_especifico')) else None
                     area = row.get('area') if pd.notna(row.get('area')) else None
                     subarea = row.get('subarea') if pd.notna(row.get('subarea')) else None
                     role = row.get('role') if pd.notna(row.get('role')) else None
-                    
-                    # Verificar si existe
+
+                    # --- Verificar si el usuario ya existe ---
                     user = User.query.filter_by(username=row['username']).first()
                     if not user:
                         user = User(
@@ -286,20 +346,45 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
                             puede_validar=int(row.get('puede_validar', 0)),
                             puede_ver_todas_areas=int(row.get('puede_ver_todas_areas', 0)),
                             puede_configurar=int(row.get('puede_configurar', 0)),
-                            is_active=int(row.get('is_active', 1)),
-                            municipio_id=mun_id
+                            is_active=int(row.get('is_active', 1))
                         )
                         db.session.add(user)
                         count_users += 1
-                        print(f"   ✅ Usuario '{row['username']}' agregado (municipio {mun_id})")
+                        print(f"   ✅ Usuario '{row['username']}' agregado")
                     else:
                         print(f"   ⚠️ Usuario '{row['username']}' ya existe, omitiendo")
-                
+
                 db.session.commit()
                 print(f"   ✅ {count_users} usuarios agregados")
+            else:
+                print("   ⚠️ Hoja 'users' no encontrada, omitiendo...")
         except Exception as e:
             print(f"   ❌ Error al cargar usuarios: {e}")
             db.session.rollback()
+        
+        # ============================
+        # 6. CREAR ADMIN SI NO EXISTE (FALLBACK)
+        # ============================
+        try:
+            admin = User.query.filter_by(username='admin').first()
+            if not admin:
+                admin = User(
+                    nombre='Administrador',
+                    username='admin',
+                    password_hash='',
+                    role='admin',
+                    is_active=True,
+                    puede_asignar=True,
+                    puede_validar=True,
+                    puede_ver_todas_areas=True,
+                    puede_configurar=True
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+                db.session.commit()
+                print("   ✅ Usuario admin creado por defecto (usuario: admin / contraseña: admin123)")
+        except Exception as e:
+            print(f"   ⚠️ No se pudo crear usuario admin: {e}")
         
         # ============================
         # RESUMEN FINAL
@@ -313,23 +398,8 @@ def cargar_datos(archivo="datos_municipio.xlsx", municipio_id_default=None):
         print(f"   • Estados: {Status.query.count()}")
         print(f"   • Equipos: {Team.query.count()}")
         print(f"   • Usuarios: {User.query.count()}")
+        
+        DATOS_CARGADOS = True
 
 if __name__ == "__main__":
-    # Uso: python cargar_datos_municipio.py [archivo] [municipio_id]
-    if len(sys.argv) > 2:
-        archivo = sys.argv[1]
-        try:
-            mun_id = int(sys.argv[2])
-            cargar_datos(archivo=archivo, municipio_id_default=mun_id)
-        except ValueError:
-            print("❌ municipio_id debe ser número entero")
-    elif len(sys.argv) > 1:
-        # Puede ser archivo o municipio_id
-        try:
-            mun_id = int(sys.argv[1])
-            cargar_datos(municipio_id_default=mun_id)
-        except ValueError:
-            archivo = sys.argv[1]
-            cargar_datos(archivo=archivo)
-    else:
-        cargar_datos()
+    cargar_datos()

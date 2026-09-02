@@ -5,7 +5,6 @@ class GpsDispositivo(db.Model):
     __tablename__ = 'gps_dispositivos'
     
     id = db.Column(db.Integer, primary_key=True)
-    municipio_id = db.Column(db.Integer, default=1)
     nombre = db.Column(db.String(100), nullable=False)
     imei = db.Column(db.String(50), unique=True, nullable=False)
     team_id = db.Column(db.Integer, db.ForeignKey('teams.id'), nullable=True)

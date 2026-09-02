@@ -12,7 +12,6 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    municipio_id = db.Column(db.Integer, default=1)
     nombre = db.Column(db.String(100), nullable=False)  # Cambiado de 64 a 100
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)

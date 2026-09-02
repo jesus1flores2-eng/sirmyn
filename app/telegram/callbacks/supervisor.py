@@ -447,7 +447,7 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
 
             mensaje_cuadrilla = (
                 f"👷 *SUPERVISOR CONFIRMADO - Solicitud de Apoyo*\n\n"
-                f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte {reporte.folio_display}.\n\n"
+                f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
                 f"📍 *Ubicación:* {direccion}"
                 f"{gps_texto}"
                 f"\n\n👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
@@ -551,7 +551,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             mensaje_base = (
                 f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* {reporte.folio_display}\n"
+                f"📋 *Folio:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
                 f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -607,7 +607,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             # ⭐ CONFIRMAR AL SUPERVISOR
             await update.message.reply_text(
                 f"✅ *Rechazo enviado correctamente*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
                 f"*📌 El reporte ha vuelto a estado 'En proceso'*\n"

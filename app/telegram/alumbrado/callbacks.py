@@ -139,7 +139,7 @@ async def manejar_motivo_rechazo_jefe_alumbrado(update: Update, context: Context
                     try:
                         mensaje = (
                             f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                            f"📋 *Folio:* {reporte.folio_display}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                            f"📋 *Folio:* #{reporte.id}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                             f"👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n"
                             f"❌ *RECHAZADO POR JEFE DE ALUMBRADO*\n*Motivo:* {motivo}\n\n"
                             f"*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
@@ -149,7 +149,7 @@ async def manejar_motivo_rechazo_jefe_alumbrado(update: Update, context: Context
                     except Exception as e:
                         logger.error(f"❌ Error: {e}")
 
-            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: {reporte.folio_display}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: #{reporte.id}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
             logger.info(f"✅ Jefe de Alumbrado rechazó reporte #{reporte_id}")
 
     except Exception as e:

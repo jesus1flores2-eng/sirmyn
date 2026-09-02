@@ -16,12 +16,21 @@ logger = logging.getLogger(__name__)
 # 1. OBTENER RESPONSABLES SEGÚN TIPO DE REPORTE
 # ============================================================
 def obtener_directores_por_tipo_reporte(tipo_reporte: str):
+    """
+    Obtiene responsables según el tipo de reporte.
+    - Agua/Drenaje: Jefe Técnico (principal) + Director (informativo)
+    - Otros: Director correspondiente
+    """
     try:
         from app.models.user import User
         
         responsables = []
         
+        # ========== AGUA POTABLE O DRENAJE ==========
         if tipo_reporte in ["Agua potable", "Drenaje"]:
+            logger.info(f"💧 [NOTIFICACIÓN] Procesando {tipo_reporte} - lógica especial")
+            
+            # 1. JEFE TÉCNICO (mensaje COMPLETO con botones)
             jefe_tecnico = User.query.filter_by(
                 area='agua',
                 rol_especifico='jefe_area_tecnica',
@@ -36,25 +45,39 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
                     'es_jefe_tecnico': True,
                     'descripcion': 'Jefe Técnico de Agua/Drenaje'
                 })
+                logger.info(f"✅ Jefe Técnico encontrado: {jefe_tecnico.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró jefe técnico para agua")
             
+            # 2. DIRECTOR AGUA (mensaje INFORMATIVO)
             director_agua = User.query.filter_by(
                 area='agua',
                 rol_especifico='director',
                 is_active=True
             ).first()
             
-            if director_agua and (not jefe_tecnico or director_agua.id != jefe_tecnico.id):
-                responsables.append({
-                    'usuario': director_agua,
-                    'tipo_mensaje': 'informativo_simple_sin_botones',
-                    'puede_asignar': False,
-                    'es_jefe_tecnico': False,
-                    'descripcion': 'Director de Agua (informativo)'
-                })
+            if director_agua:
+                if jefe_tecnico and jefe_tecnico.id == director_agua.id:
+                    logger.info("ℹ️ Misma persona: Director y Jefe Técnico")
+                else:
+                    responsables.append({
+                        'usuario': director_agua,
+                        'tipo_mensaje': 'informativo_simple_sin_botones',
+                        'puede_asignar': False,
+                        'es_jefe_tecnico': False,
+                        'descripcion': 'Director de Agua (informativo)'
+                    })
+                    logger.info(f"✅ Director Agua encontrado: {director_agua.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró director de agua")
             
             return responsables
         
+        # ========== ASEO PÚBLICO ==========
         if tipo_reporte == "Aseo público":
+            logger.info(f"🗑️ [NOTIFICACIÓN] Procesando Aseo público")
+            
+            # 1. JEFE DE ÁREA DE ASEO (mensaje COMPLETO con botones)
             from sqlalchemy import func
             jefe_aseo = User.query.filter(
                 User.area == 'aseo',
@@ -70,24 +93,35 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
                     'es_jefe_tecnico': True,
                     'descripcion': 'Jefe de Área de Aseo'
                 })
+                logger.info(f"✅ Jefe de Área de Aseo encontrado: {jefe_aseo.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró jefe de área de aseo")
             
+            # 2. DIRECTOR DE ASEO (mensaje INFORMATIVO)
             director_aseo = User.query.filter_by(
                 area='aseo',
                 rol_especifico='director',
                 is_active=True
             ).first()
             
-            if director_aseo and (not jefe_aseo or director_aseo.id != jefe_aseo.id):
-                responsables.append({
-                    'usuario': director_aseo,
-                    'tipo_mensaje': 'informativo_simple_sin_botones',
-                    'puede_asignar': False,
-                    'es_jefe_tecnico': False,
-                    'descripcion': 'Director de Aseo (informativo)'
-                })
+            if director_aseo:
+                if jefe_aseo and jefe_aseo.id == director_aseo.id:
+                    logger.info("ℹ️ Misma persona: Director y Jefe de Área de Aseo")
+                else:
+                    responsables.append({
+                        'usuario': director_aseo,
+                        'tipo_mensaje': 'informativo_simple_sin_botones',
+                        'puede_asignar': False,
+                        'es_jefe_tecnico': False,
+                        'descripcion': 'Director de Aseo (informativo)'
+                    })
+                    logger.info(f"✅ Director de Aseo encontrado: {director_aseo.nombre}")
+            else:
+                logger.warning("⚠️ No se encontró director de aseo")
             
             return responsables
         
+        # ========== TODOS LOS DEMÁS DEPARTAMENTOS ==========
         CONFIG_DEPARTAMENTOS = {
             "Alumbrado público": ("jefe_area", "alumbrado"),
             "Parques y jardines": ("jefe_area", "parques"),
@@ -95,61 +129,58 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
             "Seguridad pública": ("jefe_area", "seguridad"),
             "Obras públicas": ("jefe_area", "obras"),
             "Bomberos": ("jefe_area", "bomberos"),
+            # ⭐ Agregar estos:
             "Protección Civil": ("jefe_area", "proteccion_civil"),
             "Punto Violeta": ("jefe_area", "punto_violeta"),
-            "Ambulancia": ("jefe_area", "ambulancia"),
         }
-
+                
         config = CONFIG_DEPARTAMENTOS.get(tipo_reporte)
-
+        
         if config:
             rol_principal, area = config
-
-            if area == 'bomberos':
-                jefe = User.query.filter_by(area='bomberos', rol_especifico='jefe_area', is_active=True).first()
-                if not jefe or not jefe.telegram_id:
-                    area_fallback = 'proteccion_civil'
-                    jefe = User.query.filter_by(area=area_fallback, rol_especifico='jefe_area', is_active=True).first()
-                    area = area_fallback
-
-            elif area == 'ambulancia':
-                jefe = User.query.filter_by(area='ambulancia', rol_especifico='jefe_area', is_active=True).first()
-                if not jefe or not jefe.telegram_id:
-                    area_fallback = 'proteccion_civil'
-                    jefe = User.query.filter_by(area=area_fallback, rol_especifico='jefe_area', is_active=True).first()
-                    area = area_fallback
-                    
-            elif area == 'punto_violeta':
-                jefe = User.query.filter_by(area='punto_violeta', rol_especifico='jefe_area', is_active=True).first()
-                if not jefe or not jefe.telegram_id:
-                    area_fallback = 'seguridad'
-                    jefe = User.query.filter_by(area=area_fallback, rol_especifico='jefe_area', is_active=True).first()
-                    area = area_fallback
-
-            else:
-                jefe = User.query.filter_by(area=area, rol_especifico=rol_principal, is_active=True).first()
-
-            if not jefe:
-                jefe = User.query.filter_by(area=area, rol_especifico='director', is_active=True).first()
-
+            
+            # Buscar rol principal (jefe_area)
+            jefe = User.query.filter_by(
+                area=area,
+                rol_especifico=rol_principal,
+                is_active=True
+            ).first()
+            
             if jefe:
                 responsables.append({
                     'usuario': jefe,
                     'tipo_mensaje': 'completo_con_botones',
                     'puede_asignar': True,
                     'es_jefe_tecnico': True,
-                    'descripcion': f'Responsable de {area.title()}'
+                    'descripcion': f'Jefe de {area.title()}'
                 })
-
-            director = User.query.filter_by(area=area, rol_especifico='director', is_active=True).first()
-            if director and (not jefe or director.id != jefe.id):
-                responsables.append({
-                    'usuario': director,
-                    'tipo_mensaje': 'informativo_simple_sin_botones',
-                    'puede_asignar': False,
-                    'es_jefe_tecnico': False,
-                    'descripcion': f'Director de {area.title()} (informativo)'
-                })
+                logger.info(f"✅ Jefe de {area.title()} encontrado: {jefe.nombre}")
+            else:
+                logger.warning(f"⚠️ No se encontró jefe para {area}")
+            
+            # Director (informativo)
+            director = User.query.filter_by(
+                area=area,
+                rol_especifico='director',
+                is_active=True
+            ).first()
+            
+            if director:
+                if jefe and jefe.id == director.id:
+                    logger.info(f"ℹ️ Misma persona: Director y Jefe de {area.title()}")
+                else:
+                    responsables.append({
+                        'usuario': director,
+                        'tipo_mensaje': 'informativo_simple_sin_botones',
+                        'puede_asignar': False,
+                        'es_jefe_tecnico': False,
+                        'descripcion': f'Director de {area.title()} (informativo)'
+                    })
+                    logger.info(f"✅ Director de {area.title()} encontrado: {director.nombre}")
+            else:
+                logger.warning(f"⚠️ No se encontró director para {area}")
+        else:
+            logger.warning(f"⚠️ Área no mapeada para tipo: {tipo_reporte}")
         
         return responsables
         
@@ -162,34 +193,48 @@ def obtener_directores_por_tipo_reporte(tipo_reporte: str):
 # 2. FUNCIÓN AUXILIAR PARA CONSTRUIR ENLACES DE EVIDENCIA
 # ============================================================
 def construir_enlace_evidencia(evidencia: str, nombre_base: str = "evidencia"):
+    """
+    Construye un enlace formateado para una evidencia (Cloudinary o local).
+    Retorna (texto_con_enlace, es_archivo)
+    """
     if not evidencia:
         return None, False
     
     evidencia = evidencia.strip()
     
+    # Determinar si es URL de Cloudinary o ruta local
     if evidencia.startswith('http'):
         url = evidencia
+        # Extraer nombre del archivo de la URL
         nombre_archivo = evidencia.split('/')[-1].split('?')[0]
+        # Limpiar nombre si es muy largo
         if len(nombre_archivo) > 30:
             nombre_archivo = nombre_archivo[:27] + "..."
-        return url, True
+        return f"[{nombre_archivo}]({url})", True
     
+    # Ruta local
     if evidencia.startswith('evidencias/'):
         url = url_for('static', filename=evidencia, _external=True)
     else:
         url = url_for('admin.uploaded_file', filename=evidencia, _external=True)
     
+    # Extraer nombre del archivo
     nombre_archivo = os.path.basename(evidencia)
     if len(nombre_archivo) > 30:
         nombre_archivo = nombre_archivo[:27] + "..."
     
-    return url, True
+    return f"[{nombre_archivo}]({url})", True
 
 
 # ============================================================
 # 3. NOTIFICAR NUEVO REPORTE
 # ============================================================
 async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, tipo_reporte: str):
+    """
+    Notifica a responsables según el tipo de reporte.
+    - Agua/Drenaje: Jefe Técnico (completo) + Director (informativo)
+    - Otros: Director correspondiente (completo)
+    """
     try:
         from app.models.report import Report, Localidad, Calle
         from app.models.user import User
@@ -197,17 +242,21 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
         
         reporte = Report.query.get(reporte_id)
         if not reporte:
+            logger.error(f"❌ Reporte {reporte_id} no encontrado")
             return False
         
         localidad = Localidad.query.get(reporte.localidad_id)
         calle = Calle.query.get(reporte.calle_id)
         
         responsables = obtener_directores_por_tipo_reporte(tipo_reporte)
+        
         if not responsables:
+            logger.warning(f"⚠️ No hay responsables para {tipo_reporte}")
             return False
         
         bot_app = get_telegram_app()
         if not bot_app or not bot_app.bot:
+            logger.error("❌ Bot de Telegram no disponible")
             return False
         
         notificaciones_enviadas = 0
@@ -215,11 +264,13 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
         for responsable in responsables:
             usuario = responsable['usuario']
             if not usuario or not usuario.telegram_id:
+                logger.warning(f"⚠️ Usuario {usuario.nombre if usuario else 'N/A'} sin Telegram ID")
                 continue
             
             try:
                 telegram_id_destino = int(usuario.telegram_id)
             except:
+                logger.warning(f"⚠️ Telegram ID inválido para {usuario.nombre}")
                 continue
             
             if responsable['tipo_mensaje'] == 'completo_con_botones':
@@ -227,57 +278,22 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
                 reply_markup = construir_botones_reporte(reporte.id, es_director=True)
             
             elif responsable['tipo_mensaje'] == 'informativo_simple_sin_botones':
-                NOMBRES_RESPONSABLES = {
-                    "Agua potable": "Jefe Técnico",
-                    "Drenaje": "Jefe Técnico",
-                    "Aseo público": "Jefe de Aseo",
-                    "Alumbrado público": "Jefe de Alumbrado",
-                    "Parques y jardines": "Jefe de Parques",
-                    "Ecología": "Jefe de Ecología",
-                    "Obras públicas": "Jefe de Obras",
-                    "Seguridad pública": "Cabina",
-                    "Bomberos": "Central de Bomberos",
-                    "Protección Civil": "Protección Civil",
-                    "Punto Violeta": "Punto Violeta",
-                    "Ambulancia": "Central de Ambulancias",
-                }
-
-                responsable_nombre = NOMBRES_RESPONSABLES.get(tipo_reporte, 'Responsable')
-
-                es_emergencia = tipo_reporte in [
-                    "Seguridad pública", "Bomberos", "Protección Civil",
-                    "Punto Violeta", "Ambulancia"
-                ]
-
-                if es_emergencia:
-                    if reporte.latitud and reporte.longitud:
-                        maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
-                        ubicacion_texto = f"📍 *Ubicación:* [Ver en Google Maps]({maps_url})\n"
-                    else:
-                        ubicacion_texto = ""
-
-                evidencia_texto = ''
-                if reporte.evidencia:
-                    enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia")
-                    evidencia_texto = f"📎 *Evidencia:* [Ver foto/video]({enlace})\n"
-
                 mensaje = (
-                    f"📋 *INFORMACIÓN - NUEVO REPORTE {tipo_reporte.upper()}*\n\n"
-                    f"📋 *Folio:* {reporte.folio_display}\n"
-                    f"{ubicacion_texto}"
+                    f"💧 *INFORMACIÓN - NUEVO REPORTE {tipo_reporte.upper()}*\n\n"
+                    f"📋 *Folio:* #{reporte.id}\n"
+                    f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}\n"
                     f"👤 *Reportante:* {reporte.reportante}\n"
                     f"📱 *Teléfono:* {reporte.telefono}\n"
-                    f"🔧 *Problema:* {reporte.subtipo}\n"
-                    f"{evidencia_texto}"
+                    f"🔧 *Problema:* {reporte.subtipo}\n\n"
                     f"📅 *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M')}\n\n"
-                    f"*📋 {responsable_nombre} ha sido notificado para asignación.*"
+                    f"*📋 Jefe Técnico ha sido notificado para asignación.*"
                 )
                 reply_markup = None
             
             else:
                 mensaje = (
                     f"📋 *NUEVO REPORTE*\n\n"
-                    f"Folio: {reporte.folio_display}\n"
+                    f"Folio: #{reporte.id}\n"
                     f"Ubicación: {calle.nombre if calle else 'N/D'} #{reporte.numero}\n"
                     f"Problema: {reporte.tipo} - {reporte.subtipo}\n"
                     f"Reportante: {reporte.reportante}"
@@ -294,9 +310,11 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
                     disable_web_page_preview=True
                 )
                 notificaciones_enviadas += 1
+                logger.info(f"✅ Notificación enviada a {usuario.nombre} (ID: {usuario.telegram_id})")
             except Exception as e:
                 logger.error(f"❌ Error enviando a {usuario.nombre}: {e}")
         
+        logger.info(f"📊 Notificaciones enviadas: {notificaciones_enviadas}")
         return notificaciones_enviadas > 0
         
     except Exception as e:
@@ -308,41 +326,39 @@ async def notificar_director_nuevo_reporte(reporte_id: int, telegram_id: int, ti
 # 4. CONSTRUIR MENSAJE COMPLETO (con evidencia)
 # ============================================================
 async def construir_mensaje_completo(reporte, localidad, calle):
-    es_emergencia = reporte.tipo in [
-        "Seguridad pública", "Bomberos", "Protección Civil",
-        "Punto Violeta", "Ambulancia"
-    ]
-
-    if es_emergencia:
-        ubicacion_texto = ""
-    else:
-        ubicacion_texto = f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, {localidad.nombre if localidad else 'N/D'}\n"
-
+    """Construye mensaje completo con botones de asignación y evidencia"""
     mensaje = (
         f"🚨 *NUEVO REPORTE - {reporte.tipo.upper()}*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"📋 *Folio:* {reporte.folio_display}\n"
-        f"{ubicacion_texto}"
+        f"📋 *Folio:* #{reporte.id}\n"
+        f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
+        f"{localidad.nombre if localidad else 'N/D'}\n"
         f"📞 *Reportante:* {reporte.reportante}\n"
         f"🔧 *Tipo:* {reporte.tipo}\n"
         f"📝 *Subtipo:* {reporte.subtipo}\n"
         f"📄 *Descripción:*\n"
         f"{reporte.descripcion_problema[:150]}{'...' if len(reporte.descripcion_problema) > 150 else ''}\n\n"
     )
-
+    
+    # ============================================================
+    # EVIDENCIA DEL USUARIO (con enlace)
+    # ============================================================
     if reporte.evidencia:
         enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
-        mensaje += f"📎 *Evidencia:* [Ver foto/video]({enlace})\n\n"
-
+        mensaje += f"📎 *Evidencia:* {enlace}\n\n"
+    
+    # ============================================================
+    # MAPA (si hay coordenadas)
+    # ============================================================
     if reporte.latitud and reporte.longitud:
         maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
         mensaje += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
-
+    
     mensaje += (
         f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M')}\n\n"
         f"*👷 ACCIONES RÁPIDAS:*"
     )
-
+    
     return mensaje
 
 
@@ -393,7 +409,7 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
             mensaje = (
                 f"🚨 *REPORTE ASIGNADO POR PRESIDENCIA - URGENTE*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* {reporte.folio_display}\n"
+                f"📋 *Folio:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
                 f"{localidad.nombre if localidad else 'N/D'}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
@@ -409,27 +425,19 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
             )
         else:
             # ⭐ MENSAJE NORMAL
-            # Verificar si telefono contiene telegram_id (solo dígitos)
-            contacto_reporte = ""
-            if reporte.telefono and reporte.telefono.isdigit():
-                contacto_reporte = f"📱 <b>Contactar:</b> <a href='tg://user?id={reporte.telefono}'>Abrir chat</a>\n"
-            elif reporte.telefono:
-                contacto_reporte = f"📱 <b>Teléfono:</b> {reporte.telefono}\n"
-            
             mensaje = (
-                f"🚨 <b>NUEVO REPORTE ASIGNADO</b>\n"
+                f"🚨 *NUEVO REPORTE ASIGNADO*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 <b>Folio:</b> {reporte.folio_display}\n"
-                f"📍 <b>Ubicación:</b> {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
+                f"📋 *Folio:* #{reporte.id}\n"
+                f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
                 f"{localidad.nombre if localidad else 'N/D'}\n"
-                f"📞 <b>Reportante:</b> {reporte.reportante}\n"
-                f"{contacto_reporte}"
-                f"🔧 <b>Tipo:</b> {reporte.tipo} - {reporte.subtipo}\n"
-                f"📄 <b>Descripción:</b> {reporte.descripcion_problema[:150]}...\n"
-                f"🏷️ <b>Estatus:</b> {status.descripcion if status else 'Asignado'}\n"
-                f"👷 <b>Asignado a:</b> {usuario.nombre}\n"
-                f"⏰ <b>Fecha:</b> {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
-                f"<b>📋 Acciones rápidas:</b>"
+                f"📞 *Reportante:* {reporte.reportante}\n"
+                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n"
+                f"🏷️ *Estatus:* {status.descripcion if status else 'Asignado'}\n"
+                f"👷 *Asignado a:* {usuario.nombre}\n"
+                f"⏰ *Fecha:* {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
+                f"*📋 Acciones rápidas:*"
             )
         
         # ============================================================
@@ -445,7 +453,7 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
         await bot_app.bot.send_message(
             chat_id=int(usuario.telegram_id),
             text=mensaje,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup,
             disable_web_page_preview=False
         )
@@ -516,7 +524,7 @@ async def notificar_director_asignacion_presidencial(reporte_id: int, cuadrilla_
         
         mensaje = (
             f"📋 *NOTIFICACIÓN - ASIGNACIÓN PRESIDENCIAL*\n\n"
-            f"El Presidente ha asignado el reporte *{reporte.folio_display}* a la cuadrilla *{cuadrilla_nombre}*.\n\n"
+            f"El Presidente ha asignado el reporte *#{reporte.id}* a la cuadrilla *{cuadrilla_nombre}*.\n\n"
             f"📋 *Reporte:* {reporte.tipo} - {reporte.subtipo}\n"
             f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
             f"📅 *Reportado hace:* {horas} horas\n\n"
@@ -579,7 +587,7 @@ async def notificar_presidente_urgente(reporte_id: int):
         # ============================================================
         mensaje = (
             f"🚨 *ALERTA URGENTE - REPORTE SIN ATENDER*\n\n"
-            f"📋 *Folio:* {reporte.folio_display}\n"
+            f"📋 *Folio:* #{reporte.id}\n"
             f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
             f"{localidad.nombre if localidad else 'N/D'}\n"
             f"👤 *Reportante:* {reporte.reportante}\n"
@@ -617,7 +625,7 @@ async def notificar_presidente_urgente(reporte_id: int):
         await bot_app.bot.send_message(
             chat_id=int(presidente.telegram_id),
             text=mensaje,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup,
             disable_web_page_preview=True
         )
@@ -710,7 +718,7 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
         # CONSTRUIR MENSAJE COMPLETO
         # ============================================================
         mensaje = f"""
-🔍 *REPARACIÓN PARA REVISIÓN - Reporte {reporte.folio_display}*
+🔍 *REPARACIÓN PARA REVISIÓN - Reporte #{reporte.id}*
 
 📍 *UBICACIÓN:*
 {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
@@ -754,7 +762,7 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
         await bot_app.bot.send_message(
             chat_id=int(supervisor.telegram_id),
             text=mensaje,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup,
             disable_web_page_preview=False
         )
@@ -848,7 +856,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
         mensaje = f"""
 ✅ *REPARACIÓN TERMINADA - {cuadrilla.area.upper()}*
 
-📋 *Reporte:* {reporte.folio_display}
+📋 *Reporte:* #{reporte.id}
 📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
 👤 *Reportante:* {reporte.reportante}
 🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
@@ -885,7 +893,7 @@ async def notificar_director_validacion(reporte_id: int, team_id: int):
         await bot_app.bot.send_message(
             chat_id=int(director.telegram_id),
             text=mensaje,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup,
             disable_web_page_preview=False
         )
@@ -930,7 +938,7 @@ async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_rep
         if motivo == 'nuevo_reporte':
             mensaje = f"""🏛️ *NUEVO REPORTE - PRESIDENCIA*
 
-📋 *Folio:* {reporte.folio_display}
+📋 *ID:* #{reporte.id}
 👤 *Reportante:* {reporte.reportante}
 📞 *Teléfono:* {reporte.telefono}
 🏢 *Dependencia:* {reporte.tipo}
@@ -944,7 +952,7 @@ async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_rep
             horas = int((datetime.now() - reporte.timestamp).total_seconds() / 3600)
             mensaje = f"""🚨 *REPORTE URGENTE - ATENCIÓN INMEDIATA*
 
-📋 *Folio:* {reporte.folio_display}
+📋 *ID:* #{reporte.id}
 👤 *Reportante:* {reporte.reportante}
 🏢 *Área:* {reporte.tipo}
 🔧 *Problema:* {reporte.subtipo}
@@ -954,7 +962,7 @@ async def notificar_presidente_reporte(reporte_id: int, motivo: str = "nuevo_rep
         else:
             mensaje = f"""📈 *REPORTE IMPORTANTE PARA REVISIÓN*
 
-📋 *Folio:* {reporte.folio_display}
+📋 *ID:* #{reporte.id}
 🏢 *Departamento:* {reporte.tipo}
 📍 *Zona:* {localidad.nombre if localidad else 'N/D'}
 📊 *Estado:* Sin asignar
@@ -1085,7 +1093,7 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
         mensaje = f"""
 ✅ *¡TU REPORTE HA SIDO ATENDIDO!*
 
-📋 *Folio:* {reporte.folio_display}
+📋 *Folio:* #{reporte.id}
 📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
 🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
 👷 *Cuadrilla:* {cuadrilla.nombre if cuadrilla else 'N/D'}
@@ -1110,11 +1118,11 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
         await bot_app.bot.send_message(
             chat_id=telegram_id,
             text=mensaje,
-            parse_mode=ParseMode.HTML,
+            parse_mode=ParseMode.MARKDOWN,
             reply_markup=reply_markup
         )
         
-        logger.info(f"📤 Usuario notificado para validación final - Reporte {reporte.folio_display}")
+        logger.info(f"📤 Usuario notificado para validación final - Reporte #{reporte.id}")
         return True
         
     except Exception as e:
@@ -1180,7 +1188,7 @@ async def notificar_jefe_area_apoyo(reporte_id: int, cuadrilla_principal: str, c
         localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
         
         mensaje = (
-            f"📋 *NOTIFICACIÓN DE APOYO - Reporte {reporte.folio_display}*\n\n"
+            f"📋 *NOTIFICACIÓN DE APOYO - Reporte #{reporte.id}*\n\n"
             f"Se ha asignado una cuadrilla de apoyo para este reporte.\n\n"
             f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
             f"🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -1252,11 +1260,11 @@ async def notificar_rechazo_usuario(reporte_id: int, usuario_id: int):
         
         await bot_app.bot.send_message(
             chat_id=int(responsable.telegram_id),
-            text=f"🚨 *RECHAZO DE USUARIO - Reporte {reporte.folio_display}*\n\nEl usuario ha rechazado la reparación.\nPor favor, revisa y reasigna o toma acciones.",
+            text=f"🚨 *RECHAZO DE USUARIO - Reporte #{reporte.id}*\n\nEl usuario ha rechazado la reparación.\nPor favor, revisa y reasigna o toma acciones.",
             parse_mode=ParseMode.MARKDOWN
         )
         
-        logger.info(f"📤 Responsable notificado sobre rechazo de usuario - Reporte {reporte.folio_display}")
+        logger.info(f"📤 Responsable notificado sobre rechazo de usuario - Reporte #{reporte.id}")
         
     except Exception as e:
         logger.error(f"❌ Error en notificar_rechazo_usuario: {e}", exc_info=True)
@@ -1323,7 +1331,7 @@ async def notificar_director_aceptacion_cuadrilla(reporte_id: int, cuadrilla_nom
         
         mensaje = (
             f"✅ *CUADRILLA CONFIRMÓ RECEPCIÓN*\n\n"
-            f"📋 *Reporte:* {reporte.folio_display}\n"
+            f"📋 *Reporte:* #{reporte.id}\n"
             f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
             f"👷 *Cuadrilla:* {cuadrilla_nombre}\n"
             f"👤 *Confirmado por:* {usuario_nombre}\n"
@@ -1405,7 +1413,7 @@ async def notificar_responsable_rechazo_usuario(reporte_id: int, motivo: str, no
         
         mensaje = (
             f"📋 *NOTIFICACIÓN DE RECHAZO DE USUARIO*\n\n"
-            f"El usuario *{nombre_reportante}* ha rechazado la reparación del reporte {reporte.folio_display}.\n\n"
+            f"El usuario *{nombre_reportante}* ha rechazado la reparación del reporte #{reporte.id}.\n\n"
             f"📝 *Motivo:* {motivo}\n\n"
             f"*📌 La cuadrilla ha sido notificada para corregir el trabajo.*\n"
             f"*Recibirás una nueva notificación cuando la reparación sea reenviada.*"

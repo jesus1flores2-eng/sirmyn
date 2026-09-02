@@ -6,7 +6,6 @@ class Team(db.Model):
     __tablename__ = 'teams'
     
     id = db.Column(db.Integer, primary_key=True)
-    municipio_id = db.Column(db.Integer, default=1)
     nombre = db.Column(db.String(100))
     # SOLO agregar estas dos columnas nuevas, NADA MÁS
     area = db.Column(db.String(50))

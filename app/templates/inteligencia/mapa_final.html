@@ -128,11 +128,7 @@
             <div class="btn-actions">
                 <button id="btnActualizar" class="btn-map btn-refresh"><i class="fas fa-sync-alt"></i> Actualizar</button>
                 <button id="btnToggleGPS" class="btn-map btn-primary"><i class="fas fa-satellite"></i> GPS Vehículos</button>
-                {% if session.get('municipio_id') %}
-                <a href="{{ url_for('municipio.dashboard') }}" class="btn-map btn-secondary"><i class="fas fa-arrow-left"></i> Municipio</a>
-                {% else %}
                 <a href="{{ url_for('inteligencia.dashboard') }}" class="btn-map btn-secondary"><i class="fas fa-arrow-left"></i> Dashboard</a>
-                {% endif %}
             </div>
         </header>
         <div class="map-container">

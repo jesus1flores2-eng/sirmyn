@@ -65,9 +65,9 @@ async def manejar_motivo_rechazo_jefe_seguridad(update: Update, context: Context
             for usuario in User.query.filter_by(team_id=cuadrilla_id, is_active=True).all():
                 if usuario.telegram_id:
                     try:
-                        mensaje = f"🚨 *REPORTE RECHAZADO*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📋 *Folio:* {reporte.folio_display}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n❌ *RECHAZADO POR JEFE DE SEGURIDAD*\n*Motivo:* {motivo}\n\n*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
+                        mensaje = f"🚨 *REPORTE RECHAZADO*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📋 *Folio:* #{reporte.id}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n❌ *RECHAZADO POR JEFE DE SEGURIDAD*\n*Motivo:* {motivo}\n\n*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
                         await bot.send_message(chat_id=int(usuario.telegram_id), text=mensaje, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔧 Subir evidencia reparación", callback_data=f"reparacion_{reporte_id}")]]))
                     except Exception as e: logger.error(f"❌ Error: {e}")
-            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: {reporte.folio_display}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: #{reporte.id}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
     except Exception as e: logger.error(f"❌ Error: {e}"); await update.message.reply_text("❌ Error al procesar el rechazo.")
     finally: limpiar_estado(user_id)

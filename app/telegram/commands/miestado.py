@@ -46,7 +46,7 @@ async def miestado_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ).order_by(Assignment.timestamp.desc()).first()
                     status = asignacion.status if asignacion else None
                     mensaje += (
-                        f"{i}. *{reporte.folio_display}* - {reporte.tipo}\n"
+                        f"{i}. *#{reporte.id}* - {reporte.tipo}\n"
                         f"   📍 {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
                         f"   🏷️ {status.descripcion if status else 'Sin estatus'}\n"
                         f"   ⏰ {reporte.timestamp.strftime('%H:%M') if reporte.timestamp else ''}\n\n"

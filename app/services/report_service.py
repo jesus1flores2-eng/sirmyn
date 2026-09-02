@@ -36,13 +36,7 @@ def duplicar_reporte(reporte_id):
     if not reporte_original:
         return None
 
-    # Generar nuevo folio para el duplicado
-    municipio_id = reporte_original.municipio_id or 1
-    folio = Report.generar_folio(municipio_id, reporte_original.tipo)
-
     nuevo = Report(
-        folio=folio,
-        municipio_id=municipio_id,
         telefono=reporte_original.telefono,
         reportante=reporte_original.reportante,
         tipo=reporte_original.tipo,

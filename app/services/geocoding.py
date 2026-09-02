@@ -144,9 +144,9 @@ def obtener_direccion_osm(latitud, longitud):
                 address.get('town') or
                 address.get('city')
             )
-            if road or localidad:
-                logger.info(f"📍 Reverse geocoding parcial: localidad={localidad}, road={road}")
-                return {'road': road or '', 'localidad': localidad or ''}
+            if road and localidad:
+                logger.info(f"📍 Reverse geocoding exitoso: {localidad}, {road}")
+                return {'road': road, 'localidad': localidad}
         return None
     except Exception as e:
         logger.error(f"Error en obtener_direccion_osm: {e}")

@@ -28,7 +28,6 @@ from app.services.whatsapp_bot import twilio_client, TWILIO_PHONE_NUMBER
 from app.services.whatsapp_bot import send_whatsapp_message
 from app.services.notification_service import notificar_asignacion_sync
 from app.routes.telegram_routes import get_telegram_app
-from app.models.municipio_config import MunicipioConfig
 import logging
 
 # ⭐⭐⭐ APLICAR NEST_ASYNCIO PARA PERMITIR LOOPS ANIDADOS ⭐⭐⭐
@@ -69,20 +68,13 @@ def dashboard():
     team_id = request.args.get('team_id')
     status_id = request.args.get('status_id')
     plataforma = request.args.get('plataforma')
-    municipio_id = request.args.get('municipio_id', type=int)
 
-    # Filtrar por municipio si se selecciona
-    if municipio_id:
-        reportes = Report.query.filter(
-            Report.municipio_id == municipio_id
-        ).order_by(Report.timestamp.desc()).all()
+    if any([tipo, subtipo, localidad, team_id, status_id, plataforma]):
+        reportes = obtener_reportes_filtrados(tipo, subtipo, localidad, team_id, status_id)
+        if plataforma:
+            reportes = [r for r in reportes if r.plataforma == plataforma]
     else:
-        if any([tipo, subtipo, localidad, team_id, status_id, plataforma]):
-            reportes = obtener_reportes_filtrados(tipo, subtipo, localidad, team_id, status_id)
-            if plataforma:
-                reportes = [r for r in reportes if r.plataforma == plataforma]
-        else:
-            reportes = obtener_reportes()
+        reportes = obtener_reportes()
 
     subq = db.session.query(
         Assignment.report_id,
@@ -139,12 +131,6 @@ def dashboard():
     plataformas_disponibles = ['telegram', 'whatsapp', 'ventanilla', 'web']
     plataforma_seleccionada = plataforma if plataforma else ''
 
-    # Municipios para filtro
-    from app.models.municipio_config import MunicipioConfig
-    municipios_disponibles = MunicipioConfig.query.order_by(MunicipioConfig.nombre).all()
-    municipios_dict = {m.id: m.nombre for m in municipios_disponibles}
-    municipio_seleccionado = municipio_id
-
     return render_template(
         'admin/dashboard.html',
         reportes=reportes,
@@ -159,10 +145,7 @@ def dashboard():
         localidades_disponibles=localidades_disponibles,
         cuadrillas_disponibles=cuadrillas_disponibles,
         estados_disponibles=estados_disponibles,
-        plataformas_disponibles=plataformas_disponibles,
-        municipios_disponibles=municipios_disponibles,
-        municipios_dict=municipios_dict,
-        municipio_seleccionado=municipio_seleccionado
+        plataformas_disponibles=plataformas_disponibles
     )
 
 # -------------------------------------
@@ -212,7 +195,7 @@ def cambiar_estado_reporte_admin(reporte_id):
         if not telefono.startswith("+1"):
             telefono = "+52" + telefono
         mensaje = (
-            f"✅ Estimado {reporte.reportante}, su reporte {reporte.folio_display} ha sido atendido.\n"
+            f"✅ Estimado {reporte.reportante}, su reporte #{reporte.id} ha sido atendido.\n"
             f"📍 Cuadrilla: {nueva_asignacion.team.nombre if nueva_asignacion.team else 'N/A'}\n"
             f"📅 Fecha: {nueva_asignacion.timestamp.strftime('%d/%m/%Y %H:%M')}\n\n"
             "Muchas gracias por confiar en nosotros."
@@ -587,28 +570,12 @@ def crear_cuadrilla():
         nombre = request.form.get('nombre')
         area = request.form.get('area')
         descripcion = request.form.get('descripcion', '')
-        
         if not nombre or not area:
             flash("El nombre y el área de la cuadrilla son obligatorios.", "warning")
             return redirect(url_for('admin.gestionar_cuadrillas'))
-        
         if Team.query.filter_by(nombre=nombre).first():
             flash("Ya existe una cuadrilla con ese nombre.", "error")
             return redirect(url_for('admin.gestionar_cuadrillas'))
-        
-        # Verificar límite de cuadrillas según plan
-        from app.models.municipio_config import MunicipioConfig
-        
-        municipio = MunicipioConfig.query.first()
-        if municipio:
-            total_cuadrillas = Team.query.filter(Team.nombre != 'Sin asignar').count()
-            if total_cuadrillas >= municipio.limite_cuadrillas:
-                flash(
-                    f"Límite de cuadrillas alcanzado. Tu plan {municipio.plan} permite {municipio.limite_cuadrillas} cuadrillas.",
-                    "danger"
-                )
-                return redirect(url_for('admin.gestionar_cuadrillas'))
-        
         nueva_cuadrilla = Team(nombre=nombre, area=area, descripcion=descripcion)
         db.session.add(nueva_cuadrilla)
         db.session.commit()
@@ -617,7 +584,7 @@ def crear_cuadrilla():
         db.session.rollback()
         flash(f'Error al crear la cuadrilla: {str(e)[:100]}', 'danger')
     return redirect(url_for('admin.gestionar_cuadrillas'))
-    
+
 @admin_bp.route('/editar_cuadrilla/<int:team_id>', methods=['POST'])
 @login_required
 @admin_required
@@ -1392,7 +1359,7 @@ def test_director_agua(reporte_id):
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
             mensaje = (
                 f"💧 *INFORMACIÓN - NUEVO REPORTE {reporte.tipo.upper()}*\n\n"
-                f"📋 *Folio:* {reporte.folio_display}\n"
+                f"📋 *Folio:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                 f"👤 *Reportante:* {reporte.reportante}\n"
                 f"📱 *Teléfono:* {reporte.telefono}\n"
@@ -1892,382 +1859,3 @@ def eliminar_localidad(id):
     db.session.commit()
     flash(f"Localidad '{nombre}' eliminada.", "warning")
     return redirect(url_for('admin.gestionar_calles'))
-
-# ============================================================
-# GESTIÓN DE MUNICIPIOS (PÁGINA MAESTRA)
-# ============================================================
-
-@admin_bp.route('/municipios', methods=['GET'])
-@login_required
-@admin_required
-def gestionar_municipios():
-    """Página maestra para controlar municipios, departamentos y límites"""
-    from app.models.municipio_config import MunicipioConfig
-
-    municipios = MunicipioConfig.query.order_by(MunicipioConfig.nombre).all()
-
-    # Lista de todos los departamentos posibles
-    departamentos_disponibles = [
-        ('agua', 'Agua Potable'),
-        ('drenaje', 'Drenaje'),
-        ('aseo', 'Aseo Público'),
-        ('alumbrado', 'Alumbrado Público'),
-        ('parques', 'Parques y Jardines'),
-        ('ecologia', 'Ecología'),
-        ('obras', 'Obras Públicas')
-    ]
-
-    emergencias_disponibles = [
-        ('seguridad', 'Seguridad Pública'),
-        ('bomberos', 'Bomberos'),
-        ('proteccion_civil', 'Protección Civil'),
-        ('punto_violeta', 'Punto Violeta'),
-        ('ambulancia', 'Ambulancia')
-    ]
-    
-    planes_disponibles = [
-        ('basico', 'Básico - 3 cuadrillas'),
-        ('intermedio', 'Intermedio - 5 cuadrillas'),
-        ('avanzado', 'Avanzado - 10 cuadrillas')
-    ]
-
-    return render_template(
-        'admin/municipios.html',
-        municipios=municipios,
-        departamentos_disponibles=departamentos_disponibles,
-        emergencias_disponibles=emergencias_disponibles,
-        planes_disponibles=planes_disponibles
-    )
-
-
-@admin_bp.route('/municipios/agregar', methods=['POST'])
-@login_required
-@admin_required
-def agregar_municipio():
-    from app.models.municipio_config import MunicipioConfig
-
-    nombre = request.form.get('nombre', '').strip()
-    plan = request.form.get('plan', 'basico')
-    limite = request.form.get('limite_cuadrillas', 3, type=int)
-    departamentos = request.form.getlist('departamentos')
-    fecha_vencimiento = request.form.get('fecha_vencimiento', '')
-    emergencias = request.form.getlist('emergencias')
-    bot_token = request.form.get('bot_token', '').strip()
-
-
-    if not nombre:
-        flash("El nombre del municipio es obligatorio.", "warning")
-        return redirect(url_for('admin.gestionar_municipios'))
-
-    if MunicipioConfig.query.filter_by(nombre=nombre).first():
-        flash(f"Ya existe un municipio llamado '{nombre}'.", "error")
-        return redirect(url_for('admin.gestionar_municipios'))
-
-    usuario = request.form.get('usuario', '').strip()
-    password = request.form.get('password', '').strip()
-
-    nuevo = MunicipioConfig(
-        nombre=nombre,
-        plan=plan,
-        limite_cuadrillas=limite,
-        activo=True,
-        usuario=usuario if usuario else None
-    )
-    nuevo.set_departamentos_lista(departamentos)
-
-    if password:
-        nuevo.set_password(password)
-        
-    aviso = request.form.get('aviso_privacidad', '').strip()
-    nuevo.aviso_privacidad = aviso if aviso else None
-
-    nuevo.ver_cuadrillas = 'ver_cuadrillas' in request.form
-    nuevo.ver_estados = 'ver_estados' in request.form
-    nuevo.ver_inteligencia = 'ver_inteligencia' in request.form
-    nuevo.ver_gps = 'ver_gps' in request.form
-    nuevo.ver_encuestas = 'ver_encuestas' in request.form
-    nuevo.ver_exportar = 'ver_exportar' in request.form
-    nuevo.ver_historial = 'ver_historial' in request.form
-    nuevo.ver_mapa = 'ver_mapa' in request.form
-    nuevo.ver_test = 'ver_test' in request.form
-    nuevo.ver_editar_coordenadas = 'ver_editar_coordenadas' in request.form
-    nuevo.ver_filtros = 'ver_filtros' in request.form
-    nuevo.set_emergencias_lista(emergencias)
-    nuevo.bot_token = bot_token if bot_token else None
-
-    if fecha_vencimiento:
-        from datetime import datetime
-        nuevo.fecha_vencimiento = datetime.strptime(fecha_vencimiento, '%Y-%m-%d').date()
-
-    db.session.add(nuevo)
-    db.session.commit()
-    flash(f"Municipio '{nombre}' creado correctamente.", "success")
-    return redirect(url_for('admin.gestionar_municipios'))
-
-
-@admin_bp.route('/municipios/<int:id>/actualizar', methods=['POST'])
-@login_required
-@admin_required
-def actualizar_municipio(id):
-    from app.models.municipio_config import MunicipioConfig
-
-    municipio = MunicipioConfig.query.get_or_404(id)
-
-    municipio.plan = request.form.get('plan', 'basico')
-    municipio.limite_cuadrillas = request.form.get('limite_cuadrillas', 3, type=int)
-    emergencias = request.form.getlist('emergencias')
-    bot_token = request.form.get('bot_token', '').strip()
-
-
-    usuario = request.form.get('usuario', '').strip()
-    if usuario:
-        municipio.usuario = usuario
-
-    password = request.form.get('password', '').strip()
-    if password:
-        municipio.set_password(password)
-
-    departamentos = request.form.getlist('departamentos')
-    municipio.set_departamentos_lista(departamentos)
-
-    aviso = request.form.get('aviso_privacidad', '').strip()
-    municipio.aviso_privacidad = aviso if aviso else None
-
-    municipio.ver_cuadrillas = 'ver_cuadrillas' in request.form
-    municipio.ver_estados = 'ver_estados' in request.form
-    municipio.ver_inteligencia = 'ver_inteligencia' in request.form
-    municipio.ver_gps = 'ver_gps' in request.form
-    municipio.ver_encuestas = 'ver_encuestas' in request.form
-    municipio.ver_exportar = 'ver_exportar' in request.form
-    municipio.ver_historial = 'ver_historial' in request.form
-    municipio.ver_mapa = 'ver_mapa' in request.form
-    municipio.ver_test = 'ver_test' in request.form
-    municipio.ver_editar_coordenadas = 'ver_editar_coordenadas' in request.form
-    municipio.ver_filtros = 'ver_filtros' in request.form
-    municipio.set_emergencias_lista(emergencias)
-    if bot_token:
-        municipio.bot_token = bot_token
-    # Si viene vacío, mantener el token existente
-
-    fecha = request.form.get('fecha_vencimiento', '')
-    if fecha:
-        from datetime import datetime
-        municipio.fecha_vencimiento = datetime.strptime(fecha, '%Y-%m-%d').date()
-    else:
-        municipio.fecha_vencimiento = None
-
-    municipio.activo = 'activo' in request.form
-
-    db.session.commit()
-    flash(f"Municipio '{municipio.nombre}' actualizado.", "success")
-    return redirect(url_for('admin.gestionar_municipios'))
-
-
-@admin_bp.route('/municipios/<int:id>/eliminar', methods=['POST'])
-@login_required
-@admin_required
-def eliminar_municipio(id):
-    from app.models.municipio_config import MunicipioConfig
-
-    municipio = MunicipioConfig.query.get_or_404(id)
-    nombre = municipio.nombre
-    db.session.delete(municipio)
-    db.session.commit()
-    flash(f"Municipio '{nombre}' eliminado.", "warning")
-    return redirect(url_for('admin.gestionar_municipios'))
-
-# ============================================================
-# IMPORTAR/EXPORTAR USUARIOS DESDE ADMIN
-# ============================================================
-
-@admin_bp.route('/usuarios/exportar', methods=['GET'])
-@login_required
-@admin_required
-def exportar_usuarios_admin():
-    import pandas as pd
-    import io
-    from flask import send_file
-
-    usuarios = User.query.order_by(User.id).all()
-
-    datos = []
-    for u in usuarios:
-        datos.append({
-            'id': u.id,
-            'nombre': u.nombre,
-            'username': u.username,
-            'team_id': u.team_id,
-            'team_nombre': u.team.nombre if u.team else '',
-            'telegram_id': u.telegram_id or '',
-            'nivel': u.nivel or '',
-            'rol_especifico': u.rol_especifico or '',
-            'area': u.area or '',
-            'subarea': u.subarea or '',
-            'role': u.role or '',
-            'puede_asignar': u.puede_asignar,
-            'puede_validar': u.puede_validar,
-            'puede_ver_todas_areas': u.puede_ver_todas_areas,
-            'puede_configurar': u.puede_configurar,
-            'created_at': u.created_at.strftime('%Y-%m-%d %H:%M:%S') if u.created_at else '',
-            'is_active': u.is_active,
-            'municipio_id': u.municipio_id
-        })
-
-    df = pd.DataFrame(datos)
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name='usuarios')
-
-    output.seek(0)
-    return send_file(
-        output,
-        download_name=f'usuarios_admin_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx',
-        as_attachment=True
-    )
-
-
-@admin_bp.route('/usuarios/importar', methods=['POST'])
-@login_required
-@admin_required
-def importar_usuarios_admin():
-    import pandas as pd
-
-    archivo = request.files.get('archivo')
-    if not archivo:
-        flash("Debes subir un archivo Excel.", "warning")
-        return redirect(url_for('admin.gestionar_cuadrillas'))
-
-    try:
-        df = pd.read_excel(archivo)
-        creados = 0
-        actualizados = 0
-        errores = 0
-
-        for _, fila in df.iterrows():
-            user_id = fila.get('id', None)
-            nombre = str(fila.get('nombre', '')).strip()
-            username = str(fila.get('username', '')).strip()
-            team_nombre = str(fila.get('team_nombre', '')).strip()
-            telegram_id = str(fila.get('telegram_id', '')).strip()
-            nivel = str(fila.get('nivel', '')).strip()
-            rol_especifico = str(fila.get('rol_especifico', '')).strip()
-            area = str(fila.get('area', '')).strip()
-            subarea = str(fila.get('subarea', '')).strip()
-            role = str(fila.get('role', '')).strip()
-            activo = fila.get('is_active', True)
-
-            # Limpiar valores nan
-            if nombre == 'nan': nombre = ''
-            if username == 'nan': username = ''
-            if team_nombre == 'nan': team_nombre = ''
-            if telegram_id == 'nan': telegram_id = ''
-            if nivel == 'nan': nivel = ''
-            if rol_especifico == 'nan': rol_especifico = ''
-            if area == 'nan': area = ''
-            if subarea == 'nan': subarea = ''
-            if role == 'nan': role = ''
-
-            if not nombre or not username:
-                errores += 1
-                continue
-
-            team = None
-            if team_nombre:
-                team = Team.query.filter_by(nombre=team_nombre).first()
-
-            # Si viene id, actualizar usuario existente
-            usuario = None
-            if user_id and not pd.isna(user_id):
-                usuario = User.query.get(int(user_id))
-
-            if usuario:
-                usuario.nombre = nombre
-                usuario.username = username
-                usuario.team_id = team.id if team else None
-                usuario.telegram_id = int(float(telegram_id)) if telegram_id else None
-                usuario.nivel = nivel if nivel else 'cuadrilla'
-                usuario.rol_especifico = rol_especifico if rol_especifico else None
-                usuario.area = area if area else None
-                usuario.subarea = subarea if subarea else None
-                usuario.role = role if role else 'cuadrilla'
-                usuario.is_active = bool(activo)
-                actualizados += 1
-            else:
-                # Crear nuevo usuario
-                password = os.urandom(6).hex()
-
-                nuevo = User(
-                    nombre=nombre,
-                    username=username,
-                    team_id=team.id if team else None,
-                    telegram_id=int(float(telegram_id)) if telegram_id else None,
-                    nivel=nivel if nivel else 'cuadrilla',
-                    rol_especifico=rol_especifico if rol_especifico else None,
-                    area=area if area else None,
-                    subarea=subarea if subarea else None,
-                    role=role if role else 'cuadrilla',
-                    municipio_id=1,
-                    is_active=bool(activo)
-                )
-                nuevo.set_password(password)
-                db.session.add(nuevo)
-                creados += 1
-
-        db.session.commit()
-        flash(f"Se importaron {creados} usuarios nuevos y {actualizados} actualizados. Errores: {errores}", "success")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al importar: {str(e)[:100]}", "danger")
-
-    return redirect(url_for('admin.gestionar_cuadrillas'))
-
-@admin_bp.route('/municipios/<int:id>/subir_logo', methods=['POST'])
-@login_required
-@admin_required
-def subir_logo_municipio(id):
-    from app.models.municipio_config import MunicipioConfig
-    from app.services.cloudinary_service import subir_archivo
-    import os
-    import uuid
-
-    municipio = MunicipioConfig.query.get_or_404(id)
-
-    archivo = request.files.get('logo')
-    if not archivo:
-        flash("Debes seleccionar una imagen.", "warning")
-        return redirect(url_for('admin.gestionar_municipios'))
-
-    try:
-        # Guardar temporalmente
-        ext = os.path.splitext(archivo.filename)[1].lower()
-        if ext not in ['.jpg', '.jpeg', '.png', '.webp']:
-            flash("Formato no permitido. Usa JPG, PNG o WEBP.", "danger")
-            return redirect(url_for('admin.gestionar_municipios'))
-
-        nombre_temporal = f"temp_logo_{uuid.uuid4().hex}{ext}"
-        ruta_temporal = os.path.join(current_app.config['UPLOAD_FOLDER'], nombre_temporal)
-        archivo.save(ruta_temporal)
-
-        # Subir a Cloudinary
-        public_id = f"municipios/{municipio.nombre.lower().replace(' ', '_')}_logo"
-        url = subir_archivo(ruta_temporal, folder="municipios", public_id=public_id)
-
-        # Limpiar temporal
-        try:
-            os.remove(ruta_temporal)
-        except:
-            pass
-
-        if url:
-            municipio.logo_url = url
-            db.session.commit()
-            flash("Logo actualizado correctamente.", "success")
-        else:
-            flash("Error al subir el logo.", "danger")
-
-    except Exception as e:
-        db.session.rollback()
-        flash(f"Error al subir el logo: {str(e)[:100]}", "danger")
-
-    return redirect(url_for('admin.gestionar_municipios'))

@@ -76,7 +76,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
 
             await query.message.reply_text(
                 f"🔄 *SOLICITAR APOYO DE CUADRILLA*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
                 f"👷 *Tu cuadrilla:* {cuadrilla_actual.nombre}\n\n"
                 f"*Selecciona la cuadrilla a la que deseas solicitar apoyo:*",
@@ -130,8 +130,8 @@ async def manejar_enviar_apoyo_cuadrilla(query, context, reporte_id, cuadrilla_d
 
             # Construir mensaje para la cuadrilla destino
             mensaje_apoyo = (
-                f"🔄 *SOLICITUD DE APOYO - Reporte {reporte.folio_display}*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"🔄 *SOLICITUD DE APOYO - Reporte #{reporte.id}*\n\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
                 f"👤 *Reportante:* {reporte.reportante}\n"
@@ -169,7 +169,7 @@ async def manejar_enviar_apoyo_cuadrilla(query, context, reporte_id, cuadrilla_d
             # Confirmar al solicitante
             await query.message.reply_text(
                 f"✅ *Solicitud de apoyo enviada a {cuadrilla_destino.nombre}*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"👷 *Cuadrilla destino:* {cuadrilla_destino.nombre}\n"
                 f"📤 *Notificaciones enviadas:* {enviados} de {len(usuarios_destino)}\n\n"
                 f"*Espera la respuesta de la cuadrilla.*",
@@ -201,7 +201,7 @@ async def manejar_apoyo_aceptar(query, context, reporte_id, cuadrilla_origen_id)
             # Mensaje de confirmación para el que acepta
             await query.edit_message_text(
                 f"✅ *Has aceptado brindar apoyo*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
                 f"*La cuadrilla solicitante será notificada.*",
                 parse_mode=ParseMode.MARKDOWN
@@ -216,7 +216,7 @@ async def manejar_apoyo_aceptar(query, context, reporte_id, cuadrilla_origen_id)
 
                 mensaje_aceptacion = (
                     f"✅ *¡APOYO ACEPTADO!*\n\n"
-                    f"📋 *Reporte:* {reporte.folio_display}\n"
+                    f"📋 *Reporte:* #{reporte.id}\n"
                     f"👷 *Cuadrilla que aceptó:* {cuadrilla_actual.nombre if cuadrilla_actual else 'N/D'}\n"
                     f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
                     f"*La cuadrilla {cuadrilla_actual.nombre if cuadrilla_actual else 'N/D'} ha aceptado brindar apoyo.*"
@@ -258,7 +258,7 @@ async def manejar_apoyo_rechazar(query, context, reporte_id):
 
             await query.edit_message_text(
                 f"❌ *Has rechazado brindar apoyo*\n\n"
-                f"📋 *Reporte:* {reporte.folio_display}\n"
+                f"📋 *Reporte:* #{reporte.id}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
                 f"*La cuadrilla solicitante será notificada.*",
                 parse_mode=ParseMode.MARKDOWN
