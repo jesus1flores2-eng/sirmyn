@@ -156,6 +156,9 @@
                             <option value="comunicacion">📣 Comunicación Social</option>
                             <option value="general">🔧 General/Mantenimiento</option>
                             <option value="supervision">👁️ Supervisión</option>
+                            <option value="proteccion_civil">Protección Civil</option>
+                            <option value="ambulancia">Ambulancia</option>
+                            <option value="punto_violeta">Punto Violeta</option>
                         </select>
                         <small class="form-text text-muted">Asigna el departamento correspondiente</small>
                     </div>
@@ -196,6 +199,19 @@
                 </div>
             </form>
         </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="{{ url_for('admin.exportar_usuarios_admin') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel me-1"></i> Exportar Usuarios
+                        </a>
+
+                        <form method="POST" action="{{ url_for('admin.importar_usuarios_admin') }}" enctype="multipart/form-data" class="d-flex gap-2">
+                            <input type="file" name="archivo" class="form-control form-control-sm" accept=".xlsx" required>
+                            <button type="submit" class="btn btn-primary btn-sm text-nowrap">
+                                <i class="fas fa-upload me-1"></i> Importar
+                            </button>
+                        </form>
+                    </div>
     </div>
 
     <!-- Tabla de cuadrillas existentes -->
@@ -432,6 +448,9 @@
                             <option value="obras" {% if team.area=='obras' %}selected{% endif %}>🏗️ Obras</option>
                             <option value="bomberos" {% if team.area=='bomberos' %}selected{% endif %}>🚒 Bomberos</option>
                             <option value="comunicacion" {% if team.area=='comunicacion' %}selected{% endif %}>📣 Comunicación</option>
+                            <option value="proteccion_civil">Protección Civil</option>
+                            <option value="ambulancia">Ambulancia</option>
+                            <option value="punto_violeta">Punto Violeta</option>
                             <option value="general" {% if team.area=='general' %}selected{% endif %}>🔧 General</option>
                         </select>
                     </div>
@@ -557,6 +576,9 @@
                                 <option value="obras" {% if user.area=='obras' %}selected{% endif %}>🏗️ Obras</option>
                                 <option value="bomberos" {% if user.area=='bomberos' %}selected{% endif %}>🚒 Bomberos</option>
                                 <option value="comunicacion" {% if user.area=='comunicacion' %}selected{% endif %}>📣 Comunicación</option>
+                                <option value="proteccion_civil">Protección Civil</option>
+                                <option value="ambulancia">Ambulancia</option>
+                                <option value="punto_violeta">Punto Violeta</option>
                                 <option value="general" {% if user.area=='general' %}selected{% endif %}>🔧 General</option>
                             </select>
                         </div>

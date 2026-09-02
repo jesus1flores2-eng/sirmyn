@@ -11,6 +11,7 @@ class RechazoUsuario(db.Model):
     __tablename__ = 'rechazos_usuario'
     
     id = db.Column(db.Integer, primary_key=True)  # CAMBIADO: Integer no Numeric
+    municipio_id = db.Column(db.Integer, default=1)
     reporte_id = db.Column(db.Integer, db.ForeignKey('reports.id'), nullable=False)
     usuario_id = db.Column(db.BigInteger, nullable=False)  # Mantener como está
     motivo = db.Column(db.String(50), nullable=False)
@@ -29,7 +30,8 @@ class RechazoUsuario(db.Model):
 class EncuestaSatisfaccion(db.Model):
     __tablename__ = 'encuestas_satisfaccion'
     
-    id = db.Column(db.Integer, primary_key=True)  # CAMBIADO: Integer no Numeric
+    id = db.Column(db.Integer, primary_key=True)  # CAMBIADO: Integer no Numeric.
+    municipio_id = db.Column(db.Integer, default=1)
     reporte_id = db.Column(db.Integer, db.ForeignKey('reports.id'), nullable=False)
     usuario_id = db.Column(db.BigInteger, nullable=False)  # Mantener como está
     calificacion = db.Column(db.Integer, nullable=False)

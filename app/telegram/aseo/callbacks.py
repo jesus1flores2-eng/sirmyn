@@ -174,7 +174,7 @@ async def manejar_motivo_rechazo_jefe_aseo(update: Update, context: ContextTypes
                         mensaje_cuadrilla = (
                             f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n"
                             f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                            f"📋 *Folio:* #{reporte.id}\n"
+                            f"📋 *Folio:* {reporte.folio_display}\n"
                             f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                             f"📞 *Reportante:* {reporte.reportante}\n"
                             f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -205,7 +205,7 @@ async def manejar_motivo_rechazo_jefe_aseo(update: Update, context: ContextTypes
 
             await update.message.reply_text(
                 f"✅ *Rechazo enviado correctamente*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
                 f"*📌 El reporte ha vuelto a estado 'En proceso'*",

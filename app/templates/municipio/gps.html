@@ -1,0 +1,187 @@
+{% extends 'base_municipio.html' %}
+
+{% block title %}GPS - {{ municipio.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary">
+                <i class="fas fa-satellite me-2"></i>Dispositivos GPS
+            </h1>
+            <p class="text-muted mb-0">Gestión de unidades de rastreo</p>
+        </div>
+        <span class="badge bg-primary fs-6">{{ dispositivos|length }} dispositivos</span>
+    </div>
+
+    <!-- Formulario crear GPS -->
+    <div class="card border-0 shadow mb-4">
+        <div class="card-header bg-primary text-white py-3">
+            <h6 class="m-0 fw-bold">
+                <i class="fas fa-plus-circle me-2"></i>Agregar GPS
+            </h6>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" action="{{ url_for('municipio.crear_gps_municipio') }}">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Nombre *</label>
+                        <input type="text" name="nombre" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">IMEI *</label>
+                        <input type="text" name="imei" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Cuadrilla</label>
+                        <select name="team_id" class="form-select">
+                            <option value="">Sin asignar</option>
+                            {% for c in cuadrillas %}
+                                <option value="{{ c.id }}">{{ c.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Teléfono chip</label>
+                        <input type="text" name="telefono_chip" class="form-control">
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Compañía</label>
+                        <input type="text" name="compania" class="form-control">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Plan de datos</label>
+                        <input type="text" name="plan_datos" class="form-control">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> Crear GPS
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tabla de GPS -->
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>IMEI</th>
+                            <th>Cuadrilla</th>
+                            <th>Compañía</th>
+                            <th>Plan</th>
+                            <th>Última actualización</th>
+                            <th class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for d in dispositivos %}
+                        <tr>
+                            <td>{{ d.id }}</td>
+                            <td class="fw-bold">{{ d.nombre }}</td>
+                            <td><code>{{ d.imei }}</code></td>
+                            <td>{{ d.team.nombre if d.team else 'Sin asignar' }}</td>
+                            <td>{{ d.compania or '—' }}</td>
+                            <td>{{ d.plan_datos or '—' }}</td>
+                            <td>{{ d.ultima_actualizacion|localtime if d.ultima_actualizacion else '—' }}</td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEditarGps{{ d.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#modalEliminarGps{{ d.id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No hay dispositivos GPS</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+{% for d in dispositivos %}
+<div class="modal fade" id="modalEditarGps{{ d.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Editar GPS</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('municipio.editar_gps_municipio', id=d.id) }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input type="text" name="nombre" class="form-control" value="{{ d.nombre }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono chip</label>
+                        <input type="text" name="telefono_chip" class="form-control" value="{{ d.telefono_chip or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Compañía</label>
+                        <input type="text" name="compania" class="form-control" value="{{ d.compania or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Plan de datos</label>
+                        <input type="text" name="plan_datos" class="form-control" value="{{ d.plan_datos or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cuadrilla</label>
+                        <select name="team_id" class="form-select">
+                            <option value="">Sin asignar</option>
+                            {% for c in cuadrillas %}
+                                <option value="{{ c.id }}" {% if d.team_id == c.id %}selected{% endif %}>{{ c.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarGps{{ d.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Eliminar GPS</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Eliminar el GPS <strong>{{ d.nombre }}</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <form method="POST" action="{{ url_for('municipio.eliminar_gps_municipio', id=d.id) }}">
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

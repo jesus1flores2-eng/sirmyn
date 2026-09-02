@@ -273,8 +273,8 @@ async def procesar_rechazo_usuario(update: Update, context: ContextTypes.DEFAULT
                     localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
 
                     mensaje_responsable = (
-                        f"🚨 *RECHAZO DE USUARIO - Reporte #{reporte.id}*\n\n"
-                        f"📋 *Folio:* #{reporte.id}\n"
+                        f"🚨 *RECHAZO DE USUARIO - Reporte {reporte.folio_display}*\n\n"
+                        f"📋 *Folio:* {reporte.folio_display}\n"
                         f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                         f"👤 *Reportante:* {reporte.reportante}\n"
                         f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -301,7 +301,7 @@ async def procesar_rechazo_usuario(update: Update, context: ContextTypes.DEFAULT
                                     mensaje_cuadrilla = (
                                         f"❌ *REPORTE RECHAZADO POR EL USUARIO*\n"
                                         f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                                        f"📋 *Folio:* #{reporte.id}\n"
+                                        f"📋 *Folio:* {reporte.folio_display}\n"
                                         f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                                         f"📞 *Reportante:* {reporte.reportante}\n"
                                         f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"

@@ -6,6 +6,7 @@ class Status(db.Model):
     __tablename__ = 'status'
     
     id = db.Column(db.Integer, primary_key=True)
+    municipio_id = db.Column(db.Integer, default=1)
     descripcion = db.Column(db.String(100))
     color = db.Column(db.String(10), default='#ccc')
 

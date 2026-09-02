@@ -125,6 +125,15 @@ def construir_botones_reporte(reporte_id, confirmado=False, problema_reportado=F
 
             keyboard.append(fila2)
 
+            # FILA 3: Contactar reportante
+            if reporte.telefono and reporte.telefono.isdigit():
+                keyboard.append([
+                    InlineKeyboardButton(
+                        "📱 Contactar reportante",
+                        callback_data=f"contactar_{reporte_id}"
+                    )
+                ])
+
             # BOTONES DE REPARACIÓN Y APOYO
             if user_id:
                 asignacion = Assignment.query.filter_by(

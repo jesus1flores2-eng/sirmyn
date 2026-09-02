@@ -114,6 +114,30 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
         return
 
     # ============================================================
+    # DETECCIÓN PARA CONTACTAR REPORTANTE
+    # ============================================================
+    if callback_data.startswith('contactar_'):
+        reporte_id = int(callback_data.split('_')[-1])
+        await manejar_contactar_reportante(query, context, reporte_id)
+        return
+
+    # ============================================================
+    # DETECCIÓN PARA RESPUESTA DEL REPORTANTE
+    # ============================================================
+    if callback_data.startswith('permitir_contacto_'):
+        partes = callback_data.split('_')
+        reporte_id = int(partes[2])
+        cuadrilla_id = int(partes[3])
+        await manejar_permitir_contacto(query, context, reporte_id, cuadrilla_id)
+        return
+
+    if callback_data.startswith('denegar_contacto_'):
+        partes = callback_data.split('_')
+        reporte_id = int(partes[2])
+        cuadrilla_id = int(partes[3])
+        await manejar_denegar_contacto(query, context, reporte_id, cuadrilla_id)
+        return
+    # ============================================================
     # SPLIT GENERAL PARA OTROS CALLBACKS
     # ============================================================
     if '_' in callback_data:
@@ -228,7 +252,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                         await bot_app.bot.send_message(
                             chat_id=int(admin_id),
                             text=f"✅ <b>Confirmación de cuadrilla</b>\n\n"
-                                 f"<b>Reporte:</b> #{reporte.id}\n"
+                                 f"<b>Reporte:</b> {reporte.folio_display}\n"
                                  f"<b>Cuadrilla:</b> {usuario.nombre}\n"
                                  f"<b>Ubicación:</b> {calle_nombre} #{reporte.numero}\n"
                                  f"<b>Hora:</b> {datetime.now().strftime('%d/%m/%Y %H:%M')}",
@@ -285,7 +309,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                         )
 
                         if success:
-                            logger.info(f"✅ Ubicación solicitada al reportante para reporte #{reporte.id}")
+                            logger.info(f"✅ Ubicación solicitada al reportante para reporte {reporte.folio_display}")
                             try:
                                 await query.edit_message_text(
                                     text=nuevo_texto + f"\n\n📱 *Solicitud de ubicación enviada al reportante*",
@@ -295,14 +319,14 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                             except:
                                 pass
                         else:
-                            logger.warning(f"⚠️ No se pudo solicitar ubicación al reportante para reporte #{reporte.id}")
+                            logger.warning(f"⚠️ No se pudo solicitar ubicación al reportante para reporte {reporte.folio_display}")
                             await context.bot.send_message(
                                 chat_id=telegram_user_id,
                                 text="⚠️ *No se pudo enviar solicitud al reportante.*\n\nEl reportante no tiene Telegram vinculado.",
                                 parse_mode=ParseMode.MARKDOWN
                             )
                     else:
-                        logger.warning(f"⚠️ Reporte #{reporte.id} no tiene Telegram ID válido: {reporte.telefono}")
+                        logger.warning(f"⚠️ Reporte {reporte.folio_display} no tiene Telegram ID válido: {reporte.telefono}")
                         await context.bot.send_message(
                             chat_id=telegram_user_id,
                             text="⚠️ *El reportante no tiene Telegram vinculado.*\n\nNo se puede solicitar ubicación automáticamente.",
@@ -394,7 +418,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
 
                         mensaje_responsable = (
                             f"⚠️ *PROBLEMA DE UBICACIÓN - ATENCIÓN REQUERIDA*\n\n"
-                            f"📋 *Reporte:* #{reporte.id}\n"
+                            f"📋 *Reporte:* {reporte.folio_display}\n"
                             f"🔧 *Tipo:* {reporte.tipo}\n"
                             f"📝 *Subtipo:* {reporte.subtipo}\n"
                             f"📍 *Dirección reportada:*\n"
@@ -490,7 +514,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
                     waze_url = f"https://waze.com/ul?ll={reporte.latitud},{reporte.longitud}&navigate=yes"
                     mensaje_mapa = (
-                        f"📍 *UBICACIÓN EXACTA - Reporte #{reporte.id}*\n\n"
+                        f"📍 *UBICACIÓN EXACTA - Reporte {reporte.folio_display}*\n\n"
                         f"*Coordenadas GPS:*\n`{reporte.latitud}, {reporte.longitud}`\n\n"
                         f"*🗺️ Google Maps:* [Abrir]({maps_url})\n"
                         f"*🚗 Waze:* [Abrir]({waze_url})\n\n"
@@ -500,7 +524,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                     maps_url = f"https://www.google.com/maps/search/?api=1&query={direccion_url}"
                     waze_url = f"https://www.waze.com/ul?q={direccion_url}&navigate=yes"
                     mensaje_mapa = (
-                        f"📍 *UBICACIÓN APROXIMADA - Reporte #{reporte.id}*\n\n"
+                        f"📍 *UBICACIÓN APROXIMADA - Reporte {reporte.folio_display}*\n\n"
                         f"{direccion}\n\n"
                         f"*🗺️ Google Maps:* [Abrir]({maps_url})\n"
                         f"*🚗 Waze:* [Abrir]({waze_url})"
@@ -533,7 +557,7 @@ async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_
                         nombre_archivo = os.path.basename(reporte.evidencia)
 
                     mensaje = (
-                        f"📎 *Evidencia del reporte #{reporte.id}*\n\n"
+                        f"📎 *Evidencia del reporte {reporte.folio_display}*\n\n"
                         f"📄 *Archivo:* `{nombre_archivo}`\n\n"
                         f"🔗 [Ver evidencia]({evidencia_url})"
                     )
@@ -669,7 +693,7 @@ async def manejar_solicitar_retro(query, context, reporte_id):
 
             mensaje = (
                 f"🛠️ *SOLICITUD DE RETROEXCAVADORA*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Solicitado por:* {nombre_solicitante}\n"
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
@@ -764,7 +788,7 @@ async def manejar_solicitar_camion(query, context, reporte_id):
 
             await query.message.reply_text(
                 f"🚛 *SELECCIONA EL MATERIAL*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
                 f"*Solicitado por:* {nombre_solicitante}\n\n"
                 f"*Selecciona el material que necesita el camión:*",
@@ -823,7 +847,7 @@ async def manejar_material_seleccionado(query, context, reporte_id, material, ti
             mensaje = (
                 f"🚛 *SOLICITUD DE MATERIAL*\n\n"
                 f"📦 *Material solicitado:* {material}\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Solicitado por:* {nombre_solicitante}\n"
                 f"⏰ *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}\n\n"
@@ -951,7 +975,7 @@ async def manejar_solicitar_apoyo_cuadrilla(query, context, reporte_id):
 
             mensaje_supervisor = (
                 f"👷 *SOLICITUD DE APOYO - OTRA CUADRILLA*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {direccion}\n"
                 f"👷 *Cuadrilla solicitante:* {cuadrilla_actual.nombre}\n"
                 f"👤 *Solicitado por:* {nombre_solicitante}\n"
@@ -1094,7 +1118,7 @@ async def manejar_mostrar_cuadrillas_apoyo(query, context, reporte_id):
 
             mensaje = (
                 f"👷 *ASIGNAR CUADRILLA DE APOYO*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n\n"
                 f"*Selecciona la cuadrilla de apoyo:*"
             )
@@ -1175,7 +1199,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                 if usuario.telegram_id:
                     try:
                         mensaje = (
-                            f"👷 *APOYO ASIGNADO - Reporte #{reporte.id}*\n\n"
+                            f"👷 *APOYO ASIGNADO - Reporte {reporte.folio_display}*\n\n"
                             f"Se ha asignado la cuadrilla *{cuadrilla_apoyo.nombre}* como apoyo.\n\n"
                             f"📍 *Ubicación:* {direccion}"
                             f"{gps_texto}"
@@ -1198,7 +1222,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
                     try:
                         mensaje = (
                             f"👷 *HAS SIDO ASIGNADO COMO APOYO*\n\n"
-                            f"📋 *Reporte:* #{reporte.id}\n"
+                            f"📋 *Reporte:* {reporte.folio_display}\n"
                             f"📍 *Ubicación:* {direccion}"
                             f"{gps_texto}"
                             f"\n🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -1225,7 +1249,7 @@ async def manejar_asignar_apoyo(query, context, reporte_id, cuadrilla_id):
             # 4. CONFIRMAR AL SUPERVISOR
             mensaje_confirmacion = (
                 f"✅ *APOYO ASIGNADO CORRECTAMENTE*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla principal:* {nombre_cuadrilla_actual}\n"
                 f"👷 *Cuadrilla de apoyo:* {cuadrilla_apoyo.nombre}\n"
                 f"📍 *Ubicación:* {direccion}"
@@ -1294,7 +1318,7 @@ async def manejar_volver_reporte(query, context, reporte_id):
             mensaje = (
                 f"🚨 *REPORTE ASIGNADO*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
                 f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -1402,4 +1426,171 @@ async def manejar_llegada_lugar(query, context, reporte_id):
             
     except Exception as e:
         logger.error(f"❌ Error en manejar_llegada_lugar: {e}")
+        await query.answer("❌ Error", show_alert=True)
+
+# ============================================================
+# MANEJAR CONTACTO CON REPORTANTE
+# ============================================================
+
+async def manejar_contactar_reportante(query, context, reporte_id):
+    """
+    Envía aviso al reportante sobre contacto de cuadrilla.
+    El reportante decide si permite el contacto.
+    """
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            from app.models.user import User
+            
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado", show_alert=True)
+                return
+            
+            # Obtener usuario de la cuadrilla que presionó el botón
+            cuadrilla_user = User.query.filter_by(
+                telegram_id=str(query.from_user.id)
+            ).first()
+            
+            nombre_cuadrilla = cuadrilla_user.nombre if cuadrilla_user else "La cuadrilla"
+            equipo_nombre = cuadrilla_user.team.nombre if cuadrilla_user and cuadrilla_user.team else "municipal"
+            
+            # Verificar que el reportante tenga telegram_id
+            if not reporte.telefono or not reporte.telefono.isdigit():
+                await query.answer("❌ El reportante no tiene Telegram vinculado", show_alert=True)
+                return
+            
+            # Enviar aviso al reportante con botones
+            mensaje_reportante = (
+                f"📋 <b>Aviso de contacto</b>\n\n"
+                f"La cuadrilla <b>{nombre_cuadrilla}</b> de <b>{equipo_nombre}</b> "
+                f"quiere contactarte sobre tu reporte <b>{reporte.folio_display}</b>.\n\n"
+                f"⚠️ <b>Recuerda:</b>\n"
+                f"Este contacto es únicamente para atender tu reporte.\n\n"
+                f"Si recibes algún mensaje inapropiado o acoso, "
+                f"puedes denunciarlo con el administrador o presidente municipal.\n\n"
+                f"<b>¿Deseas permitir el contacto?</b>"
+            )
+            
+            # Botones para que el reportante decida
+            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
+            
+            keyboard_contacto = [
+                [
+                    InlineKeyboardButton("✅ Sí, permitir", callback_data=f"permitir_contacto_{reporte.id}_{query.from_user.id}"),
+                    InlineKeyboardButton("❌ No, denegar", callback_data=f"denegar_contacto_{reporte.id}_{query.from_user.id}")
+                ]
+            ]
+            reply_markup = InlineKeyboardMarkup(keyboard_contacto)
+            
+            await context.bot.send_message(
+                chat_id=int(reporte.telefono),
+                text=mensaje_reportante,
+                parse_mode=ParseMode.HTML,
+                reply_markup=reply_markup
+            )
+            
+            await query.answer("✅ Aviso enviado al reportante", show_alert=True)
+            
+            # Confirmar a la cuadrilla
+            await query.message.reply_text(
+                f"✅ <b>Aviso enviado al reportante</b>\n\n"
+                f"El reportante ha sido notificado de que deseas contactarlo.\n"
+                f"Si acepta, podrás comunicarte con él.\n\n"
+                f"⚠️ <b>Recuerda:</b> El contacto es únicamente para atender el reporte.",
+                parse_mode=ParseMode.HTML
+            )
+            
+            logger.info(f"📤 Aviso de contacto enviado al reportante del reporte #{reporte_id}")
+            
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_contactar_reportante: {e}", exc_info=True)
+        await query.answer("❌ Error al contactar reportante", show_alert=True)
+
+# ============================================================
+# MANEJAR RESPUESTA DEL REPORTANTE AL CONTACTO
+# ============================================================
+
+async def manejar_permitir_contacto(query, context, reporte_id, cuadrilla_telegram_id):
+    """El reportante aceptó el contacto con la cuadrilla"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado", show_alert=True)
+                return
+            
+            # Notificar a la cuadrilla que el reportante aceptó
+            mensaje_cuadrilla = (
+                f"✅ <b>Contacto permitido</b>\n\n"
+                f"El reportante del reporte <b>{reporte.folio_display}</b> ha aceptado el contacto.\n\n"
+                f"📱 <b>Contactar:</b> <a href='tg://user?id={reporte.telefono}'>Abrir chat</a>\n\n"
+                f"⚠️ <b>Recuerda:</b> El contacto es únicamente para atender el reporte."
+            )
+            
+            await context.bot.send_message(
+                chat_id=cuadrilla_telegram_id,
+                text=mensaje_cuadrilla,
+                parse_mode=ParseMode.HTML,
+                disable_web_page_preview=True
+            )
+            
+            # Confirmar al reportante
+            await query.message.reply_text(
+                f"✅ <b>Gracias por permitir el contacto.</b>\n\n"
+                f"La cuadrilla ha sido notificada y podrá comunicarse contigo.\n\n"
+                f"⚠️ Si recibes algún mensaje inapropiado, "
+                f"por favor denúncialo con el administrador.",
+                parse_mode=ParseMode.HTML
+            )
+            
+            await query.answer("✅ Contacto permitido", show_alert=False)
+            logger.info(f"✅ Reportante aceptó contacto para reporte #{reporte_id}")
+            
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_permitir_contacto: {e}", exc_info=True)
+        await query.answer("❌ Error", show_alert=True)
+
+
+async def manejar_denegar_contacto(query, context, reporte_id, cuadrilla_telegram_id):
+    """El reportante rechazó el contacto con la cuadrilla"""
+    try:
+        app = DatabaseManager.get_app()
+        with app.app_context():
+            from app.models.report import Report
+            
+            reporte = Report.query.get(reporte_id)
+            if not reporte:
+                await query.answer("❌ Reporte no encontrado", show_alert=True)
+                return
+            
+            # Notificar a la cuadrilla que el reportante rechazó
+            mensaje_cuadrilla = (
+                f"❌ <b>Contacto denegado</b>\n\n"
+                f"El reportante del reporte <b>{reporte.folio_display}</b> ha rechazado el contacto.\n\n"
+                f"Por favor, atiende el reporte usando la ubicación proporcionada."
+            )
+            
+            await context.bot.send_message(
+                chat_id=cuadrilla_telegram_id,
+                text=mensaje_cuadrilla,
+                parse_mode=ParseMode.HTML
+            )
+            
+            # Confirmar al reportante
+            await query.message.reply_text(
+                f"❌ <b>Has denegado el contacto.</b>\n\n"
+                f"La cuadrilla atenderá tu reporte usando la ubicación proporcionada.",
+                parse_mode=ParseMode.HTML
+            )
+            
+            await query.answer("❌ Contacto denegado", show_alert=False)
+            logger.info(f"❌ Reportante rechazó contacto para reporte #{reporte_id}")
+            
+    except Exception as e:
+        logger.error(f"❌ Error en manejar_denegar_contacto: {e}", exc_info=True)
         await query.answer("❌ Error", show_alert=True)

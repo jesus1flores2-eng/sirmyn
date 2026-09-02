@@ -29,12 +29,43 @@ async def emergencia_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     es_patrullero = True
     
     user_data[user_id] = {'modo_emergencia': True, 'es_patrullero': es_patrullero}
+    user_data[user_id]['municipio_id'] = user_data[user_id].get('municipio_id', 1)
     user_data[user_id]['nombre_telegram'] = update.effective_user.first_name or update.effective_user.username or 'Ciudadano'
     
-    keyboard = [
-        ["👮 Seguridad Pública", "🚒 Bomberos"],
-        ["🛡️ Protección Civil", "💜 Punto Violeta"],
-    ]
+    from app.models.municipio_config import MunicipioConfig
+
+    municipio_id = user_data[user_id].get('municipio_id', 1)
+    municipio = MunicipioConfig.query.get(municipio_id)
+
+    emergencias_activas = municipio.get_emergencias_lista() if municipio else []
+
+    mapeo_emergencias = {
+        'seguridad': "👮 Seguridad Pública",
+        'bomberos': "🚒 Bomberos",
+        'proteccion_civil': "🛡️ Protección Civil",
+        'punto_violeta': "💜 Punto Violeta",
+        'ambulancia': "🚑 Ambulancia",
+    }
+
+    keyboard = []
+    fila_actual = []
+
+    for clave in emergencias_activas:
+        if clave in mapeo_emergencias:
+            fila_actual.append(mapeo_emergencias[clave])
+            if len(fila_actual) == 2:
+                keyboard.append(fila_actual)
+                fila_actual = []
+
+    if fila_actual:
+        keyboard.append(fila_actual)
+
+    if not keyboard:
+        keyboard = [
+            ["👮 Seguridad Pública", "🚒 Bomberos"],
+            ["🛡️ Protección Civil", "💜 Punto Violeta"],
+            ["🚑 Ambulancia"],
+        ]
     
     if es_patrullero:
         keyboard.append(["🔴 BOTÓN DE PÁNICO"])
@@ -72,7 +103,8 @@ async def emergencia_departamento(update: Update, context: ContextTypes.DEFAULT_
         "👮 Seguridad Pública": ("seguridad", "Seguridad pública"),
         "🚒 Bomberos": ("bomberos", "Bomberos"),
         "🛡️ Protección Civil": ("proteccion_civil", "Protección Civil"),
-        "💜 Punto Violeta": ("punto_violeta", "Punto Violeta")
+        "💜 Punto Violeta": ("punto_violeta", "Punto Violeta"),
+        "🚑 Ambulancia": ("ambulancia", "Ambulancia")
     }
     
     resultado = departamentos.get(texto)
@@ -81,6 +113,21 @@ async def emergencia_departamento(update: Update, context: ContextTypes.DEFAULT_
         return EMERGENCIA_DEPARTAMENTO
     
     depto, depto_nombre = resultado
+
+    # Validar si la emergencia está activa en el municipio
+    from app.models.municipio_config import MunicipioConfig
+
+    municipio_id = user_data[user_id].get('municipio_id', 1)
+    municipio = MunicipioConfig.query.get(municipio_id)
+    emergencias_activas = municipio.get_emergencias_lista() if municipio else []
+
+    if depto not in emergencias_activas:
+        await update.message.reply_text(
+            f"❌ La emergencia *{depto_nombre}* no está disponible en este municipio.",
+            parse_mode="Markdown"
+        )
+        return EMERGENCIA_DEPARTAMENTO
+    
     user_data[user_id]['emergencia_depto'] = depto
     user_data[user_id]['emergencia_depto_nombre'] = depto_nombre
     
@@ -196,6 +243,11 @@ async def emergencia_ubicacion(update: Update, context: ContextTypes.DEFAULT_TYP
             ["👩‍🦰 Violencia de género", "🏠 Violencia doméstica"],
             ["🚨 Acoso sexual", "🔒 Secuestro"],
             ["⚠️ Otra emergencia"]
+        ],
+        'ambulancia': [
+            ["🚑 Emergencia médica", "❤️ Dolor en el pecho"],
+            ["🤕 Accidente con heridos", "🤢 Desmayo"],
+            ["🤰 Parto en camino", "⚠️ Otra emergencia"]
         ]
     }
     
@@ -347,7 +399,12 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
                     localidad_id = loc.id
                     localidad_nombre = loc.nombre
             
+            # Generar folio para emergencia
+            municipio_id = datos.get('municipio_id', 1)
+            folio = Report.generar_folio(municipio_id, depto_nombre)
+
             nuevo_reporte = Report(
+                folio=folio,
                 telefono=datos.get('telefono', str(user_id)),
                 reportante=datos.get('nombre_telegram', 'Ciudadano'),
                 tipo=depto_nombre,
@@ -360,7 +417,8 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
                 localidad_id=localidad_id,
                 plataforma="telegram_emergencia",
                 latitud=datos.get('latitud'),
-                longitud=datos.get('longitud')
+                longitud=datos.get('longitud'),
+                municipio_id=datos.get('municipio_id', 1)
             )
             
             db.session.add(nuevo_reporte)
@@ -395,7 +453,7 @@ async def emergencia_confirmar(update: Update, context: ContextTypes.DEFAULT_TYP
             )
             
             await update.message.reply_text(
-                f"✅ *EMERGENCIA ENVIADA - Folio #{nuevo_reporte.id}*\n\n"
+                f"✅ *EMERGENCIA ENVIADA - Folio {nuevo_reporte.folio_display}*\n\n"
                 f"Las autoridades han sido notificadas.\n"
                 f"Mantén la calma y espera asistencia.\n\n"
                 f"📞 Tu teléfono registrado: {datos.get('telefono')}",

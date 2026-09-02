@@ -91,9 +91,13 @@ async def duplicado_confirmacion_handler(update: Update, context: ContextTypes.D
 async def consulta_id_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     actualizar_timestamp_usuario(user_id)
-    reporte_id = update.message.text.strip()
+    reporte_id = update.message.text.strip().upper()
     user_data[user_id] = {"reporte_id_consulta": reporte_id}
-    await update.message.reply_text("🔐 Para verificar tu identidad, escribe el nombre de quien levantó el reporte.", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text(
+        "🔐 Para verificar tu identidad, escribe el *nombre* de quien levantó el reporte.",
+        parse_mode="Markdown",
+        reply_markup=ReplyKeyboardRemove()
+    )
     return VERIFICAR_REPORTANTE
 
 async def verificar_reportante_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -110,7 +114,7 @@ async def verificar_reportante_handler(update: Update, context: ContextTypes.DEF
         with app.app_context():
             from app.models.report import Report, Assignment, Localidad, Calle
             from app.models.user import User
-            rep = Report.query.filter_by(id=reporte_id).first()
+            rep = Report.query.filter_by(folio=reporte_id).first()
             if rep:
                 if (rep.reportante or "").strip().lower() == nombre:
                     asignacion_reporte = Assignment.query.filter_by(report_id=rep.id).order_by(Assignment.timestamp.desc()).first()
@@ -122,7 +126,7 @@ async def verificar_reportante_handler(update: Update, context: ContextTypes.DEF
                         nombre_usuario = usuario.nombre if usuario else "Sin usuario"
                         calle = Calle.query.get(rep.calle_id)
                         loc = Localidad.query.get(rep.localidad_id)
-                        mensaje = f"📋 *Estado del Reporte #{rep.id}*\n\n📍 *Dirección:* {calle.nombre if calle else 'N/D'} #{rep.numero}, {loc.nombre if loc else 'N/D'}\n👤 *Reportante:* {rep.reportante}\n🛠 *Cuadrilla:* {cuadrilla}\n👷 *Atendiendo:* {nombre_usuario}\n📌 *Estatus:* {estado_desc}\n📝 *Observaciones:* {observaciones}"
+                        mensaje = f"📋 *Estado del Reporte {rep.folio or rep.id}*\n\n📍 *Dirección:* {calle.nombre if calle else 'N/D'} #{rep.numero}, {loc.nombre if loc else 'N/D'}\n👤 *Reportante:* {rep.reportante}\n🛠 *Cuadrilla:* {cuadrilla}\n👷 *Atendiendo:* {nombre_usuario}\n📌 *Estatus:* {estado_desc}\n📝 *Observaciones:* {observaciones}"
                     else:
                         mensaje = f"⚠️ Tu reporte #{rep.id} aún no ha sido asignado a ninguna cuadrilla."
                     await update.message.reply_text(mensaje, parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())

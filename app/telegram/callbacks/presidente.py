@@ -259,7 +259,7 @@ async def asignar_cuadrilla_urgente(query, reporte_id: int, cuadrilla_id: int):
             # Confirmar al presidente
             mensaje_confirmacion = (
                 f"✅ *REPORTE ASIGNADO URGENTEMENTE*\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla:* {cuadrilla.nombre}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
                 f"🔧 *Problema:* {reporte.subtipo}\n\n"
@@ -313,7 +313,7 @@ async def mostrar_area_detalle_simple(query, area: str):
                 for i, reporte in enumerate(reportes[:6], 1):
                     horas = int((datetime.now() - reporte.timestamp).total_seconds() / 3600)
                     estado = reporte.get_estado_actual()
-                    mensaje += f"{i}. *#{reporte.id}*\n"
+                    mensaje += f"{i}. *{reporte.folio_display}*\n"
                     mensaje += f"   🔧 {reporte.subtipo[:30]}\n"
                     if reporte.entre_calles:
                         mensaje += f"   📍 {reporte.entre_calles[:30]}\n"

@@ -107,8 +107,14 @@ def captura_paso3():
                 os.remove(temp_path)
             return redirect(url_for('captura.captura_inicio'))
 
+        # Generar folio
+        municipio_id = localidad.municipio_id or 1
+        folio = Report.generar_folio(municipio_id, reporte.get('tipo'))
+        
         # Crear reporte real
         nuevo_reporte = Report(
+            folio=folio,
+            municipio_id=municipio_id,
             reportante=reporte.get('reportante'),
             telefono=reporte.get('telefono'),
             calle_id=calle.id,

@@ -30,6 +30,10 @@
                 <i class="fas fa-road fa-xl"></i>
                 <span class="ms-2">Calles y Localidades</span>
             </a>
+            <a href="{{ url_for('admin.gestionar_municipios') }}" class="btn btn-primary btn-icon">
+                <i class="fas fa-city fa-xl"></i>
+                <span class="ms-2">Municipios</span>
+            </a>
             <a href="{{ url_for('inteligencia.dashboard') }}" class="btn btn-primary btn-icon">
                 <i class="fas fa-brain fa-xl"></i>
                 <span class="ms-2">Centro de Inteligencia</span>
@@ -42,6 +46,18 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body p-4">
         <form method="get" class="row g-3 align-items-end">
+            <!-- Filtro Municipio -->
+            <div class="col-md-2">
+                <label class="form-label small text-uppercase text-muted fw-bold">Municipio</label>
+                <select name="municipio_id" class="form-select form-select-sm shadow-none border-2">
+                    <option value="">Todos</option>
+                    {% for m in municipios_disponibles %}
+                        <option value="{{ m.id }}" {% if m.id == municipio_seleccionado %}selected{% endif %}>{{ m.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filtro Tipo -->
             <div class="col-md-2">
                 <label class="form-label small text-uppercase text-muted fw-bold">Tipo</label>
                 <select name="tipo" class="form-select form-select-sm shadow-none border-2">
@@ -51,7 +67,8 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
+            <!-- Filtro Subtipo -->
             <div class="col-md-2">
                 <label class="form-label small text-uppercase text-muted fw-bold">Subtipo</label>
                 <select name="subtipo" class="form-select form-select-sm shadow-none border-2">
@@ -61,7 +78,8 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
+            <!-- Filtro Localidad -->
             <div class="col-md-2">
                 <label class="form-label small text-uppercase text-muted fw-bold">Localidad</label>
                 <select name="localidad" class="form-select form-select-sm shadow-none border-2">
@@ -71,7 +89,8 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
+            <!-- Filtro Cuadrilla -->
             <div class="col-md-2">
                 <label class="form-label small text-uppercase text-muted fw-bold">Cuadrilla</label>
                 <select name="team_id" class="form-select form-select-sm shadow-none border-2">
@@ -81,7 +100,8 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
+            <!-- Filtro Estado -->
             <div class="col-md-2">
                 <label class="form-label small text-uppercase text-muted fw-bold">Estado</label>
                 <select name="status_id" class="form-select form-select-sm shadow-none border-2">
@@ -91,13 +111,15 @@
                     {% endfor %}
                 </select>
             </div>
-            
+
+            <!-- Botón Filtrar -->
             <div class="col-md-1 d-grid">
                 <button type="submit" class="btn btn-dark btn-sm">
                     <i class="fas fa-filter me-1"></i> Filtrar
                 </button>
             </div>
-            
+
+            <!-- Botón Exportar -->
             <div class="col-md-1 d-grid">
                 <a href="{{ url_for('admin.descargar_excel', 
                     tipo=tipo_seleccionado,
@@ -117,10 +139,11 @@
 <div class="card border-0 shadow">
     <div class="card-body p-0">
         <div class="table-responsive" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
-            <table class="table table-hover table-borderless mb-0" id="reportsTable" style="min-width: 1400px;">
+            <table class="table table-hover table-borderless mb-0" id="reportsTable" style="min-width: 1600px;">
                 <thead class="text-white" style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);">
                     <tr>
                         <th class="ps-4">ID</th>
+                        <th>Municipio</th>
                         <th>Fecha</th>
                         <th>Reportante</th>
                         <th>Tipo/Subtipo</th>
@@ -137,7 +160,12 @@
                 <tbody class="border-top-0">
                     {% for reporte in reportes %}
                     <tr class="border-bottom">
-                        <td class="ps-4 fw-bold">{{ reporte.id }}</td>
+                        <td class="ps-4 fw-bold">{{ reporte.folio or reporte.id }}</td>
+                        <td>
+                            <span class="badge bg-primary">
+                                {{ municipios_dict.get(reporte.municipio_id, 'Sin asignar') }}
+                            </span>
+                        </td>
                         <td>{{ reporte.timestamp|localtime if reporte.timestamp else '—' }}</td>
                         <td>
                             <div class="d-flex align-items-center">
@@ -166,18 +194,14 @@
                             {% if reporte.latitud %}
                             <span class="coordenada-value">{{ reporte.latitud }}</span>
                             {% else %}
-                            <form method="post" action="{{ url_for('admin.obtener_coordenadas', reporte_id=reporte.id) }}" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Obtener</button>
-                            </form>
+                            —
                             {% endif %}
                         </td>
                         <td>
                             {% if reporte.longitud %}
                             <span class="coordenada-value">{{ reporte.longitud }}</span>
                             {% else %}
-                            <form method="post" action="{{ url_for('admin.obtener_coordenadas', reporte_id=reporte.id) }}" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-primary">Obtener</button>
-                            </form>
+                            —
                             {% endif %}
                         </td>
                         <td>
@@ -198,19 +222,19 @@
                                     <i class="fas fa-paperclip me-1"></i> Evidencia
                                 </a>
                             {% endif %}
-                            
+
                             {% if reporte.evidencia_cuadrilla %}
                                 <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ reporte.evidencia_cuadrilla.split('/')[-1]) }}" target="_blank" class="evidence-link text-decoration-none d-block mb-1">
                                     <i class="fas fa-hard-hat me-1"></i> Cuadrilla
                                 </a>
                             {% endif %}
-                            
+
                             {% if reporte.materiales_utilizados %}
                                 <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ reporte.materiales_utilizados.split('/')[-1]) }}" target="_blank" class="evidence-link text-decoration-none d-block">
                                     <i class="fas fa-boxes me-1"></i> Materiales
                                 </a>
                             {% endif %}
-                            
+
                             {% if not reporte.evidencia and not reporte.evidencia_cuadrilla and not reporte.materiales_utilizados %}
                                 <span class="text-muted">—</span>
                             {% endif %}
@@ -224,26 +248,26 @@
                                 <a href="{{ url_for('admin.ver_historial', reporte_id=reporte.id) }}" class="btn btn-sm btn-outline-dark" title="Ver historial">
                                     <i class="fas fa-history"></i>
                                 </a>
-                                
+
                                 {% if reporte.latitud and reporte.longitud %}
                                 <a href="{{ url_for('admin.ver_mapa_reporte', reporte_id=reporte.id) }}" class="btn btn-sm btn-outline-info" target="_blank" title="Ver en mapa">
                                     <i class="fas fa-map-marked-alt"></i>
                                 </a>
                                 {% endif %}
-                                
+
                                 <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#modalPruebas{{ reporte.id }}" title="Pruebas de envío">
                                     <i class="fas fa-bell"></i>
                                 </button>
                             </div>
                         </td>
                     </tr>
-                    
-                    <!-- Modal de pruebas para este reporte -->
+
+                    <!-- Modal de pruebas -->
                     <div class="modal fade" id="modalPruebas{{ reporte.id }}" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title">Pruebas de envío - Reporte #{{ reporte.id }}</h5>
+                                    <h5 class="modal-title">Pruebas de envío - Reporte {{ reporte.folio or reporte.id }}</h5>
                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                 </div>
                                 <div class="modal-body">
@@ -284,9 +308,9 @@ $(document).ready(function() {
     if ($.fn.DataTable.isDataTable('#reportsTable')) {
         $('#reportsTable').DataTable().destroy();
     }
-    
+
     $('#reportsTable').DataTable({
-        order: [[1, 'desc']],
+        order: [[2, 'desc']],
         pageLength: 25,
         scrollX: true,
         autoWidth: false,

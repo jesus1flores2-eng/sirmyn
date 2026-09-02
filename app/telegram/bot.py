@@ -277,7 +277,10 @@ def build_telegram_app(token):
     # CONVERSATIONHANDLER PRINCIPAL PARA REPORTES
     # ============================================================
     conv_handler_main = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[
+            CommandHandler('start', start),
+            MessageHandler(filters.Regex('^📋 INICIAR REPORTE$'), start),
+        ],
         states={
             ESPERAR_ACEPTACION: [CallbackQueryHandler(manejar_aceptacion, pattern="^(aceptar|rechazar)_privacidad$")],
             MENU_PRINCIPAL: [MessageHandler(filters.TEXT & ~filters.COMMAND, menu_principal_handler)],
@@ -403,7 +406,7 @@ def build_telegram_app(token):
     # Handler central para mensajes de texto
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND & ~filters.Regex('^(📋 REPORTE NORMAL|🚨 EMERGENCIA|📊 CONSULTAR REPORTE|❌ CANCELAR|↩️ VOLVER AL MENÚ)$'),
+            filters.TEXT & ~filters.COMMAND,
             router_texto_completo
         )
     )

@@ -498,9 +498,16 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
         msg.body(resumen + "\n\n¿Está correcto el reporte? Responde 'sí' o 'no'")
         estado["paso"] = "confirmacion"
 
+
     elif paso == "confirmacion":
         if mensaje_lower in ["sí", "si"]:
+            # Generar folio
+            municipio_id = estado.get("municipio_id", 1)
+            folio = Report.generar_folio(municipio_id, estado["tipo"])
+            
             nuevo_reporte = Report(
+                folio=folio,
+                municipio_id=municipio_id,
                 telefono=telefono,
                 reportante=estado["reportante"],
                 tipo=estado["tipo"],

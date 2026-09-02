@@ -125,10 +125,12 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
         calle_detectada = None
 
         direccion = obtener_direccion_osm(location.latitude, location.longitude)
-        if direccion and direccion.get('road') and direccion.get('localidad'):
-            localidad_detectada = direccion['localidad']
-            calle_detectada = direccion['road']
+        if direccion:
+            localidad_detectada = direccion.get('localidad', '')
+            calle_detectada = direccion.get('road', '')
         else:
+            localidad_detectada = ''
+            calle_detectada = ''
             print("⚠️ No se pudo detectar dirección, usando valores predeterminados")
 
         # Buscar localidad en BD
@@ -149,12 +151,12 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
 
         # Si no se encontró, usar valores predeterminados
         if not user_data[user_id].get("localidad_nombre"):
-            user_data[user_id]["localidad_nombre"] = "Proporcionada por el usuario"
-            user_data[user_id]["localidad_id"] = None
+            user_data[user_id]["localidad_nombre"] = "No registrada"
+            user_data[user_id]["localidad_id"] = 1
 
         if not user_data[user_id].get("calle_nombre"):
-            user_data[user_id]["calle_nombre"] = "Proporcionada por el usuario"
-            user_data[user_id]["calle_id"] = None
+            user_data[user_id]["calle_nombre"] = "No registrada"
+            user_data[user_id]["calle_id"] = 1
 
         # Mostrar confirmación y pedir número
         localidad_mostrar = user_data[user_id].get("localidad_nombre", "Proporcionada por el usuario")
@@ -704,7 +706,7 @@ async def manejar_ubicacion_problema_gps(update: Update, context: ContextTypes.D
                 localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
 
                 mensaje_cuadrilla = (
-                    f"📍 *UBICACIÓN EXACTA RECIBIDA - Reporte #{reporte.id}*\n\n"
+                    f"📍 *UBICACIÓN EXACTA RECIBIDA - Reporte {reporte.folio_display}*\n\n"
                     f"El reportante ha compartido su ubicación exacta.\n\n"
                     f"📋 *Detalles:*\n"
                     f"• Reportante: {reporte.reportante}\n"
@@ -770,7 +772,7 @@ async def manejar_ubicacion_problema_gps(update: Update, context: ContextTypes.D
 
                 if responsable and responsable.telegram_id:
                     mensaje_responsable = (
-                        f"📍 *UBICACIÓN RECIBIDA - Reporte #{reporte.id}*\n\n"
+                        f"📍 *UBICACIÓN RECIBIDA - Reporte {reporte.folio_display}*\n\n"
                         f"El reportante ha compartido su ubicación exacta.\n\n"
                         f"• Cuadrilla: {cuadrilla_nombre}\n"
                         f"• Coordenadas: {location.latitude}, {location.longitude}\n\n"
