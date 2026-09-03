@@ -404,9 +404,10 @@ def build_telegram_app(token):
     )
 
     # Handler central para mensajes de texto
+    # PERO excluir los botones del menú y flujo del ConversationHandler
     app.add_handler(
         MessageHandler(
-            filters.TEXT & ~filters.COMMAND,
+            filters.TEXT & ~filters.COMMAND & ~filters.Regex('^(📋 REPORTE NORMAL|🚨 EMERGENCIA|📊 CONSULTAR REPORTE|❌ CANCELAR|↩️ VOLVER AL MENÚ)$'),
             router_texto_completo
         )
     )
