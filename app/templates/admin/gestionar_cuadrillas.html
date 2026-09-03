@@ -105,35 +105,26 @@
                         </div>
                     </div>
                     
-                    <div class="col-md-6 mb-3">
-                        <label for="role" class="form-label">Rol Base *</label>
-                        <select name="role" id="role" class="form-select" required>
-                            <option value="">-- Selecciona un rol --</option>
-                            <option value="cuadrilla">👷 Cuadrilla (Operador)</option>
-                            <option value="jefe_area">👨‍💼 Jefe de Área</option>
-                            <option value="director">👔 Director de Área</option>
-                            <option value="supervisor">👁️ Supervisor</option>
-                            <option value="admin">🔧 Administrador</option>
-                        </select>
-                    </div>
 
                     <!-- Rol Específico para notificaciones -->
                     <div class="col-md-6 mb-3">
                         <label for="rol_especifico" class="form-label">Rol Específico (Notificaciones) ⚠️</label>
                         <select name="rol_especifico" id="rol_especifico" class="form-select">
-                            <option value="">-- Heredar del rol base --</option>
-                            <option value="jefe_area_tecnica">🔧 Jefe Área Técnica (Agua)</option>
-                            <option value="jefe_area_comercial">💰 Jefe Área Comercial</option>
-                            <option value="jefe_area">👨‍💼 Jefe de Área</option>
-                            <option value="director">👔 Director</option>
-                            <option value="supervisor">👁️ Supervisor</option>
-                            <option value="comandante">🎖️ Comandante</option>
-                            <option value="secretaria">📋 Secretaria</option>
-                            <option value="encargado_mantenimiento">🔨 Encargado de Mantenimiento</option>
-                            <option value="coordinador_pc">🚨 Coordinador PC</option>
+                            <option value="">-- Selecciona --</option>
                             <option value="presidente">🏛️ Presidente</option>
-                            <option value="comunicacion_social">📣 Comunicación Social</option>
+                            <option value="administrador">🔧 Administrador</option>
+                            <option value="director">👔 Director</option>
+                            <option value="jefe_area">👨‍💼 Jefe de Área</option>
+                            <option value="jefe_area_tecnica">🔧 Jefe Técnico (Agua)</option>
+                            <option value="jefe_area_comercial">💰 Jefe Comercial (Agua)</option>
+                            <option value="supervisor">👁️ Supervisor</option>
                             <option value="cuadrilla">👷 Cuadrilla</option>
+                            <option value="retroexcavadora">🚜 Retroexcavadora</option>
+                            <option value="camion_volteo">🚛 Camión de Volteo</option>
+                            <option value="vactor">🚛 Vactor</option>
+                            <option value="pipa">🚛 Pipa</option>
+                            <option value="camion_bombero">🚒 Camión Bombero</option>
+                            <option value="patrullero">🚓 Patrullero</option>
                         </select>
                         <small class="form-text text-muted">
                             ⚠️ <strong>Importante:</strong> Define quién recibe las notificaciones.
@@ -156,6 +147,9 @@
                             <option value="comunicacion">📣 Comunicación Social</option>
                             <option value="general">🔧 General/Mantenimiento</option>
                             <option value="supervision">👁️ Supervisión</option>
+                            <option value="proteccion_civil">Protección Civil</option>
+                            <option value="ambulancia">Ambulancia</option>
+                            <option value="punto_violeta">Punto Violeta</option>
                         </select>
                         <small class="form-text text-muted">Asigna el departamento correspondiente</small>
                     </div>
@@ -183,6 +177,55 @@
                         <small class="form-text text-muted">Para recibir notificaciones del bot</small>
                     </div>
                     
+
+
+                    <div class="col-md-6 mb-3">
+                        <label for="municipio_id" class="form-label">Municipio *</label>
+                        <select name="municipio_id" class="form-select" required>
+                            <option value="">-- Selecciona --</option>
+                            {% for m in municipios_disponibles %}
+                            <option value="{{ m.id }}">{{ m.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-12 mb-3">
+                        <label class="form-label fw-bold">Permisos del Usuario</label>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="puede_asignar" id="puede_asignar" class="form-check-input">
+                                    <label for="puede_asignar" class="form-check-label">Puede asignar</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="puede_validar" id="puede_validar" class="form-check-input">
+                                    <label for="puede_validar" class="form-check-label">Puede validar</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="puede_ver_todas_areas" id="puede_ver_todas_areas" class="form-check-input">
+                                    <label for="puede_ver_todas_areas" class="form-check-label">Ver todas las áreas</label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input type="checkbox" name="puede_configurar" id="puede_configurar" class="form-check-input">
+                                    <label for="puede_configurar" class="form-check-label">Puede configurar</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_active" id="is_active" class="form-check-input" checked>
+                            <label for="is_active" class="form-check-label">Usuario activo</label>
+                        </div>
+                    </div>
+                    
                     <div class="col-12 mt-3">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success">
@@ -196,6 +239,19 @@
                 </div>
             </form>
         </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <a href="{{ url_for('admin.exportar_usuarios_admin') }}" class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel me-1"></i> Exportar Usuarios
+                        </a>
+
+                        <form method="POST" action="{{ url_for('admin.importar_usuarios_admin') }}" enctype="multipart/form-data" class="d-flex gap-2">
+                            <input type="file" name="archivo" class="form-control form-control-sm" accept=".xlsx" required>
+                            <button type="submit" class="btn btn-primary btn-sm text-nowrap">
+                                <i class="fas fa-upload me-1"></i> Importar
+                            </button>
+                        </form>
+                    </div>
     </div>
 
     <!-- Tabla de cuadrillas existentes -->
@@ -307,8 +363,7 @@
                             <th>ID</th>
                             <th>Nombre</th>
                             <th>Usuario</th>
-                            <th>Rol Base</th>
-                            <th>Rol Específico</th>
+                            <th>Rol</th>
                             <th>Área</th>
                             <th>Cuadrilla</th>
                             <th>Telegram ID</th>
@@ -326,15 +381,7 @@
                                 {% endif %}
                             </td>
                             <td><code class="text-primary">{{ user.username }}</code></td>
-                            <td>
-                                <span class="badge {% if user.role == 'admin' %}bg-danger
-                                                   {% elif user.role == 'director' %}bg-primary
-                                                   {% elif user.role == 'supervisor' %}bg-warning text-dark
-                                                   {% elif user.role == 'jefe_area' %}bg-success
-                                                   {% else %}bg-info text-dark{% endif %}">
-                                    {{ user.role|title if user.role else 'N/A' }}
-                                </span>
-                            </td>
+
                             <td>
                                 {% if user.rol_especifico %}
                                 <span class="badge bg-warning text-dark">{{ user.rol_especifico|replace('_', ' ')|title }}</span>
@@ -432,6 +479,9 @@
                             <option value="obras" {% if team.area=='obras' %}selected{% endif %}>🏗️ Obras</option>
                             <option value="bomberos" {% if team.area=='bomberos' %}selected{% endif %}>🚒 Bomberos</option>
                             <option value="comunicacion" {% if team.area=='comunicacion' %}selected{% endif %}>📣 Comunicación</option>
+                            <option value="proteccion_civil">Protección Civil</option>
+                            <option value="ambulancia">Ambulancia</option>
+                            <option value="punto_violeta">Punto Violeta</option>
                             <option value="general" {% if team.area=='general' %}selected{% endif %}>🔧 General</option>
                         </select>
                     </div>
@@ -510,34 +560,26 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Rol Base *</label>
-                            <select name="role" class="form-select" required>
-                                <option value="cuadrilla" {% if user.role=='cuadrilla' %}selected{% endif %}>👷 Cuadrilla</option>
-                                <option value="jefe_area" {% if user.role=='jefe_area' %}selected{% endif %}>👨‍💼 Jefe de Área</option>
-                                <option value="director" {% if user.role=='director' %}selected{% endif %}>👔 Director</option>
-                                <option value="supervisor" {% if user.role=='supervisor' %}selected{% endif %}>👁️ Supervisor</option>
-                                <option value="admin" {% if user.role=='admin' %}selected{% endif %}>🔧 Administrador</option>
-                            </select>
-                        </div>
 
                         <!-- Rol Específico -->
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Rol Específico (Notificaciones) ⚠️</label>
                             <select name="rol_especifico" class="form-select">
-                                <option value="">-- Heredar del rol base --</option>
-                                <option value="jefe_area_tecnica" {% if user.rol_especifico=='jefe_area_tecnica' %}selected{% endif %}>🔧 Jefe Área Técnica (Agua)</option>
-                                <option value="jefe_area_comercial" {% if user.rol_especifico=='jefe_area_comercial' %}selected{% endif %}>💰 Jefe Área Comercial</option>
-                                <option value="jefe_area" {% if user.rol_especifico=='jefe_area' %}selected{% endif %}>👨‍💼 Jefe de Área</option>
-                                <option value="director" {% if user.rol_especifico=='director' %}selected{% endif %}>👔 Director</option>
-                                <option value="supervisor" {% if user.rol_especifico=='supervisor' %}selected{% endif %}>👁️ Supervisor</option>
-                                <option value="comandante" {% if user.rol_especifico=='comandante' %}selected{% endif %}>🎖️ Comandante</option>
-                                <option value="secretaria" {% if user.rol_especifico=='secretaria' %}selected{% endif %}>📋 Secretaria</option>
-                                <option value="encargado_mantenimiento" {% if user.rol_especifico=='encargado_mantenimiento' %}selected{% endif %}>🔨 Encargado Mantenimiento</option>
-                                <option value="coordinador_pc" {% if user.rol_especifico=='coordinador_pc' %}selected{% endif %}>🚨 Coordinador PC</option>
+                                <option value="">-- Selecciona --</option>
                                 <option value="presidente" {% if user.rol_especifico=='presidente' %}selected{% endif %}>🏛️ Presidente</option>
-                                <option value="comunicacion_social" {% if user.rol_especifico=='comunicacion_social' %}selected{% endif %}>📣 Comunicación Social</option>
+                                <option value="administrador" {% if user.rol_especifico=='administrador' %}selected{% endif %}>🔧 Administrador</option>
+                                <option value="director" {% if user.rol_especifico=='director' %}selected{% endif %}>👔 Director</option>
+                                <option value="jefe_area" {% if user.rol_especifico=='jefe_area' %}selected{% endif %}>👨‍💼 Jefe de Área</option>
+                                <option value="jefe_area_tecnica" {% if user.rol_especifico=='jefe_area_tecnica' %}selected{% endif %}>🔧 Jefe Técnico (Agua)</option>
+                                <option value="jefe_area_comercial" {% if user.rol_especifico=='jefe_area_comercial' %}selected{% endif %}>💰 Jefe Comercial (Agua)</option>
+                                <option value="supervisor" {% if user.rol_especifico=='supervisor' %}selected{% endif %}>👁️ Supervisor</option>
                                 <option value="cuadrilla" {% if user.rol_especifico=='cuadrilla' %}selected{% endif %}>👷 Cuadrilla</option>
+                                <option value="retroexcavadora" {% if user.rol_especifico=='retroexcavadora' %}selected{% endif %}>🚜 Retroexcavadora</option>
+                                <option value="camion_volteo" {% if user.rol_especifico=='camion_volteo' %}selected{% endif %}>🚛 Camión de Volteo</option>
+                                <option value="vactor" {% if user.rol_especifico=='vactor' %}selected{% endif %}>🚛 Vactor</option>
+                                <option value="pipa" {% if user.rol_especifico=='pipa' %}selected{% endif %}>🚛 Pipa</option>
+                                <option value="camion_bombero" {% if user.rol_especifico=='camion_bombero' %}selected{% endif %}>🚒 Camión Bombero</option>
+                                <option value="patrullero" {% if user.rol_especifico=='patrullero' %}selected{% endif %}>🚓 Patrullero</option>
                             </select>
                             <small class="form-text">
                                 Actual: <strong>{{ user.rol_especifico or 'No definido' }}</strong>
@@ -557,8 +599,59 @@
                                 <option value="obras" {% if user.area=='obras' %}selected{% endif %}>🏗️ Obras</option>
                                 <option value="bomberos" {% if user.area=='bomberos' %}selected{% endif %}>🚒 Bomberos</option>
                                 <option value="comunicacion" {% if user.area=='comunicacion' %}selected{% endif %}>📣 Comunicación</option>
+                                <option value="proteccion_civil">Protección Civil</option>
+                                <option value="ambulancia">Ambulancia</option>
+                                <option value="punto_violeta">Punto Violeta</option>
                                 <option value="general" {% if user.area=='general' %}selected{% endif %}>🔧 General</option>
                             </select>
+                        </div>
+
+
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Municipio</label>
+                            <select name="municipio_id" class="form-select">
+                                {% for m in municipios_disponibles %}
+                                <option value="{{ m.id }}" {% if user.municipio_id==m.id %}selected{% endif %}>{{ m.nombre }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-bold">Permisos</label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="puede_asignar" class="form-check-input" {% if user.puede_asignar %}checked{% endif %}>
+                                        <label class="form-check-label">Puede asignar</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="puede_validar" class="form-check-input" {% if user.puede_validar %}checked{% endif %}>
+                                        <label class="form-check-label">Puede validar</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="puede_ver_todas_areas" class="form-check-input" {% if user.puede_ver_todas_areas %}checked{% endif %}>
+                                        <label class="form-check-label">Ver todas las áreas</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" name="puede_configurar" class="form-check-input" {% if user.puede_configurar %}checked{% endif %}>
+                                        <label class="form-check-label">Puede configurar</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input type="checkbox" name="is_active" class="form-check-input" {% if user.is_active %}checked{% endif %}>
+                                <label class="form-check-label">Usuario activo</label>
+                            </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Cuadrilla</label>

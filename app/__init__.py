@@ -25,7 +25,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
-    # ⭐⭐⭐ CONFIGURAR DatabaseManager AQUÍ ⭐⭐⭐
+    # Configurar DatabaseManager
     from app.services.db_manager import DatabaseManager
     DatabaseManager.set_app(app)
     print("✅ DatabaseManager configurado con la app")
@@ -54,7 +54,7 @@ def create_app():
     # Registrar blueprints
     register_blueprints(app)
 
-    # WhatsApp (solo inicialización)
+    # WhatsApp
     try:
         from app.services.whatsapp_bot import init_bot
         init_bot(app)
@@ -72,12 +72,37 @@ def create_app():
             return User.query.get(int(user_id))
         db.create_all()
         print("✅ Base de datos lista")
-        
-    # Iniciar scheduler para tareas programadas
+
+    # Iniciar scheduler
     from app.scheduler import iniciar_scheduler
     scheduler = iniciar_scheduler()
     if scheduler:
-       app.scheduler = scheduler
+        app.scheduler = scheduler
+
+    # Registrar webhooks automáticamente solo si no es modo local
+    if not app.config.get('DEBUG'):
+        try:
+            import requests
+            from app.models.municipio_config import MunicipioConfig
+
+            server_url = os.getenv('SERVER_URL', 'http://localhost:5000')
+
+            with app.app_context():
+                municipios = MunicipioConfig.query.filter(MunicipioConfig.bot_token.isnot(None)).all()
+
+            for m in municipios:
+                import unicodedata
+                clave = unicodedata.normalize('NFD', m.nombre.lower()).encode('ascii', 'ignore').decode('utf-8')
+                clave = clave.replace(' ', '_')
+                webhook_url = f"{server_url}/telegram/webhook/{clave}"
+                requests.get(
+                    f"https://api.telegram.org/bot{m.bot_token}/setWebhook",
+                    params={"url": webhook_url},
+                    timeout=5
+                )
+                print(f"✅ Webhook registrado para {m.nombre}")
+        except Exception as e:
+            print(f"⚠️ No se pudieron registrar webhooks: {e}")
 
     print("\n" + "="*60)
     print("🚀 SISTEMA SIRMYN INICIADO")

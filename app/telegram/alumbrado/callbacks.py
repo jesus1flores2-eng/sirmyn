@@ -74,7 +74,7 @@ async def jefe_alumbrado_callback_handler(update: Update, context: ContextTypes.
 
             from app.services.notification_service import notificar_usuario_reporte_finalizado
             await notificar_usuario_reporte_finalizado(reporte, asignacion, "Jefe de Alumbrado")
-            logger.info(f"✅ Jefe de Alumbrado validó reporte #{reporte_id}")
+            logger.info(f"✅ Jefe de Alumbrado validó reporte {reporte.folio_display}")
             await query.answer("✅ Reparación validada", show_alert=False)
 
         elif accion == 'rechazar':
@@ -85,10 +85,10 @@ async def jefe_alumbrado_callback_handler(update: Update, context: ContextTypes.
                 'cuadrilla_nombre': cuadrilla.nombre if cuadrilla else 'Cuadrilla desconocida'
             }
             await query.edit_message_text(
-                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte #{reporte_id}*\n\nEscribe el *motivo del rechazo*:\n\n📌 *El reporte volverá a estado 'En proceso'.*",
+                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte {reporte.folio_display}*\n\nEscribe el *motivo del rechazo*:\n\n📌 *El reporte volverá a estado 'En proceso'.*",
                 parse_mode=ParseMode.MARKDOWN, reply_markup=None
             )
-            logger.info(f"❌ Jefe de Alumbrado inició rechazo para reporte #{reporte_id}")
+            logger.info(f"❌ Jefe de Alumbrado inició rechazo para reporte {reporte.folio_display}")
             await query.answer("⚠️ Escribe el motivo del rechazo", show_alert=False)
 
 
@@ -139,7 +139,7 @@ async def manejar_motivo_rechazo_jefe_alumbrado(update: Update, context: Context
                     try:
                         mensaje = (
                             f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                            f"📋 *Folio:* #{reporte.id}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                            f"📋 *Folio:* {reporte.folio_display}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                             f"👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n"
                             f"❌ *RECHAZADO POR JEFE DE ALUMBRADO*\n*Motivo:* {motivo}\n\n"
                             f"*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
@@ -149,8 +149,8 @@ async def manejar_motivo_rechazo_jefe_alumbrado(update: Update, context: Context
                     except Exception as e:
                         logger.error(f"❌ Error: {e}")
 
-            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: #{reporte.id}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
-            logger.info(f"✅ Jefe de Alumbrado rechazó reporte #{reporte_id}")
+            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: {reporte.folio_display}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+            logger.info(f"✅ Jefe de Alumbrado rechazó reporte {reporte.folio_display}")
 
     except Exception as e:
         logger.error(f"❌ Error: {e}")

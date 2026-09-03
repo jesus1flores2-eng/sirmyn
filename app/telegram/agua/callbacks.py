@@ -49,7 +49,7 @@ async def mostrar_cuadrillas_agua(query, reporte_id):
                 ])
             
             await query.edit_message_text(
-                f"👷 *Asignar reporte #{reporte_id}*\n\nSelecciona una cuadrilla de agua:",
+                f"👷 *Asignar reporte {reporte.folio_display}*\n\nSelecciona una cuadrilla de agua:",
                 parse_mode="Markdown",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
@@ -92,7 +92,7 @@ async def asignar_cuadrilla_agua(query, reporte_id, team_id):
             db.session.commit()
             
             await query.edit_message_text(
-                f"✅ *Reporte #{reporte_id} asignado*\n\n"
+                f"✅ *Reporte {reporte.folio_display} asignado*\n\n"
                 f"👷 *Cuadrilla:* {cuadrilla.nombre}\n"
                 f"📅 *Fecha:* {datetime.now().strftime('%d/%m/%Y %H:%M')}",
                 parse_mode="Markdown"

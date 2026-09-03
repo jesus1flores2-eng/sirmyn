@@ -6,9 +6,7 @@ TIPOS_DEPENDENCIAS = {
     "4": "Alumbrado público", 
     "5": "Parques y jardines",
     "6": "Ecología",
-    "7": "Seguridad pública",
-    "8": "Obras públicas",
-    "9": "Bomberos"
+    "7": "Obras públicas"
 }
 
 SUBTIPOS_AGUA = {

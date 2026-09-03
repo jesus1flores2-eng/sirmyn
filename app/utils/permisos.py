@@ -19,7 +19,7 @@ def calcular_permisos_usuario(usuario):
     }
     
     # Si no tiene nivel, usar role como fallback
-    nivel = usuario.nivel if hasattr(usuario, 'nivel') else usuario.role if hasattr(usuario, 'role') else 'cuadrilla'
+    nivel = usuario.rol_especifico if hasattr(usuario, 'rol_especifico') else 'cuadrilla'
     area = usuario.area if hasattr(usuario, 'area') else None
     rol_especifico = usuario.rol_especifico if hasattr(usuario, 'rol_especifico') else None
     
@@ -246,6 +246,21 @@ def obtener_roles_por_area(area):
         'presidencia': [
             ('presidente', 'Presidente Municipal'),
             ('administrador', 'Administrador Sistema')
+        ],
+        'proteccion_civil': [
+            ('director', 'Director de Protección Civil'),
+            ('jefe_area', 'Jefe de Protección Civil'),
+            ('cuadrilla', 'Cuadrilla Protección Civil')
+        ],
+        'ambulancia': [
+            ('director', 'Director de Ambulancias'),
+            ('jefe_area', 'Jefe de Ambulancias'),
+            ('cuadrilla', 'Paramédico')
+        ],
+        'punto_violeta': [
+            ('director', 'Director Punto Violeta'),
+            ('jefe_area', 'Jefe Punto Violeta'),
+            ('cuadrilla', 'Personal Punto Violeta')
         ]
     }
     

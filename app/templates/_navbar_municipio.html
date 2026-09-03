@@ -1,0 +1,61 @@
+<nav class="navbar navbar-expand-lg navbar-dark shadow" style="background: linear-gradient(135deg, #1a5276 0%, #2e86c1 100%);">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="{{ url_for('municipio.dashboard') }}">
+            <img src="{{ session.get('municipio_logo') or 'https://imembrillos.gob.mx/Nuevo/images_upload/logotipo/e0b7f25f2202eab98bee245b8671c4fb.png' }}" 
+                 alt="Logo" style="height: 40px; width: auto; border-radius: 6px;" class="me-2">
+            <span class="fw-bold">{{ session.get('municipio_nombre', 'Municipio') }}</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMunicipio">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarMunicipio">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('municipio.dashboard') }}">
+                        <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+                    </a>
+                </li>
+
+                {% if session.get('ver_cuadrillas') %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('municipio.cuadrillas') }}">
+                        <i class="fas fa-users me-1"></i> Cuadrillas
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if session.get('ver_inteligencia') %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('inteligencia.dashboard') }}">
+                        <i class="fas fa-brain me-1"></i> Inteligencia
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if session.get('ver_gps') %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('municipio.gps') }}">
+                        <i class="fas fa-satellite me-1"></i> GPS
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if session.get('ver_encuestas') %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('municipio.encuestas') }}">
+                        <i class="fas fa-star me-1"></i> Encuestas
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="nav-item">
+                    <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+                        <i class="fas fa-sign-out-alt me-1"></i> Salir
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

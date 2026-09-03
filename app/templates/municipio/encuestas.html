@@ -1,0 +1,56 @@
+{% extends 'base_municipio.html' %}
+
+{% block title %}Encuestas - {{ municipio.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary">
+                <i class="fas fa-star me-2"></i>Encuestas de Satisfacción
+            </h1>
+            <p class="text-muted mb-0">Opiniones de los ciudadanos</p>
+        </div>
+        <span class="badge bg-primary fs-6">{{ encuestas|length }} encuestas</span>
+    </div>
+
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Reporte</th>
+                            <th>Calificación</th>
+                            <th>Velocidad</th>
+                            <th>Comentario</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in encuestas %}
+                        <tr>
+                            <td>{{ e.id }}</td>
+                            <td>#{{ e.reporte_id }}</td>
+                            <td>
+                                <span class="badge bg-warning text-dark">{{ e.calificacion }} / 5</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">{{ e.velocidad }} / 5</span>
+                            </td>
+                            <td>{{ e.comentario or '—' }}</td>
+                            <td>{{ e.fecha|localtime if e.fecha else '—' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">No hay encuestas</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

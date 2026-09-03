@@ -16,58 +16,80 @@ async def presidencia_command(update: Update, context: ContextTypes.DEFAULT_TYPE
         with app.app_context():
             from app.models.user import User
             from app.models.report import Report
+            from app.models.municipio_config import MunicipioConfig
             
             usuario = User.query.filter_by(telegram_id=str(user_id)).first()
             if not usuario or usuario.rol_especifico != 'presidente':
                 await update.message.reply_text("❌ Solo el presidente puede usar este comando.")
                 return
             
-            total = Report.query.count()
-            agua = Report.query.filter(Report.tipo == 'Agua potable').count()
-            alumbrado = Report.query.filter(Report.tipo == 'Alumbrado público').count()
-            drenaje = Report.query.filter(Report.tipo == 'Drenaje').count()
-            aseo = Report.query.filter(Report.tipo == 'Aseo público').count()
-            parques = Report.query.filter(Report.tipo == 'Parques y jardines').count()
-            obras = Report.query.filter(Report.tipo == 'Obras públicas').count()
-            seguridad = Report.query.filter(Report.tipo == 'Seguridad pública').count()
-            bomberos = Report.query.filter(Report.tipo == 'Bomberos').count()
-            ecologia = Report.query.filter(Report.tipo == 'Ecología').count()
+            muni_id = usuario.municipio_id or 1
+            municipio = MunicipioConfig.query.get(muni_id)
             
-            fecha = datetime.now().strftime('%d/%m/%Y')
-            hora = datetime.now().strftime('%H:%M')
-
+            # Departamentos normales (de dicts.py)
+            departamentos_activos = municipio.get_departamentos_lista() if municipio else []
+            mapeo_normales = {
+                'agua': ('💧 Agua', 'Agua potable', 'pres_agua'),
+                'drenaje': ('🚰 Drenaje', 'Drenaje', 'pres_drenaje'),
+                'aseo': ('🗑️ Aseo', 'Aseo público', 'pres_aseo'),
+                'alumbrado': ('💡 Alumbrado', 'Alumbrado público', 'pres_alumbrado'),
+                'parques': ('🌳 Parques', 'Parques y jardines', 'pres_parques'),
+                'ecologia': ('🌍 Ecología', 'Ecología', 'pres_ecologia'),
+                'obras': ('🏗️ Obras', 'Obras públicas', 'pres_obra'),
+            }
+            
+            # Emergencias (de emergencias/handlers.py)
+            emergencias_activas = municipio.get_emergencias_lista() if municipio else []
+            mapeo_emergencias = {
+                'seguridad': ('👮 Seguridad', 'Seguridad pública', 'pres_seguridad'),
+                'bomberos': ('🚒 Bomberos', 'Bomberos', 'pres_bomberos'),
+                'proteccion_civil': ('🛡️ Protección Civil', 'Protección Civil', 'pres_proteccion_civil'),
+                'punto_violeta': ('💜 Punto Violeta', 'Punto Violeta', 'pres_punto_violeta'),
+                'ambulancia': ('🚑 Ambulancia', 'Ambulancia', 'pres_ambulancia'),
+            }
+            
+            total = Report.query.filter_by(municipio_id=muni_id).count()
+            
             mensaje = f"""🏛️ *DASHBOARD PRESIDENCIAL*
-📅 {fecha} | 🕐 {hora}
+📅 {datetime.now().strftime('%d/%m/%Y')} | 🕐 {datetime.now().strftime('%H:%M')}
 ━━━━━━━━━━━━━━━━━━━━━━
 
 📊 *REPORTES EN SISTEMA:*
 • 📋 Total: {total}
-• 💧 Agua: {agua}
-• 🚰 Drenaje: {drenaje}
-• 💡 Alumbrado: {alumbrado}
-• 🗑️ Aseo: {aseo}
-• 🌳 Parques: {parques}
-• 🏗️ Obras: {obras}
-• 👮 Seguridad: {seguridad}
-• 🚒 Bomberos: {bomberos}
-• 🌍 Ecología: {ecologia}
-
-*Selecciona un área:*
 """
             
-            keyboard = [
-                [InlineKeyboardButton("💧 Agua", callback_data="pres_agua"),
-                 InlineKeyboardButton("🚰 Drenaje", callback_data="pres_drenaje")],
-                [InlineKeyboardButton("💡 Alumbrado", callback_data="pres_alumbrado"),
-                 InlineKeyboardButton("🗑️ Aseo", callback_data="pres_aseo")],
-                [InlineKeyboardButton("🌳 Parques", callback_data="pres_parques"),
-                 InlineKeyboardButton("🏗️ Obras", callback_data="pres_obra")],
-                [InlineKeyboardButton("👮 Seguridad", callback_data="pres_seguridad"),
-                 InlineKeyboardButton("🚒 Bomberos", callback_data="pres_bomberos")],
-                [InlineKeyboardButton("🌍 Ecología", callback_data="pres_ecologia")],
-                [InlineKeyboardButton("🔄 Actualizar", callback_data="pres_refresh")],
-                [InlineKeyboardButton("🚪 Salir del dashboard", callback_data="pres_salir")]
-            ]
+            keyboard = []
+            fila = []
+            
+            # Agregar departamentos normales activos
+            for dep_key in departamentos_activos:
+                if dep_key in mapeo_normales:
+                    nombre, tipo, callback = mapeo_normales[dep_key]
+                    count = Report.query.filter_by(municipio_id=muni_id, tipo=tipo).count()
+                    mensaje += f"• {nombre}: {count}\n"
+                    fila.append(InlineKeyboardButton(nombre, callback_data=callback))
+                    if len(fila) == 2:
+                        keyboard.append(fila)
+                        fila = []
+            
+            # Agregar emergencias activas
+            for emp_key in emergencias_activas:
+                if emp_key in mapeo_emergencias:
+                    nombre, tipo, callback = mapeo_emergencias[emp_key]
+                    count = Report.query.filter_by(municipio_id=muni_id, tipo=tipo).count()
+                    mensaje += f"• {nombre}: {count}\n"
+                    fila.append(InlineKeyboardButton(nombre, callback_data=callback))
+                    if len(fila) == 2:
+                        keyboard.append(fila)
+                        fila = []
+            
+            if fila:
+                keyboard.append(fila)
+            
+            mensaje += "\n*Selecciona un área:*"
+            
+            keyboard.append([InlineKeyboardButton("🔄 Actualizar", callback_data="pres_refresh")])
+            keyboard.append([InlineKeyboardButton("🚪 Salir", callback_data="pres_salir")])
             
             await update.message.reply_text(mensaje, parse_mode='Markdown', reply_markup=InlineKeyboardMarkup(keyboard))
             
@@ -170,7 +192,7 @@ async def mostrar_cuadrillas_para_asignar_urgente(query, reporte_id: int):
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             mensaje = (
-                f"👷 *ASIGNACIÓN URGENTE - Reporte #{reporte_id}*\n\n"
+                f"👷 *ASIGNACIÓN URGENTE - Reporte {reporte.folio_display}*\n\n"
                 f"*🔴 ASIGNACIÓN PRESIDENCIAL*\n"
                 f"Este reporte lleva más de 48 horas sin atender.\n\n"
                 f"*Selecciona la cuadrilla para asignar:*"
@@ -259,7 +281,7 @@ async def asignar_cuadrilla_urgente(query, reporte_id: int, cuadrilla_id: int):
             # Confirmar al presidente
             mensaje_confirmacion = (
                 f"✅ *REPORTE ASIGNADO URGENTEMENTE*\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla:* {cuadrilla.nombre}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
                 f"🔧 *Problema:* {reporte.subtipo}\n\n"
@@ -275,7 +297,7 @@ async def asignar_cuadrilla_urgente(query, reporte_id: int, cuadrilla_id: int):
                 parse_mode=ParseMode.MARKDOWN
             )
             
-            logger.info(f"✅ Presidente {quien_asigna} asignó URGENTE reporte #{reporte_id} a cuadrilla {cuadrilla.nombre}")
+            logger.info(f"✅ Presidente {quien_asigna} asignó URGENTE reporte {reporte.folio_display} a cuadrilla {cuadrilla.nombre}")
             
     except Exception as e:
         logger.error(f"❌ Error asignando urgente: {e}")
@@ -287,6 +309,10 @@ async def mostrar_area_detalle_simple(query, area: str):
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report
+            from app.models.user import User
+            
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            muni_id = usuario.municipio_id if usuario else 1
             
             mapeo = {
                 'agua': {'nombre': '💧 Agua Potable', 'tipo': 'Agua potable'},
@@ -305,7 +331,7 @@ async def mostrar_area_detalle_simple(query, area: str):
                 return
             
             config = mapeo[area]
-            reportes = Report.query.filter(Report.tipo == config['tipo']).order_by(Report.timestamp.desc()).all()
+            reportes = Report.query.filter_by(municipio_id=muni_id, tipo=config['tipo']).order_by(Report.timestamp.desc()).all()
             
             mensaje = f"{config['nombre']}\n📊 Total: {len(reportes)} reportes\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
             
@@ -313,7 +339,7 @@ async def mostrar_area_detalle_simple(query, area: str):
                 for i, reporte in enumerate(reportes[:6], 1):
                     horas = int((datetime.now() - reporte.timestamp).total_seconds() / 3600)
                     estado = reporte.get_estado_actual()
-                    mensaje += f"{i}. *#{reporte.id}*\n"
+                    mensaje += f"{i}. *{reporte.folio_display}*\n"
                     mensaje += f"   🔧 {reporte.subtipo[:30]}\n"
                     if reporte.entre_calles:
                         mensaje += f"   📍 {reporte.entre_calles[:30]}\n"
@@ -341,17 +367,21 @@ async def recargar_dashboard_presidencial_simple(query):
         app = DatabaseManager.get_app()
         with app.app_context():
             from app.models.report import Report
+            from app.models.user import User
             
-            total = Report.query.count()
-            agua = Report.query.filter(Report.tipo == 'Agua potable').count()
-            alumbrado = Report.query.filter(Report.tipo == 'Alumbrado público').count()
-            drenaje = Report.query.filter(Report.tipo == 'Drenaje').count()
-            aseo = Report.query.filter(Report.tipo == 'Aseo público').count()
-            parques = Report.query.filter(Report.tipo == 'Parques y jardines').count()
-            obras = Report.query.filter(Report.tipo == 'Obras públicas').count()
-            seguridad = Report.query.filter(Report.tipo == 'Seguridad pública').count()
-            bomberos = Report.query.filter(Report.tipo == 'Bomberos').count()
-            ecologia = Report.query.filter(Report.tipo == 'Ecología').count()
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first()
+            muni_id = usuario.municipio_id if usuario else 1
+            
+            total = Report.query.filter_by(municipio_id=muni_id).count()
+            agua = Report.query.filter_by(municipio_id=muni_id, tipo='Agua potable').count()
+            alumbrado = Report.query.filter_by(municipio_id=muni_id, tipo='Alumbrado público').count()
+            drenaje = Report.query.filter_by(municipio_id=muni_id, tipo='Drenaje').count()
+            aseo = Report.query.filter_by(municipio_id=muni_id, tipo='Aseo público').count()
+            parques = Report.query.filter_by(municipio_id=muni_id, tipo='Parques y jardines').count()
+            obras = Report.query.filter_by(municipio_id=muni_id, tipo='Obras públicas').count()
+            seguridad = Report.query.filter_by(municipio_id=muni_id, tipo='Seguridad pública').count()
+            bomberos = Report.query.filter_by(municipio_id=muni_id, tipo='Bomberos').count()
+            ecologia = Report.query.filter_by(municipio_id=muni_id, tipo='Ecología').count()
 
             fecha = datetime.now().strftime('%d/%m/%Y')
             hora = datetime.now().strftime('%H:%M')

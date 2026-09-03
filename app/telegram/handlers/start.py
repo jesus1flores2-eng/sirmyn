@@ -12,19 +12,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print("🔴🔴🔴 START EJECUTADO 🔴🔴🔴")
     user = update.effective_user
     user_id = user.id
-    limpiar_estado(user_id)
+    municipio_id_guardado = user_data.get(user_id, {}).get('municipio_id', 1)
     nombre_telegram = user.first_name or user.username or "Usuario"
+    limpiar_estado(user_id)
 
     user_data[user_id] = {
         "nombre_telegram": nombre_telegram,
         "user_id": user_id,
         "telegram_username": user.username,
+        "municipio_id": municipio_id_guardado,
         "_timestamp": time.time()
     }
+
+    from app.models.municipio_config import MunicipioConfig
+
+    municipio_id = user_data[user_id].get('municipio_id', 1)
+    municipio = MunicipioConfig.query.get(municipio_id)
+    nombre_municipio = municipio.nombre if municipio else "Ixtlahuacán"
 
     mensaje = (
         "🏛️ *Sistema Integral de Reportes Municipales y Notificaciones*\n"
         "*SIRMYN*\n\n"
+        f"🏘️ *Municipio:* {nombre_municipio}\n\n"
         f"👋 *¡Bienvenido, {nombre_telegram}!*\n\n"
         "Este sistema te permite generar reportes ciudadanos y recibir "
         "información oficial del Ayuntamiento.\n\n"
@@ -107,8 +116,59 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
     print("🟢 MENU_PRINCIPAL_HANDLER EJECUTADO")
     user_id = update.effective_user.id
     opcion = update.message.text.strip()
+    print(f"   📱 Opción recibida: '{opcion}'")
+    print(f"   📱 ¿Es REPORTE NORMAL? {opcion == '📋 REPORTE NORMAL'}")
 
-    if opcion == "❌ CANCELAR":
+    if opcion == "📋 Nuevo reporte":
+        # Redirigir a REPORTE NORMAL
+        nombre = user_data[user_id].get("nombre_telegram", "Usuario")
+        user_data[user_id]["nombre"] = nombre
+
+        from app.models.municipio_config import MunicipioConfig
+
+        municipio_id = user_data[user_id].get('municipio_id', 1)
+        municipio = MunicipioConfig.query.get(municipio_id)
+        departamentos_activos = municipio.get_departamentos_lista() if municipio else []
+
+        mapeo = {
+            'agua': "1️⃣ Agua potable",
+            'drenaje': "2️⃣ Drenaje",
+            'aseo': "3️⃣ Aseo público",
+            'alumbrado': "4️⃣ Alumbrado público",
+            'parques': "5️⃣ Parques y jardines",
+            'ecologia': "6️⃣ Ecología",
+            'obras': "7️⃣ Obras públicas",
+        }
+
+        keyboard = []
+        fila_actual = []
+
+        for clave in departamentos_activos:
+            if clave in mapeo:
+                fila_actual.append(mapeo[clave])
+                if len(fila_actual) == 2:
+                    keyboard.append(fila_actual)
+                    fila_actual = []
+
+        if fila_actual:
+            keyboard.append(fila_actual)
+
+        keyboard.append(["8️⃣ Checar un reporte"])
+
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        await update.message.reply_text(
+            "📋 Selecciona el tipo de reporte:",
+            reply_markup=reply_markup
+        )
+        return MENU_PRINCIPAL
+
+    elif opcion == "📊 Consultar estado":
+        # Redirigir a /estado
+        from app.telegram.commands.estado import estado_command
+        await estado_command(update, context)
+        return MENU_PRINCIPAL
+
+    elif opcion == "❌ CANCELAR":
         await update.message.reply_text(
             "Operación cancelada. Use /start para comenzar de nuevo.",
             reply_markup=ReplyKeyboardRemove()
@@ -117,16 +177,56 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
         return ConversationHandler.END
 
     elif opcion == "📋 REPORTE NORMAL":
+        print("🔴 REPORTE NORMAL PRESIONADO")
+        print(f"   user_id: {user_id}")
+        print(f"   user_data: {user_data.get(user_id, {})}")
+        # Inicializar user_data correctamente como lo hace emergencia
+        user_data[user_id] = user_data.get(user_id, {})
+        user_data[user_id]['municipio_id'] = user_data[user_id].get('municipio_id', 1)
+        user_data[user_id]['nombre_telegram'] = user_data[user_id].get('nombre_telegram', update.effective_user.first_name or 'Usuario')
+        user_data[user_id]['nombre'] = user_data[user_id].get('nombre_telegram', 'Usuario')
+        
         nombre = user_data[user_id].get("nombre_telegram", "Usuario")
-        user_data[user_id]["nombre"] = nombre
 
-        keyboard = [
-            ["1️⃣ Agua potable", "2️⃣ Drenaje"],
-            ["3️⃣ Aseo público", "4️⃣ Alumbrado público"],
-            ["5️⃣ Parques y jardines", "6️⃣ Ecología"],
-            ["7️⃣ Seguridad pública", "8️⃣ Obras públicas"],
-            ["9️⃣ Bomberos", "🔟 Checar un reporte"]
-        ]
+        from app.models.municipio_config import MunicipioConfig
+
+        municipio_id = user_data[user_id].get('municipio_id', 1)
+        municipio = MunicipioConfig.query.get(municipio_id)
+        departamentos_activos = municipio.get_departamentos_lista() if municipio else []
+
+        mapeo = {
+            'agua': "1️⃣ Agua potable",
+            'drenaje': "2️⃣ Drenaje",
+            'aseo': "3️⃣ Aseo público",
+            'alumbrado': "4️⃣ Alumbrado público",
+            'parques': "5️⃣ Parques y jardines",
+            'ecologia': "6️⃣ Ecología",
+            'obras': "7️⃣ Obras públicas",
+        }
+
+        keyboard = []
+        fila_actual = []
+
+        for clave in departamentos_activos:
+            if clave in mapeo:
+                fila_actual.append(mapeo[clave])
+                if len(fila_actual) == 2:
+                    keyboard.append(fila_actual)
+                    fila_actual = []
+
+        if fila_actual:
+            keyboard.append(fila_actual)
+
+        keyboard.append(["8️⃣ Checar un reporte"])
+
+        if not departamentos_activos:
+            keyboard = [
+                ["1️⃣ Agua potable", "2️⃣ Drenaje"],
+                ["3️⃣ Aseo público", "4️⃣ Alumbrado público"],
+                ["5️⃣ Parques y jardines", "6️⃣ Ecología"],
+                ["7️⃣ Obras públicas", "8️⃣ Checar un reporte"]
+            ]
+
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         await update.message.reply_text(
             f"✅ *{nombre}*, selecciona la dependencia municipal para tu reporte:",
@@ -140,7 +240,9 @@ async def menu_principal_handler(update: Update, context: ContextTypes.DEFAULT_T
 
     elif opcion == "📊 CONSULTAR REPORTE":
         await update.message.reply_text(
-            "Ingresa el número de folio de tu reporte:",
+            "📋 Ingresa el *folio de tu reporte* tal como aparece en tu confirmación.\n"
+            "Ejemplo: *ALUM-0006*",
+            parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )
         return CONSULTA_ID

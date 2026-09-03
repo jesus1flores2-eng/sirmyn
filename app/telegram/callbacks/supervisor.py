@@ -97,14 +97,14 @@ async def supervisor_callback_handler(update: Update, context: ContextTypes.DEFA
             
             await query.edit_message_text(
                 text=nuevo_mensaje,
-                parse_mode=ParseMode.MARKDOWN
+                parse_mode=None
             )
             
             # Notificar al usuario reportante para validación final
             from app.services.notification_service import notificar_usuario_reporte_finalizado
             await notificar_usuario_reporte_finalizado(reporte, asignacion, "supervisor")
             
-            logger.info(f"✅ Supervisor {usuario.nombre} validó reporte #{reporte_id}")
+            logger.info(f"✅ Supervisor {usuario.nombre} validó reporte {reporte.folio_display}")
             await query.answer("✅ Reparación validada", show_alert=False)
         
         # ============================================================
@@ -121,7 +121,7 @@ async def supervisor_callback_handler(update: Update, context: ContextTypes.DEFA
             
             # ⭐ PEDIR MOTIVO AL SUPERVISOR
             await query.edit_message_text(
-                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte #{reporte_id}*\n\n"
+                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte {reporte.folio_display}*\n\n"
                      f"Escribe el *motivo del rechazo*:\n"
                      f"(Ej: 'La reparación no cumple con los estándares de calidad')\n\n"
                      f"📌 *El reporte volverá a estado 'En proceso' para que la cuadrilla corrija.*",
@@ -129,7 +129,7 @@ async def supervisor_callback_handler(update: Update, context: ContextTypes.DEFA
                 reply_markup=None
             )
             
-            logger.info(f"❌ Supervisor {usuario.nombre} inició rechazo para reporte #{reporte_id}")
+            logger.info(f"❌ Supervisor {usuario.nombre} inició rechazo para reporte {reporte.folio_display}")
             await query.answer("⚠️ Escribe el motivo del rechazo", show_alert=False)
 
 
@@ -211,7 +211,7 @@ async def rechazo_opciones_handler(update: Update, context: ContextTypes.DEFAULT
                 if cuadrilla_sin:
                     await realizar_reasignacion(reporte_id, asignacion, cuadrilla_sin.id, "No hay otras cuadrillas disponibles")
                     await query.edit_message_text(
-                        f"🔄 *Reasignado a 'Sin asignar'*\n\nEl reporte #{reporte_id} ha sido reasignado a la cuadrilla 'Sin asignar'.\nEstado: Sin asignar."
+                        f"🔄 *Reasignado a 'Sin asignar'*\n\nEl reporte {reporte.folio_display} ha sido reasignado a la cuadrilla 'Sin asignar'.\nEstado: Sin asignar."
                     )
                 else:
                     await query.edit_message_text("❌ No hay cuadrillas disponibles para reasignación.")
@@ -229,7 +229,7 @@ async def rechazo_opciones_handler(update: Update, context: ContextTypes.DEFAULT
             ])
             
             await query.edit_message_text(
-                text=f"👷 *Selecciona una cuadrilla para reasignar el reporte #{reporte_id}:*",
+                text=f"👷 *Selecciona una cuadrilla para reasignar el reporte {reporte.folio_display}:*",
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
@@ -256,12 +256,12 @@ async def rechazo_opciones_handler(update: Update, context: ContextTypes.DEFAULT
                 bot_app = get_telegram_app()
                 await bot_app.bot.send_message(
                     chat_id=int(admin_id),
-                    text=f"⚠️ *Reporte #{reporte_id} enviado a revisión*\n\nMotivo: Rechazado por supervisor.\nRequiere reasignación manual.",
+                    text=f"⚠️ *Reporte {reporte.folio_display} enviado a revisión*\n\nMotivo: Rechazado por supervisor.\nRequiere reasignación manual.",
                     parse_mode=ParseMode.MARKDOWN
                 )
             
             await query.edit_message_text(
-                f"📤 *Enviado a administrador*\n\nEl reporte #{reporte_id} ha sido enviado para revisión y reasignación manual."
+                f"📤 *Enviado a administrador*\n\nEl reporte {reporte.folio_display} ha sido enviado para revisión y reasignación manual."
             )
         
         # ============================================================
@@ -288,12 +288,12 @@ async def rechazo_opciones_handler(update: Update, context: ContextTypes.DEFAULT
                         bot_app = get_telegram_app()
                         await bot_app.bot.send_message(
                             chat_id=int(usuario.telegram_id),
-                            text=f"🔄 *Reparación rechazada - Requiere corrección*\n\nReporte #{reporte_id}\nMotivo: Rechazado por supervisor.\nPor favor, corrige el trabajo y vuelve a subir evidencia.",
+                            text=f"🔄 *Reparación rechazada - Requiere corrección*\n\nReporte {reporte.folio_display}\nMotivo: Rechazado por supervisor.\nPor favor, corrige el trabajo y vuelve a subir evidencia.",
                             parse_mode=ParseMode.MARKDOWN
                         )
             
             await query.edit_message_text(
-                f"🔄 *Devuelto a misma cuadrilla*\n\nEl reporte #{reporte_id} ha sido devuelto a la cuadrilla para corrección."
+                f"🔄 *Devuelto a misma cuadrilla*\n\nEl reporte {reporte.folio_display} ha sido devuelto a la cuadrilla para corrección."
             )
 
 
@@ -367,6 +367,8 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
         with app.app_context():
             from app.models.report import Report, Assignment
             from app.models.user import User
+            usuario = User.query.filter_by(telegram_id=str(user_id)).first()
+            muni_id = usuario.municipio_id if usuario else 1
             from app.models.team import Team
             from app.routes.telegram_routes import get_telegram_app
             from datetime import datetime
@@ -447,7 +449,7 @@ async def apoyo_confirmar_handler(update: Update, context: ContextTypes.DEFAULT_
 
             mensaje_cuadrilla = (
                 f"👷 *SUPERVISOR CONFIRMADO - Solicitud de Apoyo*\n\n"
-                f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte #{reporte.id}.\n\n"
+                f"*{supervisor.nombre}* ha confirmado estar enterado de la solicitud de apoyo para el reporte {reporte.folio_display}.\n\n"
                 f"📍 *Ubicación:* {direccion}"
                 f"{gps_texto}"
                 f"\n\n👷 *Cuadrilla solicitante:* {cuadrilla.nombre}\n\n"
@@ -509,6 +511,8 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
         with app.app_context():
             from app.models.report import Report, Assignment
             from app.models.user import User
+            usuario = User.query.filter_by(telegram_id=str(user_id)).first()
+            muni_id = usuario.municipio_id if usuario else 1
             from app.models.status import Status
             from app.extensions import db
             from datetime import datetime
@@ -551,7 +555,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             mensaje_base = (
                 f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
                 f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -607,7 +611,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
             # ⭐ CONFIRMAR AL SUPERVISOR
             await update.message.reply_text(
                 f"✅ *Rechazo enviado correctamente*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
                 f"*📌 El reporte ha vuelto a estado 'En proceso'*\n"
@@ -616,7 +620,7 @@ async def manejar_motivo_rechazo_supervisor(update: Update, context: ContextType
                 reply_markup=ReplyKeyboardRemove()
             )
             
-            logger.info(f"✅ Supervisor {nombre_supervisor} rechazó reporte #{reporte_id} notificando a {notificados} miembros de la cuadrilla")
+            logger.info(f"✅ Supervisor {nombre_supervisor} rechazó reporte {reporte.folio_display} notificando a {notificados} miembros de la cuadrilla")
             
     except Exception as e:
         logger.error(f"❌ Error en manejar_motivo_rechazo_supervisor: {e}")

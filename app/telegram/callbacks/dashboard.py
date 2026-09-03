@@ -117,7 +117,7 @@ async def manejar_ver_reportes(query, usuario, tipo_reporte):
                 for i, rep in enumerate(reportes[:15], 1):
                     horas = int((ahora - rep.timestamp).total_seconds() / 3600)
                     estado_actual = rep.get_estado_actual()
-                    mensaje += f"{i}. *#{rep.id}*\n"
+                    mensaje += f"{i}. *{rep.folio_display}*\n"
                     mensaje += f"   🔧 {rep.subtipo}\n"
                     if rep.entre_calles:
                         mensaje += f"   📍 {rep.entre_calles}\n"

@@ -74,9 +74,9 @@ def revisar_reportes_urgentes():
                 for reporte in reportes_urgentes:
                     try:
                         await notificar_presidente_urgente(reporte.id)
-                        logger.info(f"✅ [TAREA] Notificado presidente sobre reporte #{reporte.id}")
+                        logger.info(f"✅ [TAREA] Notificado presidente sobre reporte {reporte.folio_display}")
                     except Exception as e:
-                        logger.error(f"❌ [TAREA] Error notificando reporte #{reporte.id}: {e}")
+                        logger.error(f"❌ [TAREA] Error notificando reporte {reporte.folio_display}: {e}")
             
             # Ejecutar notificaciones
             loop = asyncio.new_event_loop()

@@ -147,14 +147,14 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
     if reporte:
         if mensaje_lower == "estado":
             if asignacion and asignacion.status:
-                msg.body(f"El estado actual de tu reporte #{reporte.id} es: {asignacion.status.descripcion}.")
+                msg.body(f"El estado actual de tu reporte {reporte.folio_display} es: {asignacion.status.descripcion}.")
             else:
                 msg.body("Tu reporte no tiene estado asignado aún.")
             return str(resp)
 
         if mensaje_lower == "cuadrilla":
             if asignacion and asignacion.team:
-                msg.body(f"La cuadrilla asignada a tu reporte #{reporte.id} es: {asignacion.team.nombre}.")
+                msg.body(f"La cuadrilla asignada a tu reporte {reporte.folio_display} es: {asignacion.team.nombre}.")
             else:
                 msg.body("Tu reporte no tiene cuadrilla asignada aún.")
             return str(resp)
@@ -171,7 +171,7 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
                 )
                 db.session.add(nueva_asignacion)
                 db.session.commit()
-                msg.body(f"Estado actualizado a '{nuevo_estado.descripcion}' para tu reporte #{reporte.id}.")
+                msg.body(f"Estado actualizado a '{nuevo_estado.descripcion}' para tu reporte {reporte.folio_display}.")
             else:
                 msg.body("No se encontró el estado indicado. Por favor intenta con otro estado válido.")
             return str(resp)
@@ -188,7 +188,7 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
                 )
                 db.session.add(nueva_asignacion)
                 db.session.commit()
-                msg.body(f"Cuadrilla asignada a '{nueva_cuadrilla.nombre}' para tu reporte #{reporte.id}.")
+                msg.body(f"Cuadrilla asignada a '{nueva_cuadrilla.nombre}' para tu reporte {reporte.folio_display}.")
             else:
                 msg.body("No se encontró la cuadrilla indicada. Por favor intenta con otro nombre válido.")
             return str(resp)
@@ -498,9 +498,16 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
         msg.body(resumen + "\n\n¿Está correcto el reporte? Responde 'sí' o 'no'")
         estado["paso"] = "confirmacion"
 
+
     elif paso == "confirmacion":
         if mensaje_lower in ["sí", "si"]:
+            # Generar folio
+            municipio_id = estado.get("municipio_id", 1)
+            folio = Report.generar_folio(municipio_id, estado["tipo"])
+            
             nuevo_reporte = Report(
+                folio=folio,
+                municipio_id=municipio_id,
                 telefono=telefono,
                 reportante=estado["reportante"],
                 tipo=estado["tipo"],
@@ -572,7 +579,7 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
                     loc = Localidad.query.get(rep.localidad_id)
 
                     msg.body(
-                        f"📋 *Estado del Reporte #{rep.id}*\n"
+                        f"📋 *Estado del Reporte {rep.folio_display}*\n"
                         f"📍 Dirección: {calle.nombre if calle else 'N/D'} #{rep.numero}, {loc.nombre if loc else 'N/D'}\n"
                         f"👤 Reportante: {rep.reportante}\n"
                         f"🛠 Cuadrilla: {cuadrilla}\n"
@@ -581,7 +588,7 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
                         f"📝 Observaciones: {observaciones}"
                     )
                 else:
-                    msg.body(f"⚠️ Tu reporte #{rep.id} aún no ha sido asignado a ninguna cuadrilla.")
+                    msg.body(f"⚠️ Tu reporte {rep.folio_display} aún no ha sido asignado a ninguna cuadrilla.")
             else:
                 msg.body("❌ El nombre no coincide con quien levantó el reporte.")
         else:

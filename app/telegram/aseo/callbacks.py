@@ -94,7 +94,7 @@ async def jefe_aseo_callback_handler(update: Update, context: ContextTypes.DEFAU
             from app.services.notification_service import notificar_usuario_reporte_finalizado
             await notificar_usuario_reporte_finalizado(reporte, asignacion, "Jefe de Área de Aseo")
 
-            logger.info(f"✅ Jefe de Aseo {usuario.nombre} validó reporte #{reporte_id}")
+            logger.info(f"✅ Jefe de Aseo {usuario.nombre} validó reporte {reporte.folio_display}")
             await query.answer("✅ Reparación validada", show_alert=False)
 
         # RECHAZAR
@@ -107,7 +107,7 @@ async def jefe_aseo_callback_handler(update: Update, context: ContextTypes.DEFAU
             }
 
             await query.edit_message_text(
-                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte #{reporte_id}*\n\n"
+                text=f"❌ *RECHAZO DE REPARACIÓN - Reporte {reporte.folio_display}*\n\n"
                      f"Escribe el *motivo del rechazo*:\n"
                      f"(Ej: 'Falta recoger escombros en la esquina')\n\n"
                      f"📌 *El reporte volverá a estado 'En proceso' para que la cuadrilla corrija.*",
@@ -115,7 +115,7 @@ async def jefe_aseo_callback_handler(update: Update, context: ContextTypes.DEFAU
                 reply_markup=None
             )
 
-            logger.info(f"❌ Jefe de Aseo {usuario.nombre} inició rechazo para reporte #{reporte_id}")
+            logger.info(f"❌ Jefe de Aseo {usuario.nombre} inició rechazo para reporte {reporte.folio_display}")
             await query.answer("⚠️ Escribe el motivo del rechazo", show_alert=False)
 
 
@@ -174,7 +174,7 @@ async def manejar_motivo_rechazo_jefe_aseo(update: Update, context: ContextTypes
                         mensaje_cuadrilla = (
                             f"🚨 *REPORTE RECHAZADO - REQUIERE CORRECCIÓN*\n"
                             f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                            f"📋 *Folio:* #{reporte.id}\n"
+                            f"📋 *Folio:* {reporte.folio_display}\n"
                             f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
                             f"📞 *Reportante:* {reporte.reportante}\n"
                             f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
@@ -205,7 +205,7 @@ async def manejar_motivo_rechazo_jefe_aseo(update: Update, context: ContextTypes
 
             await update.message.reply_text(
                 f"✅ *Rechazo enviado correctamente*\n\n"
-                f"📋 *Reporte:* #{reporte.id}\n"
+                f"📋 *Reporte:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla notificada:* {cuadrilla_nombre}\n"
                 f"📝 *Motivo:* {motivo}\n\n"
                 f"*📌 El reporte ha vuelto a estado 'En proceso'*",
@@ -213,7 +213,7 @@ async def manejar_motivo_rechazo_jefe_aseo(update: Update, context: ContextTypes
                 reply_markup=ReplyKeyboardRemove()
             )
 
-            logger.info(f"✅ Jefe de Aseo {nombre_jefe} rechazó reporte #{reporte_id}")
+            logger.info(f"✅ Jefe de Aseo {nombre_jefe} rechazó reporte {reporte.folio_display}")
 
     except Exception as e:
         logger.error(f"❌ Error en manejar_motivo_rechazo_jefe_aseo: {e}")

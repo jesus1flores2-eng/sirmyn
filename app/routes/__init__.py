@@ -7,6 +7,7 @@ from app.routes.supervisor import supervisor_bp
 from app.routes.inteligencia import inteligencia_bp
 from app.routes.captura import captura_bp
 from app.routes.telegram_routes import telegram_bp
+from app.routes.municipio import municipio_bp
 
 def register_blueprints(app):
     app.register_blueprint(auth_bp, url_prefix='/auth')
@@ -16,4 +17,5 @@ def register_blueprints(app):
     app.register_blueprint(teams_bp, url_prefix='/teams')
     app.register_blueprint(supervisor_bp, url_prefix='/supervisor')
     app.register_blueprint(inteligencia_bp, url_prefix='/inteligencia')
+    app.register_blueprint(municipio_bp, url_prefix='/municipio')
     print("✅ Blueprints registrados")

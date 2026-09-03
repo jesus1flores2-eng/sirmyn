@@ -20,7 +20,7 @@ async def desvincular_command(update: Update, context: ContextTypes.DEFAULT_TYPE
             # Si es admin y proporciona un username
             if args:
                 usuario_actual = User.query.filter_by(telegram_id=str(user_id)).first()
-                if not usuario_actual or usuario_actual.role != 'admin':
+                if not usuario_actual or usuario_actual.rol_especifico not in ['admin', 'administrador']:
                     await update.message.reply_text("❌ Solo un administrador puede desvincular a otros usuarios.")
                     return
                 

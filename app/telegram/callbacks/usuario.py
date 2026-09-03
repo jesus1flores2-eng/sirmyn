@@ -85,7 +85,7 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
             if reporte.tipo == "Seguridad pública":
                 await query.edit_message_text(
                     text=f"✅ *Reporte cerrado*\n\n"
-                         f"Gracias por tu reporte #{reporte_id}.\n"
+                         f"Gracias por tu reporte {reporte.folio_display}.\n"
                          f"Las autoridades han sido notificadas del resultado.",
                     parse_mode=ParseMode.MARKDOWN
                 )
@@ -93,11 +93,11 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
                 return ConversationHandler.END
             
             await query.edit_message_text(
-                text=f"✅ *¡Gracias por tu confirmación!*\n\nEl reporte #{reporte_id} ha sido marcado como RESUELTO.\n\n📞 Para nuevos reportes, usa /start.",
+                text=f"✅ *¡Gracias por tu confirmación!*\n\nEl reporte {reporte.folio_display} ha sido marcado como RESUELTO.\n\n📞 Para nuevos reportes, usa /start.",
                 parse_mode=ParseMode.MARKDOWN
             )
             
-            logger.info(f"✅ Usuario ACEPTÓ reporte #{reporte_id}")
+            logger.info(f"✅ Usuario ACEPTÓ reporte {reporte.folio_display}")
             
             # Iniciar encuesta de satisfacción
             user_data[user_id] = {
@@ -202,5 +202,5 @@ async def usuario_validacion_callback_handler(update: Update, context: ContextTy
                 reply_markup=reply_markup
             )
     
-            logger.info(f"❌ Usuario inició rechazo para reporte #{reporte_id}")
+            logger.info(f"❌ Usuario inició rechazo para reporte {reporte.folio_display}")
             await query.answer("Selecciona un motivo o vuelve atrás", show_alert=False)

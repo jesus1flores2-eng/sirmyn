@@ -43,7 +43,7 @@ async def jefe_bomberos_callback_handler(update: Update, context: ContextTypes.D
             await query.answer("✅ Reparación validada", show_alert=False)
         elif accion == 'rechazar':
             user_data[query.from_user.id] = {'modo_esperando_motivo_rechazo_bomberos': True, 'reporte_id': reporte_id, 'cuadrilla_id': asignacion.team_id, 'cuadrilla_nombre': cuadrilla.nombre if cuadrilla else 'Cuadrilla desconocida'}
-            await query.edit_message_text(text=f"❌ *RECHAZO - Reporte #{reporte_id}*\n\nEscribe el *motivo del rechazo*:", parse_mode=ParseMode.MARKDOWN, reply_markup=None)
+            await query.edit_message_text(text=f"❌ *RECHAZO - Reporte {reporte.folio_display}*\n\nEscribe el *motivo del rechazo*:", parse_mode=ParseMode.MARKDOWN, reply_markup=None)
             await query.answer("⚠️ Escribe el motivo", show_alert=False)
 
 
@@ -65,9 +65,9 @@ async def manejar_motivo_rechazo_jefe_bomberos(update: Update, context: ContextT
             for usuario in User.query.filter_by(team_id=cuadrilla_id, is_active=True).all():
                 if usuario.telegram_id:
                     try:
-                        mensaje = f"🚨 *REPORTE RECHAZADO*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📋 *Folio:* #{reporte.id}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n❌ *RECHAZADO POR JEFE DE BOMBEROS*\n*Motivo:* {motivo}\n\n*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
+                        mensaje = f"🚨 *REPORTE RECHAZADO*\n━━━━━━━━━━━━━━━━━━━━━━\n\n📋 *Folio:* {reporte.folio_display}\n📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n👤 *Reportante:* {reporte.reportante}\n🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n\n❌ *RECHAZADO POR JEFE DE BOMBEROS*\n*Motivo:* {motivo}\n\n*📌 Acción requerida:* Corrige y vuelve a subir evidencia.\n\n*📋 Acciones rápidas:*"
                         await bot.send_message(chat_id=int(usuario.telegram_id), text=mensaje, parse_mode=ParseMode.MARKDOWN, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔧 Subir evidencia reparación", callback_data=f"reparacion_{reporte_id}")]]))
                     except Exception as e: logger.error(f"❌ Error: {e}")
-            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: #{reporte.id}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
+            await update.message.reply_text(f"✅ *Rechazo enviado*\n📋 Reporte: {reporte.folio_display}\n👷 Cuadrilla: {cuadrilla_nombre}\n📝 Motivo: {motivo}", parse_mode=ParseMode.MARKDOWN, reply_markup=ReplyKeyboardRemove())
     except Exception as e: logger.error(f"❌ Error: {e}"); await update.message.reply_text("❌ Error al procesar el rechazo.")
     finally: limpiar_estado(user_id)

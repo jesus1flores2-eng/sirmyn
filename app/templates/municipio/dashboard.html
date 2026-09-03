@@ -1,0 +1,300 @@
+{% extends 'base_municipio.html' %}
+
+{% block title %}Panel Municipal - {{ municipio.nombre }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary">
+                <i class="fas fa-building me-2"></i>{{ municipio.nombre }}
+            </h1>
+            <p class="text-muted mb-0">Panel de control municipal</p>
+        </div>
+        <div>
+            <span class="badge bg-primary fs-6">{{ municipio.plan|upper }}</span>
+            <span class="badge bg-info fs-6">{{ municipio.limite_cuadrillas }} cuadrillas</span>
+        </div>
+    </div>
+
+    <!-- Métricas -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <h6 class="text-muted">Total Reportes</h6>
+                <h2 class="mb-0">{{ total_reportes }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <h6 class="text-muted">Atendidos</h6>
+                <h2 class="mb-0 text-success">{{ atendidos }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center p-4">
+                <h6 class="text-muted">Pendientes</h6>
+                <h2 class="mb-0 text-warning">{{ pendientes }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Departamentos activos -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-check-circle text-success me-2"></i>Departamentos Activos
+            </h6>
+            {% if tipos_permitidos %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% for tipo in tipos_permitidos %}
+                        <span class="badge bg-success bg-opacity-10 text-success fs-6">{{ tipo }}</span>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted mb-0">No hay departamentos activos.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-rocket text-primary me-2"></i>Funciones Disponibles
+            </h6>
+            <div class="row">
+                {% if ver_cuadrillas %}
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('municipio.cuadrillas') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-users me-2"></i>Cuadrillas
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if ver_inteligencia %}
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('inteligencia.dashboard') }}" class="btn btn-outline-info w-100">
+                        <i class="fas fa-brain me-2"></i>Inteligencia
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if ver_gps %}
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('municipio.gps') }}" class="btn btn-outline-warning w-100">
+                        <i class="fas fa-satellite me-2"></i>GPS
+                    </a>
+                </div>
+                {% endif %}
+
+                {% if ver_encuestas %}
+                <div class="col-md-3 mb-3">
+                    <a href="{{ url_for('municipio.encuestas') }}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-star me-2"></i>Encuestas
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    {% if ver_filtros %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Tipo</label>
+                    <select name="tipo" class="form-select form-select-sm shadow-none border-2">
+                        <option value="">Todos</option>
+                        {% for tipo in tipos_permitidos %}
+                            <option value="{{ tipo }}" {% if tipo == tipo_seleccionado %}selected{% endif %}>{{ tipo }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label small text-uppercase text-muted fw-bold">Estado</label>
+                    <select name="status_id" class="form-select form-select-sm shadow-none border-2">
+                        <option value="">Todos</option>
+                        {% for id, desc in estados_disponibles %}
+                            <option value="{{ id }}" {% if id == status_id_seleccionado %}selected{% endif %}>{{ desc }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-dark btn-sm">
+                        <i class="fas fa-filter me-1"></i> Filtrar
+                    </button>
+                </div>
+
+                {% if ver_exportar %}
+                <div class="col-md-2 d-grid">
+                    <a href="#" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel me-1"></i> Exportar
+                    </a>
+                </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla de reportes -->
+    <div class="card border-0 shadow">
+        <div class="card-body p-0">
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table table-hover table-borderless mb-0" id="reportsTable" style="min-width: 1400px;">
+                    <thead class="text-white" style="background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);">
+                        <tr>
+                            <th>ID</th>
+                            <th>Fecha</th>
+                            <th>Reportante</th>
+                            <th>Tipo/Subtipo</th>
+                            <th>Ubicación</th>
+                            <th>Descripción</th>
+                            <th>Evidencias</th>
+                            <th>Cuadrilla</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in reportes %}
+                        <tr>
+                            <td class="fw-bold">{{ r.folio or r.id }}</td>
+                            <td>{{ r.timestamp|localtime if r.timestamp else '—' }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ r.reportante }}</div>
+                                <small class="text-muted">{{ r.telefono }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-10 text-info">{{ r.tipo }}</span>
+                                <div class="small">{{ r.subtipo }}</div>
+                            </td>
+                            <td>
+                                {% if r.latitud and r.longitud %}
+                                    <small class="text-muted">GPS compartido</small>
+                                {% else %}
+                                    {{ r.calle }} {{ r.numero or '' }}, {{ r.localidad }}
+                                {% endif %}
+                            </td>
+                            <td>{{ r.descripcion_problema or '—' }}</td>
+                            <td>
+                                {% if r.evidencia %}
+                                    <a href="{{ r.evidencia }}" target="_blank" class="d-block mb-1">
+                                        <i class="fas fa-paperclip me-1"></i> Ver evidencia
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ r.cuadrilla or '—' }}</td>
+                            <td>
+                                <span class="badge bg-primary">{{ r.estado or '—' }}</span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if ver_historial %}
+                                    <a href="{{ url_for('municipio.historial_reporte', reporte_id=r.id) }}" class="btn btn-sm btn-outline-dark">
+                                        <i class="fas fa-history"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% if ver_mapa %}
+                                    <a href="{{ url_for('municipio.mapa_reporte', reporte_id=r.id) }}" class="btn btn-sm btn-outline-info" target="_blank">
+                                        <i class="fas fa-map-marked-alt"></i>
+                                    </a>
+                                    {% endif %}
+
+                                    {% if ver_test %}
+                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#modalTest{{ r.id }}">
+                                        <i class="fas fa-bell"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Modal Test -->
+                        {% if ver_test %}
+                        <div class="modal fade" id="modalTest{{ r.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Pruebas de envío - Reporte {{ r.folio or r.id }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="d-grid gap-2">
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-info w-100">🔔 Probar notificaciones</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-primary w-100">🎯 Notificar inicial</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-success w-100">🔧 Cuadrilla termina</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-dark w-100">👤 Validación usuario</button>
+                                            </form>
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger w-100">🏛️ Notificar presidente</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% else %}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                No hay reportes para mostrar
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    if (!$.fn.DataTable.isDataTable('#reportsTable')) {
+        $('#reportsTable').DataTable({
+            order: [[1, 'desc']],
+            pageLength: 25,
+            scrollX: true,
+            autoWidth: false,
+            language: {
+                lengthMenu: "Mostrar _MENU_ reportes",
+                zeroRecords: "No se encontraron reportes",
+                info: "Mostrando _START_ a _END_ de _TOTAL_ reportes",
+                infoEmpty: "No hay reportes",
+                infoFiltered: "(filtrados de _MAX_)",
+                paginate: {
+                    first: "Primero",
+                    last: "Último",
+                    next: "Siguiente",
+                    previous: "Anterior"
+                }
+            }
+        });
+    }
+
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+});
+</script>
+{% endblock %}

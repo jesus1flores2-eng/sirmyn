@@ -53,7 +53,7 @@ async def estado_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 mensaje += "*🔴 Activos (pendientes):*\n"
                 for i, (rep, estado) in enumerate(reportes_activos[:5], 1):
                     fecha = rep.timestamp.strftime('%d/%m %H:%M') if rep.timestamp else 'N/D'
-                    mensaje += f"{i}. *#{rep.id}* - {rep.tipo}\n"
+                    mensaje += f"{i}. *{rep.folio_display}* - {rep.tipo}\n"
                     mensaje += f"   📍 {rep.calle.nombre if rep.calle else 'N/D'} #{rep.numero}\n"
                     mensaje += f"   🏷️ {estado} | ⏰ {fecha}\n\n"
                 
@@ -66,7 +66,7 @@ async def estado_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 mensaje += "*✅ Finalizados:*\n"
                 for rep, estado in reportes_finalizados[:3]:
                     fecha = rep.timestamp.strftime('%d/%m %H:%M') if rep.timestamp else 'N/D'
-                    mensaje += f"• #{rep.id} - {rep.tipo} ({fecha}) - {estado}\n"
+                    mensaje += f"• {rep.folio_display} - {rep.tipo} ({fecha}) - {estado}\n"
                 
                 if len(reportes_finalizados) > 3:
                     mensaje += f"📝 ... y {len(reportes_finalizados) - 3} más\n"

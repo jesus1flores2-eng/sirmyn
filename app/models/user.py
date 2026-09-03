@@ -12,6 +12,7 @@ class User(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
+    municipio_id = db.Column(db.Integer, default=1)
     nombre = db.Column(db.String(100), nullable=False)  # Cambiado de 64 a 100
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
@@ -59,13 +60,13 @@ class User(UserMixin, db.Model):
     
     # Métodos de verificación (ACTUALIZADOS)
     def is_admin(self):
-        return self.role == 'admin' or self.nivel == 'administrador'
+        return self.rol_especifico in ['admin', 'administrador']
     
     def es_presidente(self):
-        return self.nivel == 'presidente' or self.area == 'presidencia'
+        return self.rol_especifico == 'presidente' or self.area == 'presidencia'
     
     def es_director(self):
-        return self.nivel == 'director' or self.role == 'director'
+        return self.rol_especifico == 'director'
     
     def es_jefe_area(self):
         return 'jefe_area' in str(self.rol_especifico) if self.rol_especifico else False
@@ -89,7 +90,7 @@ class User(UserMixin, db.Model):
         return False
     
     def es_cuadrilla(self):
-        return self.nivel == 'cuadrilla' or self.role == 'cuadrilla'
+        return self.rol_especifico == 'cuadrilla' or self.rol_especifico == 'cuadrilla_tecnica' or self.rol_especifico == 'cuadrilla_aseo'
     
     def es_especialista(self):
         return self.nivel == 'especialista'

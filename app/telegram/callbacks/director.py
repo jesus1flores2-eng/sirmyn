@@ -91,6 +91,8 @@ async def mostrar_cuadrillas_para_asignar(query, reporte_id: int, usuario: User)
             from app.models.report import Report
             from app.models.team import Team
             from app.models.user import User
+            usuario = User.query.filter_by(telegram_id=str(query.from_user.id)).first() if hasattr(query, "from_user") else None
+            muni_id = usuario.municipio_id if usuario else 1
             
             reporte = Report.query.get(reporte_id)
             if not reporte:
@@ -167,10 +169,9 @@ async def mostrar_cuadrillas_para_asignar(query, reporte_id: int, usuario: User)
             area_display = area_a_buscar.replace('_', ' ').title()
             
             mensaje = (
-                f"👷 *ASIGNAR REPORTE #{reporte_id}*\n\n"
+                f"👷 *ASIGNAR REPORTE {reporte.folio_display}*\n\n"
                 f"*Área:* {area_display}\n"
                 f"*Problema:* {reporte.subtipo}\n"
-                f"*Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n\n"
                 f"*Selecciona la cuadrilla:*\n"
                 f"({len(cuadrillas)} cuadrillas disponibles)"
             )
@@ -208,7 +209,7 @@ async def mostrar_detalle_reporte_director(query, reporte_id: int, director: Use
             calle = Calle.query.get(reporte.calle_id)
             
             mensaje = (
-                f"📋 *DETALLES COMPLETOS - Reporte #{reporte.id}*\n"
+                f"📋 *DETALLES COMPLETOS - Reporte {reporte.folio_display}*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
                 f"🔧 *Tipo:* {reporte.tipo}\n"
                 f"📝 *Subtipo:* {reporte.subtipo}\n"
@@ -255,7 +256,7 @@ async def volver_a_resumen(query, reporte_id: int, director: User):
             mensaje = (
                 f"🚨 *NUEVO REPORTE - {reporte.tipo.upper()}*\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"📍 *Ubicación:* {calle.nombre if calle else 'N/D'} #{reporte.numero}, "
                 f"{localidad.nombre if localidad else 'N/D'}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
@@ -327,7 +328,7 @@ async def asignar_a_cuadrilla_director(query, reporte_id: int, cuadrilla_id: int
             
             mensaje_confirmacion = (
                 f"✅ *REPORTE ASIGNADO CORRECTAMENTE*\n\n"
-                f"📋 *Folio:* #{reporte.id}\n"
+                f"📋 *Folio:* {reporte.folio_display}\n"
                 f"👷 *Cuadrilla asignada:* {cuadrilla.nombre}\n"
                 f"📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}\n"
                 f"📞 *Reportante:* {reporte.reportante}\n"
@@ -342,7 +343,7 @@ async def asignar_a_cuadrilla_director(query, reporte_id: int, cuadrilla_id: int
                 parse_mode=ParseMode.MARKDOWN
             )
             
-            logger.info(f"✅ {quien_asigna} asignó reporte #{reporte_id} a cuadrilla {cuadrilla.nombre}")
+            logger.info(f"✅ {quien_asigna} asignó reporte {reporte.folio_display} a cuadrilla {cuadrilla.nombre}")
             
     except Exception as e:
         logger.error(f"❌ Error asignando reporte: {e}")
@@ -368,7 +369,7 @@ async def manejar_evidencia_director(query, reporte_id: int, director: User):
             
             # ✅ ENVIAR MENSAJE NUEVO (NO editar el original)
             mensaje = (
-                f"📎 *Evidencia del reporte #{reporte.id}*\n\n"
+                f"📎 *Evidencia del reporte {reporte.folio_display}*\n\n"
                 f"📄 *Archivo:* `{nombre_archivo}`\n\n"
                 f"🔗 [Ver evidencia]({evidencia_url})"
             )
