@@ -169,9 +169,8 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
             f"Longitud: {location.longitude}\n"
             f"📍 *Localidad:* {localidad_mostrar}\n"
             f"🛣️ *Calle:* {calle_mostrar}\n\n"
-            f"🔍 *Para ayudar a la cuadrilla a identificar tu lugar del reporte,*\n"
-            f"¿puedes darnos el número de casa más cercano por favor?\n"
-            f"(Ej: 80)",
+            f"🔍 *Opcional:* Si conoces el número de casa cercano, escríbelo.\n"
+            f"Si no lo sabes, escribe *'S/N'* y continuamos.",
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )
@@ -193,9 +192,8 @@ async def ubicacion_gps_handler(update: Update, context: ContextTypes.DEFAULT_TY
             f"Longitud: {location.longitude}\n"
             f"📍 *Localidad:* Proporcionada por el usuario\n"
             f"🛣️ *Calle:* Proporcionada por el usuario\n\n"
-            f"🔍 *Para ayudar a la cuadrilla a identificar tu lugar del reporte,*\n"
-            f"¿puedes darnos el número de casa más cercano por favor?\n"
-            f"(Ej: 80)",
+            f"🔍 *Opcional:* Si conoces el número de casa cercano, escríbelo.\n"
+            f"Si no lo sabes, escribe *'S/N'* y continuamos.",
             parse_mode="Markdown",
             reply_markup=ReplyKeyboardRemove()
         )

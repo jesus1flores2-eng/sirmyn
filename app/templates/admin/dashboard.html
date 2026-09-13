@@ -224,15 +224,31 @@
                             {% endif %}
 
                             {% if reporte.evidencia_cuadrilla %}
-                                <a href="{{ url_for('static', filename='evidencias/cuadrilla/' ~ reporte.evidencia_cuadrilla.split('/')[-1]) }}" target="_blank" class="evidence-link text-decoration-none d-block mb-1">
-                                    <i class="fas fa-hard-hat me-1"></i> Cuadrilla
-                                </a>
+                                {% if reporte.evidencia_cuadrilla.startswith('http') %}
+                                    <a href="{{ reporte.evidencia_cuadrilla }}" target="_blank" class="evidence-link text-decoration-none d-block mb-1">
+                                        <i class="fas fa-hard-hat me-1"></i> Cuadrilla
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('admin.uploaded_file', filename=reporte.evidencia_cuadrilla) }}" target="_blank" class="evidence-link text-decoration-none d-block mb-1">
+                                        <i class="fas fa-hard-hat me-1"></i> Cuadrilla
+                                    </a>
+                                {% endif %}
                             {% endif %}
 
                             {% if reporte.materiales_utilizados %}
-                                <a href="{{ url_for('static', filename='evidencias/materiales_utilizados/' ~ reporte.materiales_utilizados.split('/')[-1]) }}" target="_blank" class="evidence-link text-decoration-none d-block">
-                                    <i class="fas fa-boxes me-1"></i> Materiales
-                                </a>
+                                {% if reporte.materiales_utilizados.startswith('http') %}
+                                    <a href="{{ reporte.materiales_utilizados }}" target="_blank" class="evidence-link text-decoration-none d-block">
+                                        <i class="fas fa-boxes me-1"></i> Materiales
+                                    </a>
+                                {% elif reporte.materiales_utilizados.endswith(('.jpg', '.jpeg', '.png', '.gif', '.mp4', '.mov')) %}
+                                    <a href="{{ url_for('admin.uploaded_file', filename=reporte.materiales_utilizados) }}" target="_blank" class="evidence-link text-decoration-none d-block">
+                                        <i class="fas fa-boxes me-1"></i> Materiales
+                                    </a>
+                                {% else %}
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-boxes me-1"></i> {{ reporte.materiales_utilizados[:60] }}{% if reporte.materiales_utilizados|length > 60 %}...{% endif %}
+                                    </small>
+                                {% endif %}
                             {% endif %}
 
                             {% if not reporte.evidencia and not reporte.evidencia_cuadrilla and not reporte.materiales_utilizados %}

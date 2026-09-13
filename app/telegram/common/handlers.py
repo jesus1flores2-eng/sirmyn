@@ -5,7 +5,7 @@ from telegram.constants import ParseMode
 from app.telegram.common.states import *
 from app.telegram.common.utils import user_data, limpiar_estado, actualizar_timestamp_usuario
 from app.services.db_manager import DatabaseManager
-from app.services.cloudinary_service import subir_archivo
+from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
 from datetime import datetime
 import os
 
@@ -117,22 +117,28 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                 db.session.add(nuevo_reporte)
                 db.session.commit()
 
-                # PROCESAR EVIDENCIA CON CLOUDINARY (CON FALLBACK LOCAL)
+                # PROCESAR EVIDENCIA CON CLOUDINARY (NUEVA ESTRUCTURA POR MUNICIPIO)
                 if "evidencia_filename" in datos:
                     extension = datos["evidencia_filename"].split(".")[-1]
-                    nuevo_nombre = f"reporte_{nuevo_reporte.id}.{extension}"
-
-                    from app.telegram.common.keyboards import obtener_carpeta_departamento
-                    carpeta_departamento = obtener_carpeta_departamento(datos.get("tipo", "general"))
-                    carpeta_completa = os.path.join("uploads", carpeta_departamento)
+                    
+                    # Obtener nombre del municipio
+                    from app.models.municipio_config import MunicipioConfig
+                    municipio = MunicipioConfig.query.get(municipio_id)
+                    municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+                    
+                    # Generar carpeta y nombre con folio
+                    carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, datos.get("tipo", "general"), 'reportes')
+                    nombre_archivo = generar_nombre_archivo(nuevo_reporte.folio_display, extension)
+                    
+                    # Carpeta local
+                    carpeta_completa = os.path.join("uploads", carpeta_cloudinary)
                     os.makedirs(carpeta_completa, exist_ok=True)
-
+                    
                     origen = os.path.join("uploads", datos["evidencia_filename"])
-                    destino = os.path.join(carpeta_completa, nuevo_nombre)
+                    destino = os.path.join(carpeta_completa, nombre_archivo)
 
-                    # Intentar subir a Cloudinary
-                    public_id = f"reporte_{nuevo_reporte.id}"
-                    url = subir_archivo(origen, folder=carpeta_departamento, public_id=public_id)
+                    # Subir a Cloudinary con nueva estructura
+                    url = subir_archivo(origen, folder=carpeta_cloudinary, public_id=nombre_archivo.replace(f'.{extension}', ''))
                     if url:
                         nuevo_reporte.evidencia = url
                         logger.info(f"✅ Evidencia subida a Cloudinary: {url}")
@@ -144,11 +150,11 @@ async def confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYP
                         # Fallback: almacenamiento local
                         try:
                             os.rename(origen, destino)
-                            nuevo_reporte.evidencia = f"{carpeta_departamento}/{nuevo_nombre}"
+                            nuevo_reporte.evidencia = f"{carpeta_cloudinary}/{nombre_archivo}"
                             logger.info(f"✅ Evidencia guardada localmente: {nuevo_reporte.evidencia}")
                         except Exception as e:
                             logger.error(f"❌ Error renombrando evidencia: {e}")
-                            nuevo_reporte.evidencia = nuevo_nombre
+                            nuevo_reporte.evidencia = nombre_archivo
 
                     db.session.commit()
 

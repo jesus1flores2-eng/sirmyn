@@ -69,7 +69,7 @@ class AnaliticaService:
         
         return cuadrilla_subquery
     
-    def metricas_generales(self, dias=30, tipo='', localidad_id=''):
+    def metricas_generales(self, dias=30, tipo='', localidad_id='', municipio_id=None):
         """Obtiene métricas generales del sistema"""
         fecha_limite = self._obtener_fecha_limite(dias)
         
@@ -81,9 +81,16 @@ class AnaliticaService:
         
         if tipo:
             filtros.append(Report.tipo == tipo)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         if localidad_id and localidad_id.isdigit():
             filtros.append(Report.localidad_id == int(localidad_id))
+        
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         # Consulta corregida con join a status actual
         query = self.session.query(
@@ -151,10 +158,15 @@ class AnaliticaService:
         'Bomberos': '🚒'
     }
     
-    def eficiencia_por_departamento(self, dias=30):
+    def eficiencia_por_departamento(self, dias=30, municipio_id=None):
         """Calcula eficiencia por tipo/departamento"""
         fecha_limite = self._obtener_fecha_limite(dias)
         status_subquery = self._obtener_status_actual_subquery()
+        
+        # Construir filtros
+        filtros = [Report.timestamp >= fecha_limite, Report.tipo.isnot(None), Report.tipo != '']
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         # Consulta optimizada con SQLAlchemy
         resultados = self.session.query(
@@ -165,11 +177,7 @@ class AnaliticaService:
             ).label('atendidos')
         ).join(
             status_subquery, Report.id == status_subquery.c.report_id
-        ).filter(
-            Report.timestamp >= fecha_limite,
-            Report.tipo.isnot(None),
-            Report.tipo != ''
-        ).group_by(Report.tipo).all()
+        ).filter(*filtros).group_by(Report.tipo).all()
         
         data = {}
         for tipo, total, atendidos in resultados:
@@ -200,7 +208,7 @@ class AnaliticaService:
         
         return data
     
-    def focos_rojos(self, dias=30, limite=10, tipo=''):
+    def focos_rojos(self, dias=30, limite=10, tipo='', municipio_id=None):
         """Identifica los focos rojos principales"""
         fecha_limite = self._obtener_fecha_limite(dias)
         status_subquery = self._obtener_status_actual_subquery()
@@ -215,6 +223,10 @@ class AnaliticaService:
         
         if tipo:
             filtros.append(Report.tipo == tipo)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         query = self.session.query(
             Localidad.nombre.label('localidad'),
@@ -307,7 +319,7 @@ class AnaliticaService:
         
         return f'Revisión de {tipo} ({nivel} prioridad)'
     
-    def tendencias_mensuales(self, meses=6):
+    def tendencias_mensuales(self, meses=6, municipio_id=None):
         """Obtiene tendencia de los últimos meses"""
         fecha_inicio = datetime.utcnow() - timedelta(days=meses*30)
         status_subquery = self._obtener_status_actual_subquery()
@@ -321,9 +333,12 @@ class AnaliticaService:
             ).label('atendidos')
         ).join(
             status_subquery, Report.id == status_subquery.c.report_id
-        ).filter(
-            Report.timestamp >= fecha_inicio
-        ).group_by(
+        )
+        filtros = [Report.timestamp >= fecha_inicio]
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
+        
+        query = query.filter(*filtros).group_by(
             func.to_char(Report.timestamp, 'YYYY-MM')
         ).order_by('mes')
     
@@ -341,7 +356,7 @@ class AnaliticaService:
     
         return tendencias
     
-    def detalle_por_departamento(self, tipo, dias=30):
+    def detalle_por_departamento(self, tipo, dias=30, municipio_id=None):
         """Drill-down detallado por departamento"""
         fecha_limite = self._obtener_fecha_limite(dias)
         status_subquery = self._obtener_status_actual_subquery()
@@ -452,7 +467,7 @@ class AnaliticaService:
     
         return [{'mes': mes, 'total': total} for mes, total in query.all()]
     
-    def obtener_reportes_detallados(self, dias=30, tipo=''):
+    def obtener_reportes_detallados(self, dias=30, tipo='', municipio_id=None):
         """Obtiene reportes para vista detallada"""
         fecha_limite = self._obtener_fecha_limite(dias)
         status_subquery = self._obtener_status_actual_subquery()
@@ -462,6 +477,10 @@ class AnaliticaService:
         
         if tipo:
             filtros.append(Report.tipo == tipo)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         query = self.session.query(
             Report.id,
@@ -516,6 +535,10 @@ class AnaliticaService:
         
         if tipo:
             filtros.append(Report.tipo == tipo)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         # Solo reportes con coordenadas
         filtros.append(Report.latitud.isnot(None))
@@ -575,10 +598,14 @@ class AnaliticaService:
             }
         }
     
-    def obtener_estadisticas_departamentos(self, dias=30):
+    def obtener_estadisticas_departamentos(self, dias=30, municipio_id=None):
         """Obtiene estadísticas por departamento para el mapa"""
         fecha_limite = self._obtener_fecha_limite(dias)
         status_subquery = self._obtener_status_actual_subquery()
+        
+        filtros = [Report.timestamp >= fecha_limite]
+        if municipio_id:
+            filtros.append(Report.municipio_id == municipio_id)
         
         query = self.session.query(
             Report.tipo,
@@ -588,9 +615,7 @@ class AnaliticaService:
             ).label('atendidos')
         ).join(
             status_subquery, Report.id == status_subquery.c.report_id
-        ).filter(
-            Report.timestamp >= fecha_limite
-        ).group_by(
+        ).filter(*filtros).group_by(
             Report.tipo
         ).order_by(
             func.count(Report.id).desc()

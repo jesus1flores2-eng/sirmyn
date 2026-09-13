@@ -1315,28 +1315,38 @@ async def manejar_volver_reporte(query, context, reporte_id):
             calle_nombre = reporte.calle.nombre if reporte.calle else 'N/D'
             localidad_nombre = reporte.localidad.nombre if reporte.localidad else 'N/D'
 
-            mensaje = (
-                f"🚨 *REPORTE ASIGNADO*\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-                f"📋 *Folio:* {reporte.folio_display}\n"
-                f"📍 *Ubicación:* {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
-                f"📞 *Reportante:* {reporte.reportante}\n"
-                f"🔧 *Tipo:* {reporte.tipo} - {reporte.subtipo}\n"
-                f"📄 *Descripción:* {reporte.descripcion_problema[:150]}...\n\n"
-            )
-
-            # ⭐ AGREGAR EVIDENCIA SI EXISTE
-            if reporte.evidencia:
-                from app.services.notification_service import construir_enlace_evidencia
-                enlace, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
-                mensaje += f"📎 *Evidencia:* {enlace}\n\n"
-
-            # ⭐ AGREGAR MAPA SI HAY COORDENADAS
+            # ⭐ CONSTRUIR ENLACES LIMPIOS
+            enlaces = []
+            
+            # Mapa
             if reporte.latitud and reporte.longitud:
                 maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
-                mensaje += f"📍 *Ver en mapa:* [Google Maps]({maps_url})\n\n"
-
-            mensaje += f"*📋 Acciones rápidas:*"
+                enlaces.append(f"🗺️ <a href='{maps_url}'>Ver ubicación exacta en mapa</a>")
+            elif reporte.calle and reporte.calle.nombre:
+                direccion_query = f"{reporte.calle.nombre} {reporte.numero or ''} {localidad_nombre}"
+                direccion_url = direccion_query.replace(' ', '+')
+                maps_url = f"https://www.google.com/maps/search/?api=1&query={direccion_url}"
+                enlaces.append(f"🗺️ <a href='{maps_url}'>Ver ubicación en mapa</a>")
+            
+            # Evidencia
+            if reporte.evidencia:
+                from app.services.notification_service import construir_enlace_evidencia
+                enlace_ev, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+                enlaces.append(f"📎 <a href='{enlace_ev}'>Ver foto/video del reporte</a>")
+            
+            enlaces_texto = '\n'.join(enlaces)
+            
+            mensaje = (
+                f"🚨 <b>REPORTE ASIGNADO</b>\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                f"📋 <b>Folio:</b> {reporte.folio_display}\n"
+                f"📍 <b>Ubicación:</b> {calle_nombre} #{reporte.numero}, {localidad_nombre}\n"
+                f"📞 <b>Reportante:</b> {reporte.reportante}\n"
+                f"🔧 <b>Tipo:</b> {reporte.tipo} - {reporte.subtipo}\n"
+                f"📄 <b>Descripción:</b> {reporte.descripcion_problema[:150]}...\n\n"
+                f"{enlaces_texto}\n\n"
+                f"<b>📋 Acciones rápidas:</b>"
+            )
 
             # ⭐ CONSTRUIR BOTONES CON EL USUARIO QUE PRESIONÓ
             reply_markup = construir_botones_reporte(
@@ -1351,7 +1361,7 @@ async def manejar_volver_reporte(query, context, reporte_id):
             await context.bot.send_message(
                 chat_id=query.from_user.id,
                 text=mensaje,
-                parse_mode=ParseMode.MARKDOWN,
+                parse_mode=ParseMode.HTML,
                 reply_markup=reply_markup,
                 disable_web_page_preview=True
             )

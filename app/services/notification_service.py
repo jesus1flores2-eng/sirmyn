@@ -417,6 +417,27 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
             elif reporte.telefono:
                 contacto_reporte = f"📱 <b>Teléfono:</b> {reporte.telefono}\n"
             
+            # ⭐ CONSTRUIR ENLACES LIMPIOS
+            enlaces = []
+            
+            # Mapa
+            if reporte.latitud and reporte.longitud:
+                maps_url = f"https://www.google.com/maps?q={reporte.latitud},{reporte.longitud}"
+                enlaces.append(f"🗺️ <a href='{maps_url}'>Ver ubicación exacta en mapa</a>")
+            elif calle and calle.nombre:
+                direccion_query = f"{calle.nombre} {reporte.numero or ''} {localidad.nombre if localidad else ''}"
+                direccion_url = direccion_query.replace(' ', '+')
+                maps_url = f"https://www.google.com/maps/search/?api=1&query={direccion_url}"
+                enlaces.append(f"🗺️ <a href='{maps_url}'>Ver ubicación en mapa</a>")
+            
+            # Evidencia
+            if reporte.evidencia:
+                from app.services.notification_service import construir_enlace_evidencia
+                enlace_ev, _ = construir_enlace_evidencia(reporte.evidencia, "evidencia_usuario")
+                enlaces.append(f"📎 <a href='{enlace_ev}'>Ver foto/video del reporte</a>")
+            
+            enlaces_texto = '\n'.join(enlaces)
+            
             mensaje = (
                 f"🚨 <b>NUEVO REPORTE ASIGNADO</b>\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
@@ -430,6 +451,7 @@ async def notificar_asignacion_a_cuadrilla(reporte_id: int, user_id_asignado: in
                 f"🏷️ <b>Estatus:</b> {status.descripcion if status else 'Asignado'}\n"
                 f"👷 <b>Asignado a:</b> {usuario.nombre}\n"
                 f"⏰ <b>Fecha:</b> {reporte.timestamp.strftime('%d/%m/%Y %H:%M') if reporte.timestamp else 'N/D'}\n\n"
+                f"{enlaces_texto}\n\n"
                 f"<b>📋 Acciones rápidas:</b>"
             )
         
@@ -710,38 +732,31 @@ async def notificar_supervisor_revision(reporte_id: int, team_id: int):
         # ============================================================
         # CONSTRUIR MENSAJE COMPLETO
         # ============================================================
+        # ⭐ CONSTRUIR EVIDENCIA DE REPARACIÓN
+        evidencia_texto = ""
+        if asignacion.evidencia_cuadrilla:
+            evidencias_lista = asignacion.evidencia_cuadrilla.split(",")
+            evidencia_texto = "\n📸 <b>Evidencia de la reparación:</b>\n"
+            for i, ev in enumerate(evidencias_lista, 1):
+                ev = ev.strip()
+                if ev:
+                    if ev.startswith("http"):
+                        url = ev
+                    else:
+                        from flask import url_for
+                        url = url_for("admin.uploaded_file", filename=ev, _external=True)
+                    evidencia_texto += f'• <a href="{url}">Ver evidencia {i}</a>\n'
+            evidencia_texto += "\n"
+        
         mensaje = f"""
-🔍 *REPARACIÓN PARA REVISIÓN - Reporte {reporte.folio_display}*
-
-📍 *UBICACIÓN:*
-{reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
-{reporte.localidad.nombre if reporte.localidad else 'N/D'}
-
-👤 *REPORTANTE:*
-{reporte.reportante} (📱 {reporte.telefono})
-
-🔧 *PROBLEMA:*
-{reporte.tipo} - {reporte.subtipo}
-{reporte.descripcion_problema[:150]}{'...' if len(reporte.descripcion_problema) > 150 else ''}
-
-👷 *CUADRILLA RESPONSABLE:*
-{cuadrilla.nombre}
-
-📸 *EVIDENCIA DE REPARACIÓN:*
-{evidencias_texto}
-
-📦 *MATERIALES UTILIZADOS:*
-{materiales_texto}
-
-💬 *COMENTARIOS DE LA CUADRILLA:*
-{asignacion.observaciones or 'Sin comentarios'}
-
-⏰ *FECHA REPARACIÓN:*
-{asignacion.timestamp.strftime('%d/%m/%Y %H:%M') if asignacion.timestamp else 'N/D'}
-
-*📋 ACCIONES DISPONIBLES:*
-• ✅ *Validar:* Aceptar reparación y finalizar reporte
-• ❌ *Rechazar:* Devolver a cuadrilla con comentario
+✅ <b>¡TU REPORTE HA SIDO ATENDIDO!</b>
+📋 <b>Folio:</b> {reporte.folio_display}
+📍 <b>Ubicación:</b> {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
+🔧 <b>Problema:</b> {reporte.tipo} - {reporte.subtipo}
+👷 <b>Cuadrilla:</b> {cuadrilla.nombre if cuadrilla else 'N/D'}
+{evidencia_texto}
+<b>¿La reparación fue satisfactoria?</b>
+⚠️ Tienes 48 horas para responder. Si no respondes, se considerará aceptada automáticamente.
 """
         
         keyboard = [
@@ -1083,16 +1098,30 @@ async def notificar_usuario_reporte_finalizado(reporte, asignacion, quien_valido
         asignacion.observaciones = f"Validado por {quien_valido} el {datetime.now().strftime('%d/%m/%Y %H:%M')}"
         db.session.commit()
         
+        # ⭐ CONSTRUIR EVIDENCIA DE REPARACIÓN
+        evidencia_texto = ""
+        if asignacion.evidencia_cuadrilla:
+            evidencias_lista = asignacion.evidencia_cuadrilla.split(",")
+            evidencia_texto = "\n📸 <b>Evidencia de la reparación:</b>\n"
+            from flask import url_for
+            for idx, ev in enumerate(evidencias_lista, 1):
+                ev = ev.strip()
+                if ev:
+                    if ev.startswith("http"):
+                        url_ev = ev
+                    else:
+                        url_ev = url_for("admin.uploaded_file", filename=ev, _external=True)
+                    evidencia_texto += f'• <a href="{url_ev}">Ver evidencia {idx}</a>\n'
+            evidencia_texto += "\n"
+        
         mensaje = f"""
-✅ *¡TU REPORTE HA SIDO ATENDIDO!*
-
-📋 *Folio:* {reporte.folio_display}
-📍 *Ubicación:* {reporte.calle.nombre if reporte.calle else 'N/D'} #{reporte.numero}
-🔧 *Problema:* {reporte.tipo} - {reporte.subtipo}
-👷 *Cuadrilla:* {cuadrilla.nombre if cuadrilla else 'N/D'}
-
-*¿La reparación fue satisfactoria?*
-
+✅ <b>¡TU REPORTE HA SIDO ATENDIDO!</b>
+📋 <b>Folio:</b> {reporte.folio_display}
+📍 <b>Ubicación:</b> {reporte.calle.nombre if reporte.calle else "N/D"} #{reporte.numero}
+🔧 <b>Problema:</b> {reporte.tipo} - {reporte.subtipo}
+👷 <b>Cuadrilla:</b> {cuadrilla.nombre if cuadrilla else "N/D"}
+{evidencia_texto}
+<b>¿La reparación fue satisfactoria?</b>
 ⚠️ Tienes 48 horas para responder. Si no respondes, se considerará aceptada automáticamente.
 """
         keyboard = [

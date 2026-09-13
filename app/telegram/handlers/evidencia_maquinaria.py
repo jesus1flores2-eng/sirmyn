@@ -12,7 +12,7 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
-from app.services.cloudinary_service import subir_archivo
+from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
 from datetime import datetime
 from pathlib import Path
 import logging
@@ -94,8 +94,18 @@ async def maquinaria_foto_antes(update: Update, context: ContextTypes.DEFAULT_TY
             filepath = base_path / filename
             await file.download_to_drive(filepath)
             
-            public_id = f"antes_{datos['tipo_maquinaria']}_{datos['reporte_id']}_{uuid.uuid4().hex[:4]}"
-            url = subir_archivo(str(filepath), folder=f"{carpeta}/cuadrilla", public_id=public_id)
+            # Nueva estructura por municipio
+            from app.models.municipio_config import MunicipioConfig
+            reporte_obj = Report.query.get(datos.get('reporte_id'))
+            municipio = MunicipioConfig.query.get(reporte_obj.municipio_id if reporte_obj else 1)
+            municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+            
+            carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, reporte_obj.tipo if reporte_obj else 'Agua potable', 'reparacion/evidencia_cuadrilla')
+            
+            folio = reporte_obj.folio_display if reporte_obj else f'REP-{datos["reporte_id"]}'
+            nombre_archivo = generar_nombre_archivo(folio, 'jpg', 'antes')
+            
+            url = subir_archivo(str(filepath), folder=carpeta_cloudinary, public_id=nombre_archivo.replace('.jpg', ''))
             
             if url:
                 datos['foto_antes'] = url
@@ -158,8 +168,18 @@ async def maquinaria_foto_despues(update: Update, context: ContextTypes.DEFAULT_
             filepath = base_path / filename
             await file.download_to_drive(filepath)
             
-            public_id = f"despues_{datos['tipo_maquinaria']}_{datos['reporte_id']}_{uuid.uuid4().hex[:4]}"
-            url = subir_archivo(str(filepath), folder=f"{carpeta}/materiales_utilizados", public_id=public_id)
+            # Nueva estructura por municipio
+            from app.models.municipio_config import MunicipioConfig
+            reporte_obj = Report.query.get(datos.get('reporte_id'))
+            municipio = MunicipioConfig.query.get(reporte_obj.municipio_id if reporte_obj else 1)
+            municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+            
+            carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, reporte_obj.tipo if reporte_obj else 'Agua potable', 'reparacion/materiales_utilizados')
+            
+            folio = reporte_obj.folio_display if reporte_obj else f'REP-{datos["reporte_id"]}'
+            nombre_archivo = generar_nombre_archivo(folio, 'jpg', 'despues')
+            
+            url = subir_archivo(str(filepath), folder=carpeta_cloudinary, public_id=nombre_archivo.replace('.jpg', ''))
             
             if url:
                 datos['foto_despues'] = url

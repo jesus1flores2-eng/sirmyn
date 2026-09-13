@@ -11,17 +11,21 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     actualizar_timestamp_usuario(user_id)
     numero = update.message.text.strip()
     user_data[user_id]["numero"] = numero
-    try:
-        from app.services.geocoding import obtener_coordenadas_osm
-        localidad_nombre = user_data[user_id].get("localidad_nombre", "")
-        calle_nombre = user_data[user_id].get("calle_nombre", "")
-        if localidad_nombre and calle_nombre:
-            lat, lon = obtener_coordenadas_osm(localidad_nombre, calle_nombre, numero)
-            if lat and lon:
-                user_data[user_id]["latitud"] = lat
-                user_data[user_id]["longitud"] = lon
-    except Exception as e:
-        logger.warning(f"Error obteniendo coordenadas: {e}")
+    # ⭐ Si ya tiene GPS, NO sobreescribir coordenadas
+    tiene_gps = user_data[user_id].get("ubicacion_gps", False)
+    
+    if not tiene_gps:
+        try:
+            from app.services.geocoding import obtener_coordenadas_osm
+            localidad_nombre = user_data[user_id].get("localidad_nombre", "")
+            calle_nombre = user_data[user_id].get("calle_nombre", "")
+            if localidad_nombre and calle_nombre:
+                lat, lon = obtener_coordenadas_osm(localidad_nombre, calle_nombre, numero)
+                if lat and lon:
+                    user_data[user_id]["latitud"] = lat
+                    user_data[user_id]["longitud"] = lon
+        except Exception as e:
+            logger.warning(f"Error obteniendo coordenadas: {e}")
     loc_id = user_data[user_id].get("localidad_id")
     calle_id = user_data[user_id].get("calle_id")
     tipo_actual = user_data[user_id].get("tipo")
@@ -66,8 +70,33 @@ async def numero_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         calle_nombre = user_data[user_id].get("calle_nombre", "Calle no especificada")
         coords_msg = ""
         if user_data[user_id].get("latitud") and user_data[user_id].get("longitud"):
-            coords_msg = f"\n📍 *Coordenadas:* {user_data[user_id]['latitud']}, {user_data[user_id]['longitud']}"
-        await update.message.reply_text(f"✅ *Ubicación confirmada:*\n\n📍 *Localidad:* {localidad_nombre}\n🛣️ *Calle:* {calle_nombre}\n🔢 *Número:* {numero}{coords_msg}\n\n*¿Entre qué calles está?* (Ej: 'Entre Morelos e Hidalgo' o 'No'):", parse_mode="Markdown", reply_markup=ReplyKeyboardRemove())
+            coords_msg = f"\\n📍 *Coordenadas GPS:* {user_data[user_id]['latitud']}, {user_data[user_id]['longitud']}"
+        
+        # ⭐ Si tiene GPS, saltar ENTRE_CALLES y pasar directo a DESCRIPCION
+        if tiene_gps:
+            user_data[user_id]["entre_calles"] = "GPS exacto"
+            await update.message.reply_text(
+                f"✅ *Ubicación GPS confirmada:*\\n\\n"
+                f"📍 *Localidad:* {localidad_nombre}\\n"
+                f"🛣️ *Calle:* {calle_nombre}\\n"
+                f"🔢 *Número (referencia):* {numero}"
+                f"{coords_msg}\\n\\n"
+                f"📝 *Descríbeme el problema:*",
+                parse_mode="Markdown",
+                reply_markup=ReplyKeyboardRemove()
+            )
+            return DESCRIPCION
+        
+        # Si NO tiene GPS (dirección manual), pedir entre calles como siempre
+        await update.message.reply_text(
+            f"✅ *Ubicación confirmada:*\\n\\n"
+            f"📍 *Localidad:* {localidad_nombre}\\n"
+            f"🛣️ *Calle:* {calle_nombre}\\n"
+            f"🔢 *Número:* {numero}{coords_msg}\\n\\n"
+            f"*¿Entre qué calles está?* (Ej: 'Entre Morelos e Hidalgo' o 'No'):",
+            parse_mode="Markdown",
+            reply_markup=ReplyKeyboardRemove()
+        )
         return ENTRE_CALLES
 
 async def duplicado_confirmacion_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):

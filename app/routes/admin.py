@@ -1252,14 +1252,51 @@ def test_cuadrilla_termina(reporte_id):
 @login_required
 @admin_required
 def test_validacion_usuario(reporte_id):
+    """Prueba REAL: Envía validación al usuario final"""
     try:
+        logger.info(f"✅ [TEST] Validación usuario para reporte #{reporte_id}")
+        
         reporte = Report.query.get_or_404(reporte_id)
-        flash(f'ℹ️ Prueba: Se enviaría validación al usuario {reporte.reportante} ({reporte.telefono})', 'info')
-        flash('⚠️ Nota: Para probar realmente, el usuario debe tener Telegram vinculado', 'warning')
+        
+        # Obtener última asignación
+        asignacion = Assignment.query.filter_by(
+            report_id=reporte_id
+        ).order_by(Assignment.timestamp.desc()).first()
+        
+        if not asignacion:
+            flash('❌ El reporte no tiene asignación', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        if not reporte.telefono:
+            flash(f'❌ El reporte no tiene teléfono/telegram_id', 'error')
+            return redirect(url_for('admin.dashboard'))
+        
+        # ========== REPLICAR FLUJO REAL ==========
+        import asyncio
+        
+        async def ejecutar_flujo():
+            from app.services.notification_service import notificar_usuario_reporte_finalizado
+            await notificar_usuario_reporte_finalizado(reporte, asignacion, "Admin (test)")
+        
+        bot_app = get_telegram_app()
+        if bot_app and bot_app.bot:
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_closed():
+                    raise RuntimeError("Loop cerrado")
+            except:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            loop.run_until_complete(ejecutar_flujo())
+            flash(f'✅ Validación enviada al usuario {reporte.reportante} ({reporte.telefono})', 'success')
+        else:
+            flash('❌ Bot no disponible', 'error')
+        
         return redirect(url_for('admin.dashboard'))
     except Exception as e:
         flash(f'❌ Error en prueba: {str(e)[:100]}', 'error')
-        logger.error(f"❌ Error en test_validacion_usuario: {e}")
+        logger.error(f"❌ Error en test_validacion_usuario: {e}", exc_info=True)
         return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/reporte/<int:reporte_id>/test_problema_ubicacion', methods=['POST'])

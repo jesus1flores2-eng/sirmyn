@@ -74,8 +74,9 @@ def api_eficiencia_departamentos():
     try:
         dias = request.args.get('dias', 30, type=int)
         analitica = AnaliticaService()
+        municipio_id = _obtener_municipio_id()
 
-        data = analitica.eficiencia_por_departamento(dias)
+        data = analitica.eficiencia_por_departamento(dias, municipio_id=municipio_id)
 
         departamentos = []
         atendidos_data = []
@@ -108,9 +109,10 @@ def api_focos_rojos():
         dias = request.args.get('dias', 30, type=int)
         limite = request.args.get('limite', 10, type=int)
         tipo = request.args.get('tipo', '')
+        municipio_id = _obtener_municipio_id()
 
         analitica = AnaliticaService()
-        data = analitica.focos_rojos(dias, limite, tipo)
+        data = analitica.focos_rojos(dias, limite, tipo, municipio_id=municipio_id)
 
         return jsonify({
             'success': True,
@@ -126,7 +128,8 @@ def api_tendencias_mensuales():
     """API: Tendencia últimos 6 meses"""
     try:
         analitica = AnaliticaService()
-        data = analitica.tendencias_mensuales()
+        municipio_id = _obtener_municipio_id()
+        data = analitica.tendencias_mensuales(municipio_id=municipio_id)
         return jsonify({'success': True, 'tendencias': data})
     except Exception as e:
         current_app.logger.error(f"Error en api_tendencias_mensuales: {str(e)}")
@@ -140,11 +143,44 @@ def api_geolocalizacion():
         dias = request.args.get('dias', 30, type=int)
         tipo = request.args.get('tipo', '')
         estado = request.args.get('estado', '')
-
-        analitica = AnaliticaService()
-        resultado = analitica.obtener_puntos_mapa(dias, tipo)
-
-        puntos = resultado['puntos']
+        municipio_id = request.args.get('municipio_id', None, type=int)
+        
+        # Si hay sesión de municipio, filtrar por ese municipio
+        if session.get('municipio_id'):
+            municipio_id = session['municipio_id']
+        
+        # Si hay municipio_id, filtrar
+        from app.models.report import Report
+        from app.services.analitica_service import AnaliticaService
+        
+        if municipio_id:
+            # Filtrar puntos por municipio directamente
+            puntos = []
+            reportes = Report.query.filter(
+                Report.municipio_id == municipio_id,
+                Report.latitud.isnot(None),
+                Report.longitud.isnot(None)
+            ).all()
+            
+            for r in reportes:
+                asignacion = r.asignaciones[-1] if r.asignaciones else None
+                estado_desc = asignacion.status.descripcion if asignacion and asignacion.status else 'Pendiente'
+                punto = {
+                    'id': r.id,
+                    'lat': r.latitud,
+                    'lng': r.longitud,
+                    'tipo': r.tipo,
+                    'estado': 'Atendido' if estado_desc in ['Finalizado', 'Aceptado por usuario', 'Aceptado automáticamente'] else 'Pendiente',
+                    'calle': r.calle.nombre if r.calle else 'N/D',
+                    'coordenadas': {'lat': r.latitud, 'lng': r.longitud}
+                }
+                puntos.append(punto)
+            
+            resultado = {'puntos': puntos, 'estadisticas': {'total': len(puntos)}}
+        else:
+            analitica = AnaliticaService()
+            resultado = analitica.obtener_puntos_mapa(dias, tipo)
+            puntos = resultado['puntos']
         if estado:
             if estado == 'atendido':
                 puntos = [p for p in puntos if p['estado'] == 'Atendido']
@@ -168,8 +204,9 @@ def api_detalle_departamento(tipo):
     try:
         dias = request.args.get('dias', 30, type=int)
         analitica = AnaliticaService()
+        municipio_id = _obtener_municipio_id()
 
-        detalle = analitica.detalle_por_departamento(tipo, dias)
+        detalle = analitica.detalle_por_departamento(tipo, dias, municipio_id=municipio_id)
 
         return jsonify({
             'success': True,
@@ -199,7 +236,8 @@ def reporte_detallado():
     dias = request.args.get('dias', 30, type=int)
     tipo = request.args.get('tipo', '')
 
-    reportes = analitica.obtener_reportes_detallados(dias, tipo)
+    municipio_id = _obtener_municipio_id()
+    reportes = analitica.obtener_reportes_detallados(dias, tipo, municipio_id=municipio_id)
 
     tipos = db.session.query(Report.tipo).distinct().all()
     tipos_disponibles = [t[0] for t in tipos if t[0]]
@@ -225,9 +263,10 @@ def obtener_departamentos():
     """API para obtener estadísticas por departamento"""
     try:
         dias = request.args.get('dias', 30, type=int)
+        municipio_id = _obtener_municipio_id()
 
         service = AnaliticaService()
-        departamentos = service.obtener_estadisticas_departamentos(dias=dias)
+        departamentos = service.obtener_estadisticas_departamentos(dias=dias, municipio_id=municipio_id)
 
         return jsonify({
             'success': True,

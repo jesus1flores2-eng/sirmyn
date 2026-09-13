@@ -1,0 +1,7255 @@
+{
+  "fecha": "2026-09-11T18:45:52.133599",
+  "usuarios": [
+    {
+      "id": 2,
+      "nombre": "Administrador Sistema",
+      "username": "admin",
+      "password_hash": "pbkdf2:sha256:100000$s4l7s3cr370$cc256608aec750b9f79c5ad1a8a1fd262584e3bd370189f7ff4c33e2f99e9249",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "administrador",
+      "rol_especifico": "administrador",
+      "area": null,
+      "subarea": null,
+      "role": "admin",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": true,
+      "puede_configurar": true,
+      "created_at": "2026-08-17 23:58:14.096239",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 42,
+      "nombre": "jefe de alumbrado",
+      "username": "Jefe_Alumbrado",
+      "password_hash": "scrypt:32768:8:1$rZiWKuU8lTWtKjIp$4ac53b8ac498399ba1ba4f181d54e12da6f4e945e74b251f5adb130e3f11ff5cf10efbd1b80aacaa2622b8db81286dff1363d11f61b544a58f31af189366619b",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jefe_area",
+      "area": "alumbrado",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 22:06:25.952406",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 5,
+      "nombre": "Jefe Comercial Agua",
+      "username": "jefe_comercial",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "jefe",
+      "rol_especifico": "jefe_area_comercial",
+      "area": "agua",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": true,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:18.989037",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 7,
+      "nombre": "Operador Vactor",
+      "username": "vactor",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "vactor",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": true,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:20.976897",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 8,
+      "nombre": "Operador Pipa",
+      "username": "pipa",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "pipa",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:21.239691",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 10,
+      "nombre": "Director Aseo",
+      "username": "director_aseo",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "aseo",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:29.741486",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 11,
+      "nombre": "Cuadrilla Aseo 1",
+      "username": "cuadrilla_aseo",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla_aseo",
+      "area": "aseo",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:30.001331",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 12,
+      "nombre": "Director Parques",
+      "username": "director_parques",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "parques",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:31.538242",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 13,
+      "nombre": "Cuadrilla Parques 1",
+      "username": "jardinero1",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jardinero",
+      "area": "parques",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:32.815866",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 14,
+      "nombre": "Director Bomberos",
+      "username": "director_bomberos",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "bomberos",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:33.342957",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 15,
+      "nombre": "Camión Bombero 1",
+      "username": "camion_bombero",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "camion_bombero",
+      "area": "bomberos",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:34.481515",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 16,
+      "nombre": "empedrador 1",
+      "username": "empedrador",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "obras",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:36.567648",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 17,
+      "nombre": "empedrador agua",
+      "username": "empedrador agua",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": true,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:38.103690",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 19,
+      "nombre": "director de ecologia",
+      "username": "director de ecologia",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "ecologia",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:38.481630",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 20,
+      "nombre": "director de seguridad publica",
+      "username": "dire_seguridad",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "seguridad",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:38.695701",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 23,
+      "nombre": "cuadrilla ecologia",
+      "username": "cuadrilla ecologia",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "ecologia",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:39.334549",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 24,
+      "nombre": "patrullero 1",
+      "username": "patrullero 1",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "seguridad",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:39.560044",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 25,
+      "nombre": "patrullero 2",
+      "username": "patrullero 2",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "seguridad",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:39.780278",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 34,
+      "nombre": "panchito",
+      "username": "patrullero1",
+      "password_hash": "scrypt:32768:8:1$Sj4xATXhiirSBgES$22690a5304b8d4a7c0cdf648192b46d02d238782abf3b99f1faf3168d8207b65e31f63f8365193c17104e306ac44219deede0f9c810dea95ff8dbb656722c143",
+      "team_id": 17,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "seguridad",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-28 04:04:42.622574",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 1,
+      "nombre": "Presidente Municipal",
+      "username": "presidente",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "presidente",
+      "rol_especifico": "presidente",
+      "area": null,
+      "subarea": null,
+      "role": "admin",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": true,
+      "puede_configurar": true,
+      "created_at": "2026-08-17 23:58:13.508528",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 33,
+      "nombre": "cabina",
+      "username": "cabina",
+      "password_hash": "scrypt:32768:8:1$Rd53kG8F9ASTUT1p$c0129cc56c9bf14b5975bb9f7d42dd450b38c3fdc6e8edd3c5feaca094fae717aee3875ac43ea58287dde34fed276dcde512e6d359e6cb25f61da7cefb138ae8",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jefe_area",
+      "area": "seguridad",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-28 03:14:52.235059",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 32,
+      "nombre": "Manuel",
+      "username": "manuelcov",
+      "password_hash": "scrypt:32768:8:1$XGGloUps57A6aCmW$4c51e078e9e27e45771aa1e52c78ed7b35de5bcfad656585fac7d6857a499036da236d50623e832d7f53220769d15159bb8fe0637d7d26ce27c95d7112d699a8",
+      "team_id": 3,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-19 00:40:25.741147",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 28,
+      "nombre": "Operador 2",
+      "username": "camion",
+      "password_hash": "",
+      "team_id": 22,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:41.513919",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 21,
+      "nombre": "director de obras publicas",
+      "username": "director obra",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "obras",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:38.897786",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 26,
+      "nombre": "bacheo",
+      "username": "bacheo",
+      "password_hash": "",
+      "team_id": 19,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "obras",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:40.009002",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 3,
+      "nombre": "Director Agua",
+      "username": "director_agua",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": 1519032684,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "agua",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:17.194245",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 4,
+      "nombre": "Jefe Técnico Agua",
+      "username": "jefe_tecnico",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": 5577044915,
+      "nivel": "jefe",
+      "rol_especifico": "jefe_area_tecnica",
+      "area": "agua",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": true,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:17.445282",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 29,
+      "nombre": "juan",
+      "username": "juanba",
+      "password_hash": "scrypt:32768:8:1$2p61H3acsM5y4TqH$8a75132649fc810d3f4c5e375da6a74043166b5bfcab1d1813e24a9c7bedde5e2eef3dbc6888ad7a3a66d75414fcb31ad5a790542da1314d6b1ecb28f23b7b7a",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "admin",
+      "area": null,
+      "subarea": null,
+      "role": "admin",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-18 23:54:50.703683",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 27,
+      "nombre": "OPERADOR 1",
+      "username": "Retro",
+      "password_hash": "",
+      "team_id": 21,
+      "telegram_id": 7008236243,
+      "nivel": "retroexcavadora",
+      "rol_especifico": "retroexcavadora",
+      "area": "agua",
+      "subarea": null,
+      "role": "retroexcavadora",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:40.348092",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 35,
+      "nombre": "ambulancia",
+      "username": "ambulancia",
+      "password_hash": "scrypt:32768:8:1$CrJggL780xy5daC6$c8cc7bcb5d9c1656e30d77843bfb14de87b9f01d458722a9cbc159ad4ef915821371b96129c8bac58c050af675cca882cd66b37efdfd9b6e679f0205da42f8d0",
+      "team_id": 24,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "proteccion_civil",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-28 20:15:41.283000",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 40,
+      "nombre": "Director Ambulancia",
+      "username": "Director_Ambulancia",
+      "password_hash": "scrypt:32768:8:1$JCtjEl0Z8A8cLVg1$fb78d5bab37dabac1c46e22b6b30e8f596366345bf671fc461bc74eab5ba6851b6d4720dbaa8eee7354bb84453b9b7d1dc9f6625a9840c55dd3ea145130e3be1",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "director",
+      "area": "ambulancia",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:48:12.642139",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 41,
+      "nombre": "cabina Ambulancia",
+      "username": "Cabina_Ambulancia",
+      "password_hash": "scrypt:32768:8:1$qiKXkYOHB4F4nKi6$2d2e17520231d829e59b23772bb50575108e5b1e66346ee4a98bae3779273d5a0bf2ad0952cfdc64871d7c6c00865732ec1668bb36c5accaffac5e466dc846c3",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jefe_area",
+      "area": "ambulancia",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:49:27.961816",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 37,
+      "nombre": "Director Punto Violeta",
+      "username": "Director_pvioleta",
+      "password_hash": "scrypt:32768:8:1$U1uiefpvr3WM0oXe$cd6bec9cdf123b1d12ea5fa476deed66c6587c9b638677aa080941ed834a1926d964ac286055e97e8c31e917621cf03920a45becaf8a2cf964df378cf3a609ac",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "director",
+      "area": "punto_violeta",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:33:33.573418",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 38,
+      "nombre": "Cabina Punto Violeta",
+      "username": "Cabina_PVioleta",
+      "password_hash": "scrypt:32768:8:1$bc1UAH8gSRcBGylt$d5722e2e742464fde41b926409dfe5f8327ae8bbf79c5048c57cb765c7172a608928975ec514f61699984cf8e23c4946c5f0dc73674bcd3bdc0d7272c2fbe619",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jefe_area",
+      "area": "punto_violeta",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:44:34.603406",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 36,
+      "nombre": "Director Proteccion Civil",
+      "username": "Director_prot_civil",
+      "password_hash": "scrypt:32768:8:1$z18ZQfruD7iwEfVZ$d4d99a95704d30870e218fa6b21c9f019947b279ea8b708c48ad9ee552b741e0acbfe2b895d46b40eb83a565410b4360bd90a23a52e619f877e62ede535d9058",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "director",
+      "area": "proteccion_civil",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:32:38.031877",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 39,
+      "nombre": "Cabina Proteccion Civil",
+      "username": "Cabina_Prot_Civil",
+      "password_hash": "scrypt:32768:8:1$Gv8F2CZ2XiNEd19f$54e74ee695856f149c8c1463bc68f755b2e7c634c1e977e5131b8d5b5412f454710d16f90a404cca86421b79da24db64e13b3a8927fe1293b5a462b05809334b",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "jefe_area",
+      "area": "proteccion_civil",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-31 03:45:41.575701",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 43,
+      "nombre": "Presidente",
+      "username": "Presidente",
+      "password_hash": "scrypt:32768:8:1$zsrXt9Ka0Jh7lvWv$d8d2b781aba648b465bfed5b9740a80f8016f76a9c2f27b66c4e57096a0a3f067853b4fe6c400e883e727c444929897f7c1d93cbba710c2a6ad6b5c1df831c5e",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": null,
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-09-02 01:05:22.407559",
+      "is_active": true,
+      "municipio_id": 2
+    },
+    {
+      "id": 18,
+      "nombre": "director de alumbrado",
+      "username": "Dir_alumbrado",
+      "password_hash": "",
+      "team_id": null,
+      "telegram_id": null,
+      "nivel": "director",
+      "rol_especifico": "director",
+      "area": "alumbrado",
+      "subarea": null,
+      "role": "director",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:38.296146",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 22,
+      "nombre": "cuadrilla alumbrado",
+      "username": "Pluma1",
+      "password_hash": "",
+      "team_id": 11,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla",
+      "area": "alumbrado",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": false,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:39.096422",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 44,
+      "nombre": "jefe de obra",
+      "username": "jefe_obra",
+      "password_hash": "scrypt:32768:8:1$DM4Hwo2HowtzpdAf$71a5d79d5bfd8777441290f3588fa3bd00a1711e84153d8e941a82d1cf33945c3ba29239138683979df8937750057a6b7d8843e1e87924c1c92bcc7e094a328c",
+      "team_id": null,
+      "telegram_id": 5834616187,
+      "nivel": "jefe_area",
+      "rol_especifico": "jefe_area",
+      "area": "obras",
+      "subarea": null,
+      "role": "jefe_area",
+      "puede_asignar": true,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-09-09 18:07:46.657616",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 6,
+      "nombre": "Supervisor Agua",
+      "username": "supervisor_agua",
+      "password_hash": "scrypt:32768:8:1$DFyhj2Ty4U39N8Qg$0103c5416d8e2e4edb82e83843c841df04383bfcffdaf15f74bfcf51db479dedf6df26228c6259513c52cbce95d5bf390e68d2cca7a35a7ff5af0400724e47db",
+      "team_id": null,
+      "telegram_id": 8500479366,
+      "nivel": "supervisor",
+      "rol_especifico": "supervisor",
+      "area": "agua",
+      "subarea": null,
+      "role": "supervisor",
+      "puede_asignar": false,
+      "puede_validar": true,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:19.871040",
+      "is_active": true,
+      "municipio_id": 1
+    },
+    {
+      "id": 9,
+      "nombre": "Miguel",
+      "username": "cuadrilla1",
+      "password_hash": "",
+      "team_id": 2,
+      "telegram_id": null,
+      "nivel": "cuadrilla",
+      "rol_especifico": "cuadrilla_tecnica",
+      "area": "agua",
+      "subarea": null,
+      "role": "cuadrilla",
+      "puede_asignar": true,
+      "puede_validar": false,
+      "puede_ver_todas_areas": false,
+      "puede_configurar": false,
+      "created_at": "2026-08-17 23:58:21.656832",
+      "is_active": true,
+      "municipio_id": 1
+    }
+  ],
+  "municipios": [
+    {
+      "id": 1,
+      "nombre": "Ixtlahuacán",
+      "plan": "basico",
+      "departamentos_activos": "agua,drenaje,alumbrado,obras",
+      "limite_cuadrillas": 3,
+      "activo": true,
+      "fecha_vencimiento": "2027-08-19",
+      "created_at": "2026-08-19 17:40:15.531903",
+      "usuario": "Ixtlahuacan",
+      "password_hash": "scrypt:32768:8:1$BGQOCzmSwqwrqBnE$c412ae9b2bced40199b68b41fb430a9983ebfb98a54ba937b045027bdd3017d41d305be42b72e17d2aa17299c5dc0a3b27eda3f2ee445cd226edf4600cc19638",
+      "ver_cuadrillas": true,
+      "ver_estados": false,
+      "ver_inteligencia": true,
+      "ver_gps": false,
+      "ver_encuestas": false,
+      "ver_exportar": true,
+      "ver_historial": true,
+      "ver_mapa": true,
+      "ver_test": false,
+      "ver_editar_coordenadas": true,
+      "ver_filtros": true,
+      "logo_url": null,
+      "aviso_privacidad": null,
+      "emergencias_activas": "seguridad,punto_violeta",
+      "bot_token": "8576103288:AAH_t7HYHvgat_CxZTGzDqrbUCdes4qhrjg"
+    },
+    {
+      "id": 2,
+      "nombre": "Chapala",
+      "plan": "basico",
+      "departamentos_activos": "agua,drenaje",
+      "limite_cuadrillas": 3,
+      "activo": true,
+      "fecha_vencimiento": "2026-09-28",
+      "created_at": "2026-08-28 20:27:32.752866",
+      "usuario": "Chapala",
+      "password_hash": "scrypt:32768:8:1$xk6Ubw0cHAg1Wvb3$c2a312bb2a8e8470bb10a8fcd9f6c2d32a71bea158e96fe1e679c3a312825db63286f31140241deb1dcb1179e8c16e8c9d01fd997e3223ef79d76a6a9e88d65c",
+      "ver_cuadrillas": true,
+      "ver_estados": false,
+      "ver_inteligencia": true,
+      "ver_gps": false,
+      "ver_encuestas": true,
+      "ver_exportar": true,
+      "ver_historial": true,
+      "ver_mapa": true,
+      "ver_test": true,
+      "ver_editar_coordenadas": true,
+      "ver_filtros": true,
+      "logo_url": "https://res.cloudinary.com/mqyejrhd/image/upload/v1787976992/sirmyn/municipios/municipios/chapala_logo.png",
+      "aviso_privacidad": null,
+      "emergencias_activas": "seguridad,bomberos",
+      "bot_token": "8936448726:AAFeiWvsfRnAF8nOzg_3_sUq4NUEWPqnwko"
+    }
+  ],
+  "teams": [
+    {
+      "id": 1,
+      "nombre": "Sin asignar",
+      "area": "general",
+      "descripcion": "Equipo por defecto",
+      "municipio_id": 1
+    },
+    {
+      "id": 2,
+      "nombre": "Cuadrilla Técnica Agua 1",
+      "area": "agua",
+      "descripcion": "Cuadrilla técnica de agua potable",
+      "municipio_id": 1
+    },
+    {
+      "id": 3,
+      "nombre": "Cuadrilla Técnica Agua 2",
+      "area": "agua",
+      "descripcion": "Cuadrilla técnica secundaria",
+      "municipio_id": 1
+    },
+    {
+      "id": 4,
+      "nombre": "Vactor",
+      "area": "agua",
+      "descripcion": "Equipo de vactor para desazolve",
+      "municipio_id": 1
+    },
+    {
+      "id": 5,
+      "nombre": "Pipa 1",
+      "area": "agua",
+      "descripcion": "Pipa de suministro de agua",
+      "municipio_id": 1
+    },
+    {
+      "id": 6,
+      "nombre": "Pipa 2",
+      "area": "agua",
+      "descripcion": "Pipa de respaldo",
+      "municipio_id": 1
+    },
+    {
+      "id": 7,
+      "nombre": "Cuadrilla Aseo 1",
+      "area": "aseo",
+      "descripcion": "Cuadrilla de limpieza pública",
+      "municipio_id": 1
+    },
+    {
+      "id": 8,
+      "nombre": "Cuadrilla Aseo 2",
+      "area": "aseo",
+      "descripcion": "Cuadrilla secundaria de aseo",
+      "municipio_id": 1
+    },
+    {
+      "id": 9,
+      "nombre": "Cuadrilla Parques 1",
+      "area": "parques",
+      "descripcion": "Cuadrilla de jardinería",
+      "municipio_id": 1
+    },
+    {
+      "id": 10,
+      "nombre": "Cuadrilla Parques 2",
+      "area": "parques",
+      "descripcion": "Cuadrilla de parques",
+      "municipio_id": 1
+    },
+    {
+      "id": 11,
+      "nombre": "Cuadrilla Alumbrado 1",
+      "area": "alumbrado",
+      "descripcion": "Cuadrilla de alumbrado público",
+      "municipio_id": 1
+    },
+    {
+      "id": 12,
+      "nombre": "Camión Bombero 1",
+      "area": "bomberos",
+      "descripcion": "Camión bombero principal",
+      "municipio_id": 1
+    },
+    {
+      "id": 13,
+      "nombre": "Rescate",
+      "area": "bomberos",
+      "descripcion": "Equipo de rescate especializado",
+      "municipio_id": 1
+    },
+    {
+      "id": 14,
+      "nombre": "Empedradores",
+      "area": "obras",
+      "descripcion": "Empedradores",
+      "municipio_id": 1
+    },
+    {
+      "id": 15,
+      "nombre": "empedrador 1",
+      "area": "agua",
+      "descripcion": "empedrador del departamento de agua potable",
+      "municipio_id": 1
+    },
+    {
+      "id": 16,
+      "nombre": "cuadrilla ecologia",
+      "area": "ecologia",
+      "descripcion": "cuadrilla ecoloogia",
+      "municipio_id": 1
+    },
+    {
+      "id": 17,
+      "nombre": "patrulla (municipal)",
+      "area": "seguridad",
+      "descripcion": "patrulla municipal",
+      "municipio_id": 1
+    },
+    {
+      "id": 18,
+      "nombre": "Patrulla (Municipal 2)",
+      "area": "seguridad",
+      "descripcion": "patrulla municipal 2",
+      "municipio_id": 1
+    },
+    {
+      "id": 19,
+      "nombre": "bacheo",
+      "area": "obras",
+      "descripcion": "encargados de bacheo",
+      "municipio_id": 1
+    },
+    {
+      "id": 20,
+      "nombre": "Ambulancia 1",
+      "area": "bomberos",
+      "descripcion": "ambulancia para traslados",
+      "municipio_id": 1
+    },
+    {
+      "id": 21,
+      "nombre": "Retroescavadora",
+      "area": "agua",
+      "descripcion": "retroescavadora para hacer mas facil la reparacion",
+      "municipio_id": 1
+    },
+    {
+      "id": 22,
+      "nombre": "Volteo 7m",
+      "area": "agua",
+      "descripcion": "camion de volteo para acarrear materiales",
+      "municipio_id": 1
+    },
+    {
+      "id": 23,
+      "nombre": "cuadrilla 2",
+      "area": "agua",
+      "descripcion": "cuadrilla seccion 2",
+      "municipio_id": 1
+    },
+    {
+      "id": 24,
+      "nombre": "Ambulancia",
+      "area": "bomberos",
+      "descripcion": "Ambulancia 1",
+      "municipio_id": 1
+    },
+    {
+      "id": 25,
+      "nombre": "Ambulancia 2",
+      "area": "bomberos",
+      "descripcion": "ambulancia 2",
+      "municipio_id": 1
+    }
+  ],
+  "status": [
+    {
+      "id": 1,
+      "descripcion": "Sin Asignar",
+      "color": "#FF0000",
+      "municipio_id": 1
+    },
+    {
+      "id": 2,
+      "descripcion": "En proceso",
+      "color": "#FFFF00",
+      "municipio_id": 1
+    },
+    {
+      "id": 3,
+      "descripcion": "En revisión",
+      "color": "#FFA500",
+      "municipio_id": 1
+    },
+    {
+      "id": 4,
+      "descripcion": "Finalizado",
+      "color": "#00FF00",
+      "municipio_id": 1
+    },
+    {
+      "id": 5,
+      "descripcion": "Cancelado",
+      "color": "#000000",
+      "municipio_id": 1
+    },
+    {
+      "id": 6,
+      "descripcion": "Reasignado",
+      "color": "#000000",
+      "municipio_id": 1
+    },
+    {
+      "id": 7,
+      "descripcion": "Asignado",
+      "color": "#ccc",
+      "municipio_id": 1
+    },
+    {
+      "id": 8,
+      "descripcion": "Reclamo - Urgente",
+      "color": "#FF4500",
+      "municipio_id": 1
+    },
+    {
+      "id": 9,
+      "descripcion": "Problema ubicación",
+      "color": "#FF69B4",
+      "municipio_id": 1
+    },
+    {
+      "id": 10,
+      "descripcion": "Revisión administrador",
+      "color": "#800080",
+      "municipio_id": 1
+    },
+    {
+      "id": 12,
+      "descripcion": "Aceptado por usuario",
+      "color": "success",
+      "municipio_id": 1
+    },
+    {
+      "id": 13,
+      "descripcion": "Aceptado automáticamente",
+      "color": "info",
+      "municipio_id": 1
+    },
+    {
+      "id": 14,
+      "descripcion": "Emergencia Reportada",
+      "color": "#FF0000",
+      "municipio_id": 1
+    },
+    {
+      "id": 11,
+      "descripcion": "Pendiente validación usuario",
+      "color": "#000000",
+      "municipio_id": 1
+    },
+    {
+      "id": 15,
+      "descripcion": "Rechazado por usuario",
+      "color": "#ccc",
+      "municipio_id": 1
+    }
+  ],
+  "localidades": [
+    {
+      "id": 1,
+      "nombre": "Atequiza",
+      "latitud_central": 20.3931514,
+      "longitud_central": -103.1385074,
+      "municipio_id": 1
+    },
+    {
+      "id": 2,
+      "nombre": "Buenavista",
+      "latitud_central": 20.3822291,
+      "longitud_central": -103.2140079,
+      "municipio_id": 1
+    },
+    {
+      "id": 3,
+      "nombre": "Los Cedros",
+      "latitud_central": 20.390766,
+      "longitud_central": -103.231577,
+      "municipio_id": 1
+    },
+    {
+      "id": 4,
+      "nombre": "El Rodeo",
+      "latitud_central": 20.4094448,
+      "longitud_central": -103.1796482,
+      "municipio_id": 1
+    },
+    {
+      "id": 5,
+      "nombre": "El Sacrificio",
+      "latitud_central": 20.40798,
+      "longitud_central": -103.202426,
+      "municipio_id": 1
+    },
+    {
+      "id": 6,
+      "nombre": "Huerta Vieja Residencial",
+      "latitud_central": 20.429103,
+      "longitud_central": -103.230266,
+      "municipio_id": 1
+    },
+    {
+      "id": 7,
+      "nombre": "Ixtlahuacán De Los Membrillos",
+      "latitud_central": 20.348947,
+      "longitud_central": -103.1922,
+      "municipio_id": 1
+    },
+    {
+      "id": 8,
+      "nombre": "La Cañada",
+      "latitud_central": 20.376898,
+      "longitud_central": -103.261719,
+      "municipio_id": 1
+    },
+    {
+      "id": 9,
+      "nombre": "La Capilla",
+      "latitud_central": 20.445268,
+      "longitud_central": -103.201075,
+      "municipio_id": 1
+    },
+    {
+      "id": 10,
+      "nombre": "Las Aguilillas",
+      "latitud_central": 20.355274,
+      "longitud_central": -103.207615,
+      "municipio_id": 1
+    },
+    {
+      "id": 11,
+      "nombre": "Lomas De La Capilla",
+      "latitud_central": 20.444477,
+      "longitud_central": -103.213922,
+      "municipio_id": 1
+    },
+    {
+      "id": 12,
+      "nombre": "Los Laureles",
+      "latitud_central": 20.43691,
+      "longitud_central": -103.234352,
+      "municipio_id": 1
+    },
+    {
+      "id": 13,
+      "nombre": "Luis Garcia",
+      "latitud_central": 20.387148,
+      "longitud_central": -103.233577,
+      "municipio_id": 1
+    },
+    {
+      "id": 14,
+      "nombre": "Puerta Del Sol",
+      "latitud_central": 20.4304528,
+      "longitud_central": -103.2377466,
+      "municipio_id": 1
+    },
+    {
+      "id": 15,
+      "nombre": "Real Del Lago",
+      "latitud_central": 20.4317034,
+      "longitud_central": -103.2269297,
+      "municipio_id": 1
+    },
+    {
+      "id": 16,
+      "nombre": "Residencial La Capilla",
+      "latitud_central": 20.4378338,
+      "longitud_central": -103.2107345,
+      "municipio_id": 1
+    },
+    {
+      "id": 17,
+      "nombre": "Rinconada Las Lomas",
+      "latitud_central": 20.45475,
+      "longitud_central": -103.220486,
+      "municipio_id": 1
+    },
+    {
+      "id": 18,
+      "nombre": "Santa Ana",
+      "latitud_central": 20.408235,
+      "longitud_central": -103.193932,
+      "municipio_id": 1
+    },
+    {
+      "id": 19,
+      "nombre": "Santa Rosa",
+      "latitud_central": 20.4149322,
+      "longitud_central": -103.2356616,
+      "municipio_id": 1
+    },
+    {
+      "id": 20,
+      "nombre": "Valle De Los Girasoles",
+      "latitud_central": 20.4288471,
+      "longitud_central": -103.198243,
+      "municipio_id": 1
+    },
+    {
+      "id": 21,
+      "nombre": "Valle De Los Olivos 2",
+      "latitud_central": 20.4416476,
+      "longitud_central": -103.2365362,
+      "municipio_id": 1
+    },
+    {
+      "id": 22,
+      "nombre": "Valle De Los Olivos 1",
+      "latitud_central": 20.435837,
+      "longitud_central": -103.229303,
+      "municipio_id": 1
+    },
+    {
+      "id": 23,
+      "nombre": "Valle De Los Sabinos 2",
+      "latitud_central": 20.426179,
+      "longitud_central": -103.183026,
+      "municipio_id": 1
+    },
+    {
+      "id": 24,
+      "nombre": "Valle De Los Sabinos 3",
+      "latitud_central": 20.425071,
+      "longitud_central": -103.191244,
+      "municipio_id": 1
+    },
+    {
+      "id": 25,
+      "nombre": "Valle De Los Sabinos 4",
+      "latitud_central": 20.418714,
+      "longitud_central": -103.182257,
+      "municipio_id": 1
+    },
+    {
+      "id": 26,
+      "nombre": "Valle De Los Sabinos 1",
+      "latitud_central": 20.422067,
+      "longitud_central": -103.187418,
+      "municipio_id": 1
+    },
+    {
+      "id": 27,
+      "nombre": "No registrada",
+      "latitud_central": null,
+      "longitud_central": null,
+      "municipio_id": 2
+    }
+  ],
+  "calles": [
+    {
+      "id": 1,
+      "nombre": "Prolongacion Hidalgo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 2,
+      "nombre": "15 De Enero",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 3,
+      "nombre": "Efrain Gonzalez Luna",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 4,
+      "nombre": "Privada Ignacio Allende",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 5,
+      "nombre": "Alberto Contreras",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 6,
+      "nombre": "Ignacio Allende",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 7,
+      "nombre": "Avenida De Los Maestros",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 8,
+      "nombre": "Azucenas",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 9,
+      "nombre": "Deposito",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 10,
+      "nombre": "El Carcamo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 11,
+      "nombre": "Enrique Gonzalez Martinez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 12,
+      "nombre": "Independencia",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 13,
+      "nombre": "Juan Escutia",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 14,
+      "nombre": "Juarez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 15,
+      "nombre": "Niños Heroes",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 16,
+      "nombre": "Rafael Ramirez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 17,
+      "nombre": "Justo Sierra",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 18,
+      "nombre": "Ramon Corona Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 19,
+      "nombre": "24 De Noviembre Norte",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 20,
+      "nombre": "5 De Mayo Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 21,
+      "nombre": "Clemente Orozco Sur",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 22,
+      "nombre": "El Mezquite",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 23,
+      "nombre": "Chapultepec",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 24,
+      "nombre": "El Pipila",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 25,
+      "nombre": "Enrique Gonzalez Martinez Sur",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 26,
+      "nombre": "Jose Cuervo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 27,
+      "nombre": "Lazaro Cardenas Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 28,
+      "nombre": "Adolfo Lopez Mateos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 29,
+      "nombre": "Maiz",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 30,
+      "nombre": "Mezquite",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 31,
+      "nombre": "Morelos Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 32,
+      "nombre": "Ramon Corona",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 33,
+      "nombre": "Pedro Moreno",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 34,
+      "nombre": "Ricardo Flores Magon",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 35,
+      "nombre": "Pedro Moreno Sur",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 36,
+      "nombre": "Pino Suarez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 37,
+      "nombre": "Privada Ramon Corona",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 38,
+      "nombre": "Torrecilla",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 39,
+      "nombre": "Gral. Alvaro Obregon",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 40,
+      "nombre": "Clemente Orozco Norte",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 41,
+      "nombre": "Sor Juana Ines De La Cruz",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 42,
+      "nombre": "Enrique Gonzalez Martinez Norte",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 43,
+      "nombre": "Ramon Corona Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 44,
+      "nombre": "Hidalgo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 45,
+      "nombre": "Josefa Ortiz De Dominguez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 46,
+      "nombre": "24 De Noviembre",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 47,
+      "nombre": "24 De Noviembre Sur",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 48,
+      "nombre": "Benito Juarez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 49,
+      "nombre": "Jose Clemente Orozco",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 50,
+      "nombre": "Francisco Villa",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 51,
+      "nombre": "Los Pinos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 52,
+      "nombre": "Priv. Josefa Ortiz De Dominguez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 53,
+      "nombre": "Privada Carretera A La Barca",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 54,
+      "nombre": "5 De Mayo Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 55,
+      "nombre": "Agustin Melgar",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 56,
+      "nombre": "Cyanamid",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 57,
+      "nombre": "Andador A",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 58,
+      "nombre": "Andador",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 59,
+      "nombre": "Andador B",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 60,
+      "nombre": "Andador C",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 61,
+      "nombre": "Andador D",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 62,
+      "nombre": "Andador E",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 63,
+      "nombre": "Andador F",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 64,
+      "nombre": "Boulevard",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 65,
+      "nombre": "Sin Nombre",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 66,
+      "nombre": "Callejon",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 67,
+      "nombre": "Camino A La Estacion",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 68,
+      "nombre": "Carretera Santa Rosa-La Barca",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 69,
+      "nombre": "Circuito 1",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 70,
+      "nombre": "Circuito 1 Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 71,
+      "nombre": "Circuito Norte",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 72,
+      "nombre": "Conocido En El Zapote",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 73,
+      "nombre": "Conocido En Lomas",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 74,
+      "nombre": "Conocido La Tinaja Lomas",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 75,
+      "nombre": "El Fresno",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 76,
+      "nombre": "Prolongacion Torrecillas",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 77,
+      "nombre": "Francisco Marquez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 78,
+      "nombre": "Ferrocarril",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 79,
+      "nombre": "Frijol",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 80,
+      "nombre": "Guadalupe Victoria",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 81,
+      "nombre": "Hidalgo Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 82,
+      "nombre": "Independencia Sur",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 83,
+      "nombre": "Jose Maria Morelos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 84,
+      "nombre": "Guillermo Prieto",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 85,
+      "nombre": "Jaime Torres Bodet",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 86,
+      "nombre": "Jose Vasconcelos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 87,
+      "nombre": "La Tinaja",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 88,
+      "nombre": "Lazaro Cardenas Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 89,
+      "nombre": "Lopez Mateos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 90,
+      "nombre": "Morelos Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 91,
+      "nombre": "Olivo Nicaraguense",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 92,
+      "nombre": "Privada Los Patos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 93,
+      "nombre": "Privada Los Pinos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 94,
+      "nombre": "Privada 2 Rafael Ramirez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 95,
+      "nombre": "Privada Rafael Ramirez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 96,
+      "nombre": "Prolongacion Valentin Gomez Farias",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 97,
+      "nombre": "Prolongacion Libertad",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 98,
+      "nombre": "Circuito C",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 99,
+      "nombre": "Prolongacion",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 100,
+      "nombre": "Conocido En La Tinaja",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 101,
+      "nombre": "Hidalgo Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 102,
+      "nombre": "Aaa",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 103,
+      "nombre": "Cianamid",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 104,
+      "nombre": "Conocido La Tinaja",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 105,
+      "nombre": "F-B De La Parsela",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 106,
+      "nombre": "Flores Magon",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 107,
+      "nombre": "Miguel Hidalgo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 108,
+      "nombre": "Jose Daniel Vasconcelos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 109,
+      "nombre": "Sin Calle",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 110,
+      "nombre": "Los Mesquites",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 111,
+      "nombre": "Los Zapotes",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 112,
+      "nombre": "Ninguno",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 113,
+      "nombre": "Noche Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 114,
+      "nombre": "Privada Las Flores",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 115,
+      "nombre": "Torres Bodet",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 116,
+      "nombre": "Rayo Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 117,
+      "nombre": "Rio Grijalva",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 118,
+      "nombre": "Rio Lerma",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 119,
+      "nombre": "Rio Santiago",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 120,
+      "nombre": "Rio Senegal",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 121,
+      "nombre": "Rio Tigris",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 122,
+      "nombre": "Zona 1",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 123,
+      "nombre": "Agustin Martinez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 124,
+      "nombre": "El Noa Noa",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 125,
+      "nombre": "Avenida Hidalgo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 126,
+      "nombre": "Privada Guadalupe Victoria",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 127,
+      "nombre": "Hacienda Estanzuela",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 128,
+      "nombre": "Dr. Atl",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 129,
+      "nombre": "Gonzalo Curiel",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 130,
+      "nombre": "Eraclio Zepeda",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 131,
+      "nombre": "Fernando Del Paso",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 132,
+      "nombre": "Privada Bolaños",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 133,
+      "nombre": "Privada Javier Mina",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 134,
+      "nombre": "Ines Arredondo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 135,
+      "nombre": "Hacienda San Gabriel",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 136,
+      "nombre": "Fernando Diaz Garcia",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 137,
+      "nombre": "Juan Escutia Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 138,
+      "nombre": "Cadetes",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 139,
+      "nombre": "Privada La Estacion",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 140,
+      "nombre": "Avenida Hidalgo Poniente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 141,
+      "nombre": "Torrecillas Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 142,
+      "nombre": "Alamo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 143,
+      "nombre": "Frida Kahlo",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 144,
+      "nombre": "Alamos",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 145,
+      "nombre": "Luis G. Urbiina",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 146,
+      "nombre": "Manuel M. Ponce",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 147,
+      "nombre": "Nacho F. Esperon",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 148,
+      "nombre": "Colegio Militar",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 149,
+      "nombre": "Rafael Ramirez Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 150,
+      "nombre": "Federico Villa",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 151,
+      "nombre": "Privada  Azucenas",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 152,
+      "nombre": "Avenida Hidalgo Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 153,
+      "nombre": "Chapultepec Oriente",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 154,
+      "nombre": "Cipres",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 155,
+      "nombre": "Avena",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 156,
+      "nombre": "Circuito Santibañez",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 157,
+      "nombre": "Pedregal",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 158,
+      "nombre": "Guamuchil",
+      "localidad_id": 1,
+      "municipio_id": 1
+    },
+    {
+      "id": 159,
+      "nombre": "Guillermo Moreno",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 160,
+      "nombre": "8 De Julio",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 161,
+      "nombre": "La Mina",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 162,
+      "nombre": "Manuel Capetillo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 163,
+      "nombre": "5 De Mayo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 164,
+      "nombre": "20 De Noviembre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 165,
+      "nombre": "12 De Octubre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 166,
+      "nombre": "16 De Septiembre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 167,
+      "nombre": "Ahuilote",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 168,
+      "nombre": "Avenida Manuel Capetillo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 169,
+      "nombre": "La Mora",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 170,
+      "nombre": "Galeanas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 171,
+      "nombre": "Laureles",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 172,
+      "nombre": "Manuel Vaqueiro",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 173,
+      "nombre": "Miguel Dip",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 174,
+      "nombre": "Mr. Queen",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 175,
+      "nombre": "Mr. Queent",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 176,
+      "nombre": "Garbanzo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 177,
+      "nombre": "Loma Alta",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 178,
+      "nombre": "Jacarandas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 179,
+      "nombre": "Camino Real",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 180,
+      "nombre": "Privada 16 De Septiembre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 181,
+      "nombre": "Vista Campestre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 182,
+      "nombre": "Las Jacarandas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 183,
+      "nombre": "Privada Pablo Cedillo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 184,
+      "nombre": "Rosales",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 185,
+      "nombre": "Tescalame",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 186,
+      "nombre": "Paseo De Los Laureles",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 187,
+      "nombre": "Camino A Cedros",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 188,
+      "nombre": "Camino Viejo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 189,
+      "nombre": "Santa Cecilia",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 190,
+      "nombre": "Prados De Atequiza",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 191,
+      "nombre": "Avenida Pablo Cedillo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 192,
+      "nombre": "Avenida Vista Alegre",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 193,
+      "nombre": "La Aburrada",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 194,
+      "nombre": "Padilla",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 195,
+      "nombre": "Camino A Las Aburradas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 196,
+      "nombre": "Camino Alburradas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 197,
+      "nombre": "Camino Antiguo A Cedros",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 198,
+      "nombre": "Camino Viejo A Cajititlan",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 199,
+      "nombre": "Cerrito",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 200,
+      "nombre": "El Cerrito",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 201,
+      "nombre": "El Perdon",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 202,
+      "nombre": "Fraccionamiento La Gigantera",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 203,
+      "nombre": "La Loma",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 204,
+      "nombre": "Paseo De Las Garzas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 205,
+      "nombre": "Paseo Del Parque",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 206,
+      "nombre": "Camino A San Isidro",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 207,
+      "nombre": "Andador De Las Garzas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 208,
+      "nombre": "Paseo De Los Cisnes",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 209,
+      "nombre": "Vista Contenta",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 210,
+      "nombre": "Vista Bonita",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 211,
+      "nombre": "Avenida Vista Tranquila",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 212,
+      "nombre": "Paseo De Las Garzas Norte",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 213,
+      "nombre": "Bellavista",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 214,
+      "nombre": "Chulavista",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 215,
+      "nombre": "Vista Azul",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 216,
+      "nombre": "Vista Hermosa",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 217,
+      "nombre": "Vista Verde",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 218,
+      "nombre": "Camino A Las Maravillas",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 219,
+      "nombre": "Vista Rosa",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 220,
+      "nombre": "Paseo De La Cigueña",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 221,
+      "nombre": "Paseo De Las Garzas Poniente",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 222,
+      "nombre": "Paseo De Las Garzas Oriente",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 223,
+      "nombre": "Agua Salada",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 224,
+      "nombre": "Avenida Buenavista",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 225,
+      "nombre": "Agrarista",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 226,
+      "nombre": "Comunidad Agraria",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 227,
+      "nombre": "Avenida Linda Vista",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 228,
+      "nombre": "Sorgo",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 229,
+      "nombre": "Antiguo Camino A La Capilla",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 230,
+      "nombre": "Privada De La Mora",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 231,
+      "nombre": "Humedades",
+      "localidad_id": 2,
+      "municipio_id": 1
+    },
+    {
+      "id": 232,
+      "nombre": "Sabinos",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 233,
+      "nombre": "Lopez Cotilla",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 234,
+      "nombre": "Gonzalez Gallo",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 235,
+      "nombre": "Ignacio Hernandez",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 236,
+      "nombre": "Ing. Jose Santoyo",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 237,
+      "nombre": "Sauz",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 238,
+      "nombre": "Tepeyac",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 239,
+      "nombre": "Periferico Luis Garcia",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 240,
+      "nombre": "Privada Guadalupe",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 241,
+      "nombre": "Juan Jose Arreola",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 242,
+      "nombre": "Circulacion Privada",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 243,
+      "nombre": "Privada Tepeyac",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 244,
+      "nombre": "Pirul",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 245,
+      "nombre": "Presa",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 246,
+      "nombre": "Presa El Pirul",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 247,
+      "nombre": "Privada Aguilote",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 248,
+      "nombre": "Prolongacion Tepeyac",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 249,
+      "nombre": "Privada Cervantes",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 250,
+      "nombre": "Privada Altar",
+      "localidad_id": 3,
+      "municipio_id": 1
+    },
+    {
+      "id": 251,
+      "nombre": "Revolucion Mexicana",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 252,
+      "nombre": "Juan M. Duran Legaspi",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 253,
+      "nombre": "San Pedro",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 254,
+      "nombre": "Privada De La Cruz",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 255,
+      "nombre": "Revolucion",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 256,
+      "nombre": "San Lucas",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 257,
+      "nombre": "Santo Toribio",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 258,
+      "nombre": "San Javier",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 259,
+      "nombre": "Avenida Del Sol",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 260,
+      "nombre": "Principal",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 261,
+      "nombre": "Fraccionamiento",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 262,
+      "nombre": "Paseo De Las Palmas",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 263,
+      "nombre": "Privada Colosio",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 264,
+      "nombre": "San Agustin",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 265,
+      "nombre": "San Mateo",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 266,
+      "nombre": "Extramuro",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 267,
+      "nombre": "Revolucion Norte",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 268,
+      "nombre": "Privada San Agustin",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 269,
+      "nombre": "Luis Donaldo Colosio",
+      "localidad_id": 5,
+      "municipio_id": 1
+    },
+    {
+      "id": 270,
+      "nombre": "Eduardo Cervantes",
+      "localidad_id": 5,
+      "municipio_id": 1
+    },
+    {
+      "id": 271,
+      "nombre": "Miguel Aleman",
+      "localidad_id": 5,
+      "municipio_id": 1
+    },
+    {
+      "id": 272,
+      "nombre": "San Miguel",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 273,
+      "nombre": "Avenida San Javier",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 274,
+      "nombre": "San Carlos",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 275,
+      "nombre": "San Diego",
+      "localidad_id": 4,
+      "municipio_id": 1
+    },
+    {
+      "id": 276,
+      "nombre": "Francisco Leon De La Barra",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 277,
+      "nombre": "Pascual Salcedo Santoscoy",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 278,
+      "nombre": "Roque Gonzalez Garza",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 279,
+      "nombre": "Juan N Mendez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 280,
+      "nombre": "Victoriano Huerta Ortega",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 281,
+      "nombre": "Alberto Orozco Romero",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 282,
+      "nombre": "Agustin Yañez Delgadillo",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 283,
+      "nombre": "Arq. Fernando Gonzalez Gortazar",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 284,
+      "nombre": "Francisco Medina Ascencio",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 285,
+      "nombre": "Paz Gortazar Gutierrez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 286,
+      "nombre": "Pedro Velez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 287,
+      "nombre": "Sebastian Lerdo De Tejada",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 288,
+      "nombre": "Carretera Guadalajara A Chapala",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 289,
+      "nombre": "General Ignacio Zaragoza",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 290,
+      "nombre": "Eulalio Gutierrez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 291,
+      "nombre": "Jesus Gonzalez Gortazar",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 292,
+      "nombre": "Francisco Rodriguez Gomez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 293,
+      "nombre": "Manuel Gonzalez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 294,
+      "nombre": "Alberto Cardenas Jimenez",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 295,
+      "nombre": "Cuisillos",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 296,
+      "nombre": "General Alvaro Obregon",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 297,
+      "nombre": "Flavio Romero De Velasco",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 298,
+      "nombre": "Pedro Lascurain Paredes",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 299,
+      "nombre": "Francisco Lagos Chazaro",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 300,
+      "nombre": "Marcela Gonzalez Gortazar",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 301,
+      "nombre": "Vicente Fox Quesada",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 302,
+      "nombre": "Manuel Avila Camacho",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 303,
+      "nombre": "Guillermo Salcedo Padilla",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 304,
+      "nombre": "General Felipe Angeles",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 305,
+      "nombre": "San Guillermo",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 306,
+      "nombre": "San Juan",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 307,
+      "nombre": "Anastasio Bustamante",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 308,
+      "nombre": "General Pedro Rio Seco",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 309,
+      "nombre": "Jose De Jesus Muñoz Limon",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 310,
+      "nombre": "Juan Gil Preciado",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 311,
+      "nombre": "Miguel Aleman Valdes",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 312,
+      "nombre": "Valentin Gomez Farias",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 313,
+      "nombre": "Avenida J Jesus Gonzalez Gallo",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 314,
+      "nombre": "Bella Vista",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 315,
+      "nombre": "San Jorge",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 316,
+      "nombre": "San Pablo",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 317,
+      "nombre": "Santa Adriana",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 318,
+      "nombre": "Santa Maite",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 319,
+      "nombre": "Yahualica",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 320,
+      "nombre": "Gral Pascual Ortiz Rubio",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 321,
+      "nombre": "Los Gortazar",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 322,
+      "nombre": "San Andres",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 323,
+      "nombre": "Castro Urdiales",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 324,
+      "nombre": "Mariano Matamoros",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 325,
+      "nombre": "Privada Yahualica",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 326,
+      "nombre": "San Julian",
+      "localidad_id": 6,
+      "municipio_id": 1
+    },
+    {
+      "id": 327,
+      "nombre": "Loma Verde",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 328,
+      "nombre": "5 De Febrero",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 329,
+      "nombre": "Duraznos",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 330,
+      "nombre": "Morelos",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 331,
+      "nombre": "Pablo Cedillo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 332,
+      "nombre": "Abasolo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 333,
+      "nombre": "Membrillo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 334,
+      "nombre": "Loma Grande",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 335,
+      "nombre": "Ebano",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 336,
+      "nombre": "Tulipanes",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 337,
+      "nombre": "Francisco I. Madero",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 338,
+      "nombre": "Juan De La Barrera",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 339,
+      "nombre": "Vicente Guerrero",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 340,
+      "nombre": "Avenida Del Trabajo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 341,
+      "nombre": "Antonio Torres",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 342,
+      "nombre": "Chirimoya",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 343,
+      "nombre": "Francisco Javier Mina",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 344,
+      "nombre": "Cuauhtemoc",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 345,
+      "nombre": "Avenida Santiago",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 346,
+      "nombre": "Matamoros",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 347,
+      "nombre": "Prolongacion Obregon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 348,
+      "nombre": "Zaragoza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 349,
+      "nombre": "Porfirio Diaz",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 350,
+      "nombre": "Guzman",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 351,
+      "nombre": "Privada Juan De La Barrera",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 352,
+      "nombre": "Privada Juan Escutia",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 353,
+      "nombre": "Topacio",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 354,
+      "nombre": "Garcia De Herrera",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 355,
+      "nombre": "Nicolas Bravo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 356,
+      "nombre": "Colon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 357,
+      "nombre": "Mangos",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 358,
+      "nombre": "Ojo De Agua",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 359,
+      "nombre": "Privada Zaragoza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 360,
+      "nombre": "Obregon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 361,
+      "nombre": "18 De Marzo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 362,
+      "nombre": "2 De Abril",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 363,
+      "nombre": "Aldama",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 364,
+      "nombre": "Libertad",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 365,
+      "nombre": "Iturbide",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 366,
+      "nombre": "Francisco Gonzalez Bocanegra",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 367,
+      "nombre": "Andador 1 De Las Rosas",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 368,
+      "nombre": "25 De Julio",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 369,
+      "nombre": "Ayuntamiento",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 370,
+      "nombre": "Loma Ancha",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 371,
+      "nombre": "Loma Baja",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 372,
+      "nombre": "Loma Bonita",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 373,
+      "nombre": "Lopez Rayon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 374,
+      "nombre": "Higuera",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 375,
+      "nombre": "Leonor Perales",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 376,
+      "nombre": "Pipila",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 377,
+      "nombre": "Sarcofago",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 378,
+      "nombre": "Zapote",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 379,
+      "nombre": "Mamey",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 380,
+      "nombre": "Andador Juarez",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 381,
+      "nombre": "Vista Del Huerto",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 382,
+      "nombre": "La Laja",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 383,
+      "nombre": "Ramos Millan",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 384,
+      "nombre": "Loma Real",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 385,
+      "nombre": "Antonio Bravo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 386,
+      "nombre": "Ciruelos",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 387,
+      "nombre": "Honda",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 388,
+      "nombre": "Paseo Hondo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 389,
+      "nombre": "Privada Colon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 390,
+      "nombre": "Privada Honda",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 391,
+      "nombre": "Vistas Del Huerto",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 392,
+      "nombre": "Zarcofago",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 393,
+      "nombre": "La Joya",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 394,
+      "nombre": "Paseo Zaragoza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 395,
+      "nombre": "Privada Iturbide",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 396,
+      "nombre": "Vista De La Colina",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 397,
+      "nombre": "Vista Del Pueblo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 398,
+      "nombre": "Magisterio",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 399,
+      "nombre": "Las Rosas",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 400,
+      "nombre": "Antigua Carretera A Santa Cruz",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 401,
+      "nombre": "Carretera Antigua Atequiza-La Capilla",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 402,
+      "nombre": "Octavio Paz",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 403,
+      "nombre": "Privada Antonio Bravo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 404,
+      "nombre": "Privada Francisco Villa",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 405,
+      "nombre": "Vista Del Cerro",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 406,
+      "nombre": "Cerrada Colon",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 407,
+      "nombre": "Privada Juarez",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 408,
+      "nombre": "Prolongacion Antonio Torres",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 409,
+      "nombre": "Vista Del Valle",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 410,
+      "nombre": "Vistas Del Pueblo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 411,
+      "nombre": "Camino Antiguo A Atequiza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 412,
+      "nombre": "El Fresnito",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 413,
+      "nombre": "Andador Tulipanes",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 414,
+      "nombre": "La Arbolada",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 415,
+      "nombre": "Camino Antiguo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 416,
+      "nombre": "Camino A Santa Cruz",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 417,
+      "nombre": "Frac. Vista Del Valle",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 418,
+      "nombre": "Fraccionamiento La Arbolada",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 419,
+      "nombre": "Francisco Silva Romero",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 420,
+      "nombre": "Julian Aguilar",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 421,
+      "nombre": "Lomas Chimborazo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 422,
+      "nombre": "Privada Loma Baja",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 423,
+      "nombre": "Prolongacion Antonio Bravo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 424,
+      "nombre": "Prolongacion Iturbide",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 425,
+      "nombre": "Prolongacion J. Antonio Bravo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 426,
+      "nombre": "Prolongacion Juan De La Barrera",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 427,
+      "nombre": "Vistas Del Valle",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 428,
+      "nombre": "Privada Mamey",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 429,
+      "nombre": "Camino A San Juan",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 430,
+      "nombre": "Predio Rio",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 431,
+      "nombre": "Peatonal Del Roble",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 432,
+      "nombre": "Ramiro Martinez Salcedo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 433,
+      "nombre": "Guillermo Diaz Mendoza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 434,
+      "nombre": "Cerrada Zaragoza",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 435,
+      "nombre": "Felicano Rochin",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 436,
+      "nombre": "Perla",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 437,
+      "nombre": "Lapizlazuli",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 438,
+      "nombre": "San Isidro",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 439,
+      "nombre": "Aurelio Ochoa",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 440,
+      "nombre": "J. Guadalupe Padilla",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 441,
+      "nombre": "Callejon Del Ciruelo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 442,
+      "nombre": "Cerezo",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 443,
+      "nombre": "Privada Tierras Blancas",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 444,
+      "nombre": "Av. San Isidro",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 445,
+      "nombre": "Salvador Marquez",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 446,
+      "nombre": "Zafiro",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 447,
+      "nombre": "Camino Al Valle",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 448,
+      "nombre": "Peatonal Del Cedro",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 449,
+      "nombre": "Camino A La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 450,
+      "nombre": "Conocido",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 451,
+      "nombre": "Santiago",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 452,
+      "nombre": "Manuel Garcia Rulfo",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 453,
+      "nombre": "Santo Santiago",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 454,
+      "nombre": "La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 455,
+      "nombre": "Camino A Potrerillos",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 456,
+      "nombre": "Camino Al Aguacate",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 457,
+      "nombre": "Arrollo Los Zapotes",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 458,
+      "nombre": "Paseo De Los Sabinos",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 459,
+      "nombre": "Avenida Guadalupe",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 460,
+      "nombre": "Avenida Las Polleras",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 461,
+      "nombre": "Carretera A La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 462,
+      "nombre": "Conocido En La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 463,
+      "nombre": "Privada Providencia",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 464,
+      "nombre": "Crucero A La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 465,
+      "nombre": "Ingreso A La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 466,
+      "nombre": "Salida Al Aguacate",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 467,
+      "nombre": "Camino Cedros La Cañada",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 468,
+      "nombre": "Privada Sauces",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 469,
+      "nombre": "Andador Potrerillos",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 470,
+      "nombre": "Privada Parota",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 471,
+      "nombre": "Pichon",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 472,
+      "nombre": "Colibrí",
+      "localidad_id": 8,
+      "municipio_id": 1
+    },
+    {
+      "id": 473,
+      "nombre": "Lazaro Cardenas",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 474,
+      "nombre": "La Estacion",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 475,
+      "nombre": "Sanchez Zepeda",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 476,
+      "nombre": "Los 3 Juanes",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 477,
+      "nombre": "Jesus Garcia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 478,
+      "nombre": "Emiliano Zapata",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 479,
+      "nombre": "Jesus Solis",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 480,
+      "nombre": "Juan Pablo Guardiola",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 481,
+      "nombre": "General Venustiano Carranza",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 482,
+      "nombre": "Cesar Gonzalez",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 483,
+      "nombre": "Guadalupe",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 484,
+      "nombre": "Privada Jesus Garcia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 485,
+      "nombre": "Avenida Santa Rosa",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 486,
+      "nombre": "Regidores",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 487,
+      "nombre": "J. Jesus Solis",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 488,
+      "nombre": "Privada Parroquia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 489,
+      "nombre": "Esteban A La Torre",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 490,
+      "nombre": "Monte De Los Olivos",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 491,
+      "nombre": "Privada Los 3 Juanes",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 492,
+      "nombre": "Santa Ana",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 493,
+      "nombre": "Parroquia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 494,
+      "nombre": "Carretera El Salto-La Capilla",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 495,
+      "nombre": "Moras",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 496,
+      "nombre": "Privada Morelos",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 497,
+      "nombre": "Santa Elena",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 498,
+      "nombre": "Santa Martha",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 499,
+      "nombre": "Ascencio Sanchez",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 500,
+      "nombre": "Avenida La Capilla",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 501,
+      "nombre": "Avenida Santa Patricia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 502,
+      "nombre": "Bugambilias",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 503,
+      "nombre": "Domicilio Conocido",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 504,
+      "nombre": "Getzemani",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 505,
+      "nombre": "Las Palmas",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 506,
+      "nombre": "Mirador",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 507,
+      "nombre": "Nogal El Mirador",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 508,
+      "nombre": "Privada Lazaro Cardenas",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 509,
+      "nombre": "Rancho La Cañada",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 510,
+      "nombre": "Rancho La Sagrada Familia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 511,
+      "nombre": "Santa Patricia",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 512,
+      "nombre": "Privada Juan Pablo Guardiola",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 513,
+      "nombre": "Paseo Lazaro Cardenas",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 514,
+      "nombre": "Privada Esteban A La Torre",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 515,
+      "nombre": "Uva",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 516,
+      "nombre": "Zarzamora",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 517,
+      "nombre": "Josue",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 518,
+      "nombre": "Jesus",
+      "localidad_id": 9,
+      "municipio_id": 1
+    },
+    {
+      "id": 519,
+      "nombre": "Albatros",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 520,
+      "nombre": "Huitlacoche",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 521,
+      "nombre": "Quetzal",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 522,
+      "nombre": "Avenida Las Aguilillas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 523,
+      "nombre": "Carretera Antigua A Guadalajara-Chapala",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 524,
+      "nombre": "Acueducto",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 525,
+      "nombre": "Jilgero",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 526,
+      "nombre": "La Presa",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 527,
+      "nombre": "Pajaro Carpintero",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 528,
+      "nombre": "Privada Pavo Real",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 529,
+      "nombre": "Prolongacion Quetzal",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 530,
+      "nombre": "Tecolote",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 531,
+      "nombre": "Zenzontle",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 532,
+      "nombre": "Ciruelo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 533,
+      "nombre": "Guayabito",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 534,
+      "nombre": "Copal",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 535,
+      "nombre": "Cuervo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 536,
+      "nombre": "Faisan",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 537,
+      "nombre": "Gorriones",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 538,
+      "nombre": "Privada Aguilillas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 539,
+      "nombre": "Roble",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 540,
+      "nombre": "Tepame",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 541,
+      "nombre": "Palomas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 542,
+      "nombre": "Cernicalo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 543,
+      "nombre": "Privada Cernicalo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 544,
+      "nombre": "Colibri",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 545,
+      "nombre": "Gaviota",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 546,
+      "nombre": "Zenzontle Poniente",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 547,
+      "nombre": "Pajaro Mulato",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 548,
+      "nombre": "Ave Del Paraiso",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 549,
+      "nombre": "Petirrojo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 550,
+      "nombre": "Camichin",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 551,
+      "nombre": "Halcon",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 552,
+      "nombre": "Privada Faisan",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 553,
+      "nombre": "Privada Granados",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 554,
+      "nombre": "Privada Palomas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 555,
+      "nombre": "Privada Faisan Norte",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 556,
+      "nombre": "Granados",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 557,
+      "nombre": "Privada Nance",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 558,
+      "nombre": "Benjamin",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 559,
+      "nombre": "Salvador Herrera",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 560,
+      "nombre": "Cecilia",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 561,
+      "nombre": "Privada Gaviota",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 562,
+      "nombre": "Pinos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 563,
+      "nombre": "Privada Canarios",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 564,
+      "nombre": "Privada Florencio Martinez",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 565,
+      "nombre": "Prolongacion Colibri",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 566,
+      "nombre": "Tlocault",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 567,
+      "nombre": "Los Ciruelos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 568,
+      "nombre": "Guayabos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 569,
+      "nombre": "Chavacano",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 570,
+      "nombre": "Nance",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 571,
+      "nombre": "Privada Acueducto",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 572,
+      "nombre": "Privada Duraznos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 573,
+      "nombre": "Pino",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 574,
+      "nombre": "Alazan Fraccion",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 575,
+      "nombre": "Amapola",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 576,
+      "nombre": "Avenida Camichin",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 577,
+      "nombre": "Av. Aguilillas Norte",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 578,
+      "nombre": "Guallabos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 579,
+      "nombre": "Camino A Las Aguilillas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 580,
+      "nombre": "Camino A Las Mulas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 581,
+      "nombre": "Avenida Los Cedros",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 582,
+      "nombre": "Cerrada Cernicalo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 583,
+      "nombre": "Encino",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 584,
+      "nombre": "La Escondida",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 585,
+      "nombre": "Parcela",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 586,
+      "nombre": "Pavo Real",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 587,
+      "nombre": "Privada Eucalipto",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 588,
+      "nombre": "Privada Gorriones",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 589,
+      "nombre": "Privada Norte Quetzal",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 590,
+      "nombre": "Privada Pino",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 591,
+      "nombre": "Privada Quetzal",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 592,
+      "nombre": "Privada Sernicalo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 593,
+      "nombre": "Lechuza",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 594,
+      "nombre": "Loro",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 595,
+      "nombre": "Alcon",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 596,
+      "nombre": "Condor",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 597,
+      "nombre": "Servidumbre De Paso",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 598,
+      "nombre": "Tucan",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 599,
+      "nombre": "Avenida Aguilillas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 600,
+      "nombre": "Privada Calandria",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 601,
+      "nombre": "Callejon  Cernicalo",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 602,
+      "nombre": "Servidumbre",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 603,
+      "nombre": "Privada Cristina",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 604,
+      "nombre": "Gladiolas",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 605,
+      "nombre": "Privada Sebastian",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 606,
+      "nombre": "Privada Guayabos",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 607,
+      "nombre": "Sauce",
+      "localidad_id": 10,
+      "municipio_id": 1
+    },
+    {
+      "id": 608,
+      "nombre": "Lomas De Los Papelillos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 609,
+      "nombre": "Lomas Del Plumbago",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 610,
+      "nombre": "Lomas De Los Abedules",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 611,
+      "nombre": "Loma Azul",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 612,
+      "nombre": "Loma Blanca",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 613,
+      "nombre": "Lomas De Las Ambrosias",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 614,
+      "nombre": "Lomas De Las Bugambilias",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 615,
+      "nombre": "Lomas De Las Ceibas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 616,
+      "nombre": "Lomas De Las Flores",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 617,
+      "nombre": "Lomas De Las Gardenias",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 618,
+      "nombre": "Lomas De Las Jacarandas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 619,
+      "nombre": "Lomas De Las Malvas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 620,
+      "nombre": "Lomas De Las Manzanas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 621,
+      "nombre": "Lomas De Las Orquideas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 622,
+      "nombre": "Loma De Las Palmas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 623,
+      "nombre": "Lomas De Las Rosas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 624,
+      "nombre": "Lomas De Las Violetas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 625,
+      "nombre": "Lomas De Los Alhelies",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 626,
+      "nombre": "Lomas De Los Belenes",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 627,
+      "nombre": "Loma De Los Claveles",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 628,
+      "nombre": "Lomas De Los Eucaliptos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 629,
+      "nombre": "Loma De Los Girasoles",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 630,
+      "nombre": "Lomas De Los Lotos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 631,
+      "nombre": "Lomas De Los Naranjos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 632,
+      "nombre": "Lomas De Los Romeros",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 633,
+      "nombre": "Lomas De Los Sabinos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 634,
+      "nombre": "Lomas Del Cielo",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 635,
+      "nombre": "Loma Del Sol",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 636,
+      "nombre": "Loma De Las Azaleas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 637,
+      "nombre": "Loma De Las Belladonas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 638,
+      "nombre": "Loma De Las Lavandas",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 639,
+      "nombre": "Lomas De Los Tulipanes",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 640,
+      "nombre": "Loma De Los Sabinos",
+      "localidad_id": 11,
+      "municipio_id": 1
+    },
+    {
+      "id": 641,
+      "nombre": "Fresnos",
+      "localidad_id": 12,
+      "municipio_id": 1
+    },
+    {
+      "id": 642,
+      "nombre": "Los Fresnos",
+      "localidad_id": 12,
+      "municipio_id": 1
+    },
+    {
+      "id": 643,
+      "nombre": "Avenida Los Laureles",
+      "localidad_id": 12,
+      "municipio_id": 1
+    },
+    {
+      "id": 644,
+      "nombre": "Avenida Los Robles",
+      "localidad_id": 12,
+      "municipio_id": 1
+    },
+    {
+      "id": 645,
+      "nombre": "Granja Los Miranda",
+      "localidad_id": 12,
+      "municipio_id": 1
+    },
+    {
+      "id": 646,
+      "nombre": "Luis Morales",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 647,
+      "nombre": "Arnulfo Rojas",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 648,
+      "nombre": "Jesus Morales",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 649,
+      "nombre": "Jesus Barajas",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 650,
+      "nombre": "Dario Briones",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 651,
+      "nombre": "Camino A San Jose",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 652,
+      "nombre": "Ambrosio Rangel",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 653,
+      "nombre": "Anexo A La Cañada",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 654,
+      "nombre": "Ing. Esteban Soto Ruiz",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 655,
+      "nombre": "Camino A Chiquilista",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 656,
+      "nombre": "Luis Garcia",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 657,
+      "nombre": "Ing. Soto Ruiz",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 658,
+      "nombre": "Jose Arreola",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 659,
+      "nombre": "Jose Maria Marquez",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 660,
+      "nombre": "Rovolucion",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 661,
+      "nombre": "Salvardor Marquez",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 662,
+      "nombre": "Simplicio Perez",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 663,
+      "nombre": "Manuel Lomas",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 664,
+      "nombre": "Av Acueducto Sur",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 665,
+      "nombre": "Acueducto Chapala-Guadalajara",
+      "localidad_id": 13,
+      "municipio_id": 1
+    },
+    {
+      "id": 666,
+      "nombre": "Avenida Huerta Vieja",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 667,
+      "nombre": "Privada La Mandarina",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 668,
+      "nombre": "Privada La Naranja",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 669,
+      "nombre": "Privada El Limon",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 670,
+      "nombre": "Privada La Lima Tranquilizada",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 671,
+      "nombre": "Privada Del Sol",
+      "localidad_id": 14,
+      "municipio_id": 1
+    },
+    {
+      "id": 672,
+      "nombre": "Amatista",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 673,
+      "nombre": "Rubi",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 674,
+      "nombre": "Circuito Real Del Lago Poniente",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 675,
+      "nombre": "Jade",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 676,
+      "nombre": "Opalo",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 677,
+      "nombre": "Agua Marina",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 678,
+      "nombre": "Onix",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 679,
+      "nombre": "Circuito Real Del Lago Norte",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 680,
+      "nombre": "Onice",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 681,
+      "nombre": "Gema",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 682,
+      "nombre": "Lapislazuli",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 683,
+      "nombre": "Pirita",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 684,
+      "nombre": "Diamante",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 685,
+      "nombre": "Obsidiana",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 686,
+      "nombre": "Alejandrita",
+      "localidad_id": 15,
+      "municipio_id": 1
+    },
+    {
+      "id": 687,
+      "nombre": "Capilla De Compostela",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 688,
+      "nombre": "Avenida Capilla Sixtina",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 689,
+      "nombre": "Capilla De Guadalupe",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 690,
+      "nombre": "Capilla De Medugori",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 691,
+      "nombre": "Capilla De Milpillas",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 692,
+      "nombre": "Capilla De San Fernando",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 693,
+      "nombre": "Capilla De San Francisco",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 694,
+      "nombre": "Capilla De San Juan",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 695,
+      "nombre": "Capilla De San Rafael",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 696,
+      "nombre": "Capilla Del Fresno",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 697,
+      "nombre": "Capilla De Fresno",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 698,
+      "nombre": "Capilla De San Patricio",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 699,
+      "nombre": "Capilla De San Pedro",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 700,
+      "nombre": "Capilla De Santa Lourdes",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 701,
+      "nombre": "Capilla Del Sagrario",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 702,
+      "nombre": "Capilla San Juan",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 703,
+      "nombre": "Capilla San Rafael",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 704,
+      "nombre": "Capilla De Santo Toribio",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 705,
+      "nombre": "Capilla Del Carmen",
+      "localidad_id": 16,
+      "municipio_id": 1
+    },
+    {
+      "id": 706,
+      "nombre": "Lomas Cumbal Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 707,
+      "nombre": "Lomas Cumbal Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 708,
+      "nombre": "Lomas Everest Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 709,
+      "nombre": "Lomas Sajama Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 710,
+      "nombre": "Avenida Lomas Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 711,
+      "nombre": "Lomas Sangay Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 712,
+      "nombre": "Lomas Paricutin Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 713,
+      "nombre": "Lomas Lascar",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 714,
+      "nombre": "Loma Maipo Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 715,
+      "nombre": "Lomas Tacana Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 716,
+      "nombre": "Lomas Tacora",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 717,
+      "nombre": "Lomas Cayambe",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 718,
+      "nombre": "Lomas Everest Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 719,
+      "nombre": "Lomas Maipo Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 720,
+      "nombre": "Lomas Maipo Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 721,
+      "nombre": "Lomas Orizaba Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 722,
+      "nombre": "Lomas Paricutin Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 723,
+      "nombre": "Lomas Sajama Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 724,
+      "nombre": "Lomas Sangay Oriente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 725,
+      "nombre": "Lomas Tacana Poniente",
+      "localidad_id": 17,
+      "municipio_id": 1
+    },
+    {
+      "id": 726,
+      "nombre": "San Antonio",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 727,
+      "nombre": "San Luis",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 728,
+      "nombre": "Santa Clara",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 729,
+      "nombre": "Avenida Santa Ana",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 730,
+      "nombre": "Santa Isabel",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 731,
+      "nombre": "San Jose",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 732,
+      "nombre": "Santa Eduviges",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 733,
+      "nombre": "Santa Teresita",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 734,
+      "nombre": "Calle Sin Nombre",
+      "localidad_id": 18,
+      "municipio_id": 1
+    },
+    {
+      "id": 735,
+      "nombre": "Donato Guerra",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 736,
+      "nombre": "Privada Aldama",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 737,
+      "nombre": "Carretera A San Juan",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 738,
+      "nombre": "Carretera Chapala-Guadalajara",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 739,
+      "nombre": "Carretera San Juan",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 740,
+      "nombre": "Juan Zaragoza",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 741,
+      "nombre": "Privada Arenita",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 742,
+      "nombre": "Tabachines",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 743,
+      "nombre": "Privada Tabachines",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 744,
+      "nombre": "Camino Antiguo A San Juan",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 745,
+      "nombre": "Florida",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 746,
+      "nombre": "Fraccionamiento Arcos De Las Casas",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 747,
+      "nombre": "Privada El Rio",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 748,
+      "nombre": "Privada La Florida",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 749,
+      "nombre": "Privada Hidalgo",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 750,
+      "nombre": "Camino Servicio Ancho",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 751,
+      "nombre": "Camino Ancho",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 752,
+      "nombre": "Circuito De Los Girasoles",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 753,
+      "nombre": "Girasol Arizona",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 754,
+      "nombre": "Girasol Arlequin",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 755,
+      "nombre": "Girasol Bicentenario",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 756,
+      "nombre": "Girasol Capuchino",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 757,
+      "nombre": "Girasol De Otoño",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 758,
+      "nombre": "Girasol Esbelto",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 759,
+      "nombre": "Girasol Florenza",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 760,
+      "nombre": "Girasol Silvestre",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 761,
+      "nombre": "Girasol Sol Rojo",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 762,
+      "nombre": "Girasol Multifloral Oeste",
+      "localidad_id": 20,
+      "municipio_id": 1
+    },
+    {
+      "id": 763,
+      "nombre": "Olivo Canadiense",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 764,
+      "nombre": "Olivo Egipcio",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 765,
+      "nombre": "Olivo Filipino",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 766,
+      "nombre": "Olivo Noruego",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 767,
+      "nombre": "Olivo Bulgaro",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 768,
+      "nombre": "Olivo Arabe",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 769,
+      "nombre": "Olivo Colombiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 770,
+      "nombre": "Olivo Africano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 771,
+      "nombre": "Andador Olivo Italiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 772,
+      "nombre": "Olivo Vietnamita",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 773,
+      "nombre": "Olivo Austriaco",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 774,
+      "nombre": "Circuito Olivo Italiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 775,
+      "nombre": "Olivo Aleman",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 776,
+      "nombre": "Olivo Australiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 777,
+      "nombre": "Olivo Brasileño",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 778,
+      "nombre": "Olivo Chileno",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 779,
+      "nombre": "Olivo Chino",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 780,
+      "nombre": "Olivo Coreano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 781,
+      "nombre": "Olivo Cubano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 782,
+      "nombre": "Olivo Danes",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 783,
+      "nombre": "Olivo Dominicano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 784,
+      "nombre": "Olivo Español",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 785,
+      "nombre": "Olivo Frances",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 786,
+      "nombre": "Olivo Hawaiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 787,
+      "nombre": "Olivo Holandes",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 788,
+      "nombre": "Olivo Hungaro",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 789,
+      "nombre": "Olivo Italiano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 790,
+      "nombre": "Olivo Japones",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 791,
+      "nombre": "Olivo Mexicano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 792,
+      "nombre": "Olivo Peruano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 793,
+      "nombre": "Olivo Polaco",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 794,
+      "nombre": "Olivo Portugues",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 795,
+      "nombre": "Olivo Ruso",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 796,
+      "nombre": "Olivo Salvadoreño",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 797,
+      "nombre": "Olivo Sueco",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 798,
+      "nombre": "Olivo Suizo",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 799,
+      "nombre": "Olivo Turco",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 800,
+      "nombre": "Olivo Yugoslavo",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 801,
+      "nombre": "Circuito De Los Olivos",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 802,
+      "nombre": "Olivo Argentino",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 803,
+      "nombre": "Olivo Boliviano",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 804,
+      "nombre": "Olivo Irani",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 805,
+      "nombre": "Olivo Libanes",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 806,
+      "nombre": "Olivo Brsileño",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 807,
+      "nombre": "Almazo Gomez",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 808,
+      "nombre": "Area Comercial De La Mzn-X",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 809,
+      "nombre": "Olivo Barragan",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 810,
+      "nombre": "Olivo Bietnamita",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 811,
+      "nombre": "Andador Vietnamita",
+      "localidad_id": 21,
+      "municipio_id": 1
+    },
+    {
+      "id": 812,
+      "nombre": "Olivo Rapasayo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 813,
+      "nombre": "Olivo Cañivano",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 814,
+      "nombre": "Olivo Arbequino",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 815,
+      "nombre": "Avenida Olivar Mediterraneo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 816,
+      "nombre": "Olivo Carrasqueño",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 817,
+      "nombre": "Olivo Frantoio",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 818,
+      "nombre": "Olivo Lechin",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 819,
+      "nombre": "Olivo Nevadillo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 820,
+      "nombre": "Olivo Picual",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 821,
+      "nombre": "Olivo Villalonga",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 822,
+      "nombre": "Avenida De Los Fresnos",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 823,
+      "nombre": "Olivo Oblonga",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 824,
+      "nombre": "Olivo Cornezuelo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 825,
+      "nombre": "Olivo Blanqueta",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 826,
+      "nombre": "Olivo Cornicabra",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 827,
+      "nombre": "Olivo Farga",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 828,
+      "nombre": "Olivo Gordal",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 829,
+      "nombre": "Olivo Hojiblanco",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 830,
+      "nombre": "Olivo Manzanilla",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 831,
+      "nombre": "Olivo Navadillo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 832,
+      "nombre": "Olivo Negral",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 833,
+      "nombre": "Rio Cuitzmala",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 834,
+      "nombre": "Rio Oblonga",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 835,
+      "nombre": "Rio Tomatlan",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 836,
+      "nombre": "Cornezuelo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 837,
+      "nombre": "Olivar Mediterraneo",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 838,
+      "nombre": "Carretera Antigua A La Capilla",
+      "localidad_id": 22,
+      "municipio_id": 1
+    },
+    {
+      "id": 839,
+      "nombre": "Rio Papaloapan Poniente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 840,
+      "nombre": "Rio Culiacan Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 841,
+      "nombre": "Rio Ameca",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 842,
+      "nombre": "Rio Tuxpan",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 843,
+      "nombre": "Rio Panuco Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 844,
+      "nombre": "Rio Antigua",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 845,
+      "nombre": "Rio Balsas",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 846,
+      "nombre": "Rio Baluarte",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 847,
+      "nombre": "Rio Candelaria",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 848,
+      "nombre": "Rio Colorado",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 849,
+      "nombre": "Rio Culiacan Poniente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 850,
+      "nombre": "Rio El Fuerte",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 851,
+      "nombre": "Rio Grijalva Poniente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 852,
+      "nombre": "Rio Grijalva Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 853,
+      "nombre": "Rio Nautla",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 854,
+      "nombre": "Rio Nazas",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 855,
+      "nombre": "Rio Panuco Poniente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 856,
+      "nombre": "Rio Papaloapan Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 857,
+      "nombre": "Rio Sinaloa",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 858,
+      "nombre": "Rio Tonala",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 859,
+      "nombre": "Rio Usumacinta Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 860,
+      "nombre": "Rio Usumacinta Poniente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 861,
+      "nombre": "Rio Yaqui",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 862,
+      "nombre": "Rio Quitupan",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 863,
+      "nombre": "Rio Sena Oriente",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 864,
+      "nombre": "Rio Yukon",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 865,
+      "nombre": "Rio Usumacinta",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 866,
+      "nombre": "Rios Tuxpan",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 867,
+      "nombre": "Rio Papaloapan",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 868,
+      "nombre": "Rio Panuco",
+      "localidad_id": 23,
+      "municipio_id": 1
+    },
+    {
+      "id": 869,
+      "nombre": "Rio Misuri Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 870,
+      "nombre": "Rio Uruguay",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 871,
+      "nombre": "Rio Ottawa Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 872,
+      "nombre": "Rio Parana",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 873,
+      "nombre": "Rio Columbia",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 874,
+      "nombre": "Rio Misisipi Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 875,
+      "nombre": "Rio Negro",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 876,
+      "nombre": "Rio Ottawa Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 877,
+      "nombre": "Rio Kansas",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 878,
+      "nombre": "Rio Congo",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 879,
+      "nombre": "Rio Blanco",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 880,
+      "nombre": "Rio Grande Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 881,
+      "nombre": "Rio Tamesis Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 882,
+      "nombre": "Rio Amarillo",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 883,
+      "nombre": "Rio De La Plata Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 884,
+      "nombre": "Rio Misuri",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 885,
+      "nombre": "Antigua Carretera A La Capilla",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 886,
+      "nombre": "Area Comercial Rio Nilo",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 887,
+      "nombre": "Rio Iguazu Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 888,
+      "nombre": "Rio Bolshoi",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 889,
+      "nombre": "Rio Sena",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 890,
+      "nombre": "Rio Columbia Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 891,
+      "nombre": "Rio Danubio",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 892,
+      "nombre": "Rio Danubio Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 893,
+      "nombre": "Rio De La Plata",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 894,
+      "nombre": "Rio De La Plata Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 895,
+      "nombre": "Rio Eufrates",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 896,
+      "nombre": "Rio Eufrates Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 897,
+      "nombre": "Rio Grande",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 898,
+      "nombre": "Rio Iguazu",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 899,
+      "nombre": "Rio Kansas Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 900,
+      "nombre": "Rio Misisipi Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 901,
+      "nombre": "Rio Misisipi",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 902,
+      "nombre": "Rio Nilo",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 903,
+      "nombre": "Rio Ottawa",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 904,
+      "nombre": "Rio Salado",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 905,
+      "nombre": "Rio Sena Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 906,
+      "nombre": "Rio Senegal Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 907,
+      "nombre": "Rio Senegal Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 908,
+      "nombre": "Rio Tamesis",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 909,
+      "nombre": "Rio Tamesis Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 910,
+      "nombre": "Rio Uefrates",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 911,
+      "nombre": "Rio Uruguay Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 912,
+      "nombre": "Rio Uruguay Oriente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 913,
+      "nombre": "Rio Plata Poniente",
+      "localidad_id": 24,
+      "municipio_id": 1
+    },
+    {
+      "id": 914,
+      "nombre": "Universo",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 915,
+      "nombre": "Luna",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 916,
+      "nombre": "Astros",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 917,
+      "nombre": "Sol",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 918,
+      "nombre": "Urano",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 919,
+      "nombre": "Cielo",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 920,
+      "nombre": "Estrella",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 921,
+      "nombre": "Jupiter",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 922,
+      "nombre": "Jupiter Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 923,
+      "nombre": "Luna Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 924,
+      "nombre": "Marte",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 925,
+      "nombre": "Mercurio",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 926,
+      "nombre": "Nube",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 927,
+      "nombre": "Saturno Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 928,
+      "nombre": "Saturno",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 929,
+      "nombre": "Sol Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 930,
+      "nombre": "Tierra",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 931,
+      "nombre": "Urano Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 932,
+      "nombre": "Venus",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 933,
+      "nombre": "Venus Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 934,
+      "nombre": "Luna Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 935,
+      "nombre": "Rayo",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 936,
+      "nombre": "Neptuno Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 937,
+      "nombre": "Rayo Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 938,
+      "nombre": "Avenida Universo",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 939,
+      "nombre": "Dia",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 940,
+      "nombre": "Cometa",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 941,
+      "nombre": "Cometa Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 942,
+      "nombre": "Cometa Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 943,
+      "nombre": "Dia Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 944,
+      "nombre": "Dia Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 945,
+      "nombre": "Eclipse Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 946,
+      "nombre": "Eclipse Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 947,
+      "nombre": "Neptuno",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 948,
+      "nombre": "Neptuno Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 949,
+      "nombre": "Noche",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 950,
+      "nombre": "Noche Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 951,
+      "nombre": "Planeta",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 952,
+      "nombre": "Paneta Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 953,
+      "nombre": "Planeta Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 954,
+      "nombre": "Planeta Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 955,
+      "nombre": "Ryo Oriente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 956,
+      "nombre": "Saelite Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 957,
+      "nombre": "Satelite",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 958,
+      "nombre": "Satelite Poniente",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 959,
+      "nombre": "Rio Venus",
+      "localidad_id": 25,
+      "municipio_id": 1
+    },
+    {
+      "id": 960,
+      "nombre": "Rio Atengo",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 961,
+      "nombre": "Rio Zula",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 962,
+      "nombre": "Rio Armeria",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 963,
+      "nombre": "Rio Atenguillo",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 964,
+      "nombre": "Rio Bolaños",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 965,
+      "nombre": "Rio Calderon",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 966,
+      "nombre": "Rio Camotlan",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 967,
+      "nombre": "Rio Cartagena",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 968,
+      "nombre": "Rio Colotlan",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 969,
+      "nombre": "Rio El Valle",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 970,
+      "nombre": "Rio Jiquilpan",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 971,
+      "nombre": "Rio Juchipila",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 972,
+      "nombre": "Rio Marabasco",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 973,
+      "nombre": "Rio Purificacion",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 974,
+      "nombre": "Rio San Miguel",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 975,
+      "nombre": "Rio Verde",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 976,
+      "nombre": "Rio Pitillal",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 977,
+      "nombre": "Rio Cuale",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 978,
+      "nombre": "Rio Mascota",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 979,
+      "nombre": "Avenida De Los Sabinos",
+      "localidad_id": 26,
+      "municipio_id": 1
+    },
+    {
+      "id": 980,
+      "nombre": "Allende",
+      "localidad_id": 7,
+      "municipio_id": 1
+    },
+    {
+      "id": 981,
+      "nombre": "Allende",
+      "localidad_id": 19,
+      "municipio_id": 1
+    },
+    {
+      "id": 982,
+      "nombre": "No registrada",
+      "localidad_id": 27,
+      "municipio_id": 2
+    }
+  ]
+}

@@ -305,7 +305,7 @@ async def emergencia_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
         await file.download_to_drive(filepath)
         
         # Subir a Cloudinary
-        from app.services.cloudinary_service import subir_archivo
+        from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
         url = subir_archivo(filepath, folder="emergencias", public_id=f"emergencia_{user_id}_{uuid.uuid4().hex[:4]}")
         if url:
             user_data[user_id]['evidencia'] = url

@@ -132,7 +132,7 @@
 
                 {% if ver_exportar %}
                 <div class="col-md-2 d-grid">
-                    <a href="#" class="btn btn-success btn-sm">
+                    <a href="{{ url_for('municipio.exportar_excel') }}" class="btn btn-success btn-sm">
                         <i class="fas fa-file-excel me-1"></i> Exportar
                     </a>
                 </div>
@@ -184,10 +184,50 @@
                             <td>{{ r.descripcion_problema or '—' }}</td>
                             <td>
                                 {% if r.evidencia %}
-                                    <a href="{{ r.evidencia }}" target="_blank" class="d-block mb-1">
-                                        <i class="fas fa-paperclip me-1"></i> Ver evidencia
-                                    </a>
-                                {% else %}
+                                    {% if r.evidencia.startswith('http') %}
+                                        <a href="{{ r.evidencia }}" target="_blank" class="d-block mb-1">
+                                            <i class="fas fa-paperclip me-1"></i> Evidencia ciudadano
+                                        </a>
+                                    {% else %}
+                                        <a href="{{ url_for('municipio.uploaded_file', filename=r.evidencia) }}" target="_blank" class="d-block mb-1">
+                                            <i class="fas fa-paperclip me-1"></i> Evidencia ciudadano
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if r.evidencia_cuadrilla %}
+                                    {% for ev in r.evidencia_cuadrilla.split(',') %}
+                                        {% if ev.strip() %}
+                                            {% if ev.strip().startswith('http') %}
+                                                <a href="{{ ev.strip() }}" target="_blank" class="d-block mb-1">
+                                                    <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla {{ loop.index }}
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('municipio.uploaded_file', filename=ev.strip()) }}" target="_blank" class="d-block mb-1">
+                                                    <i class="fas fa-hard-hat me-1"></i> Evidencia cuadrilla {{ loop.index }}
+                                                </a>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% endfor %}
+                                {% endif %}
+
+                                {% if r.materiales_utilizados %}
+                                    {% if r.materiales_utilizados.startswith('http') %}
+                                        <a href="{{ r.materiales_utilizados }}" target="_blank" class="d-block mb-1">
+                                            <i class="fas fa-boxes me-1"></i> Materiales
+                                        </a>
+                                    {% elif r.materiales_utilizados.endswith(('.jpg', '.jpeg', '.png', '.gif', '.mp4', '.mov')) %}
+                                        <a href="{{ url_for('municipio.uploaded_file', filename=r.materiales_utilizados) }}" target="_blank" class="d-block mb-1">
+                                            <i class="fas fa-boxes me-1"></i> Materiales
+                                        </a>
+                                    {% else %}
+                                        <small class="text-muted d-block mb-1">
+                                            <i class="fas fa-boxes me-1"></i> {{ r.materiales_utilizados[:60] }}{% if r.materiales_utilizados|length > 60 %}...{% endif %}
+                                        </small>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if not r.evidencia and not r.evidencia_cuadrilla and not r.materiales_utilizados %}
                                     <span class="text-muted">—</span>
                                 {% endif %}
                             </td>
@@ -229,19 +269,19 @@
                                     </div>
                                     <div class="modal-body">
                                         <div class="d-grid gap-2">
-                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones_reporte', reporte_id=r.id) }}">
                                                 <button type="submit" class="btn btn-sm btn-info w-100">🔔 Probar notificaciones</button>
                                             </form>
-                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                            <form method="POST" action="{{ url_for('municipio.test_notificar_inicial', reporte_id=r.id) }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-primary w-100">🎯 Notificar inicial</button>
                                             </form>
-                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                            <form method="POST" action="{{ url_for('municipio.test_cuadrilla_termina', reporte_id=r.id) }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-success w-100">🔧 Cuadrilla termina</button>
                                             </form>
-                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                            <form method="POST" action="{{ url_for('municipio.test_validacion_usuario', reporte_id=r.id) }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-dark w-100">👤 Validación usuario</button>
                                             </form>
-                                            <form method="POST" action="{{ url_for('municipio.test_notificaciones', reporte_id=r.id) }}">
+                                            <form method="POST" action="{{ url_for('municipio.test_notificar_presidente', reporte_id=r.id) }}">
                                                 <button type="submit" class="btn btn-sm btn-outline-danger w-100">🏛️ Notificar presidente</button>
                                             </form>
                                         </div>

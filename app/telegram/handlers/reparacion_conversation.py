@@ -14,7 +14,7 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
-from app.services.cloudinary_service import subir_archivo
+from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
 from datetime import datetime
 from pathlib import Path
 import logging
@@ -138,14 +138,26 @@ async def reparacion_evidencia(update: Update, context: ContextTypes.DEFAULT_TYP
             filepath = base_path / filename
             await file.download_to_drive(filepath)
             
-            public_id = f"reparacion_{datos['reporte_id']}_{uuid.uuid4().hex[:4]}"
-            url = subir_archivo(str(filepath), folder=f"{carpeta}/cuadrilla", public_id=public_id)
+            # Nueva estructura por municipio
+            from app.models.municipio_config import MunicipioConfig
+            reporte = Report.query.get(datos.get('reporte_id'))
+            municipio = MunicipioConfig.query.get(reporte.municipio_id if reporte else 1)
+            municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+            
+            carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, reporte.tipo if reporte else 'General', 'reparacion/evidencia_cuadrilla')
+            
+            # Contar evidencias previas para el sufijo
+            num_evidencia = len(datos['evidencias']) + 1
+            folio = reporte.folio_display if reporte else f'REP-{datos["reporte_id"]}'
+            nombre_archivo = generar_nombre_archivo(folio, extension, str(num_evidencia))
+            
+            url = subir_archivo(str(filepath), folder=carpeta_cloudinary, public_id=nombre_archivo.replace(f'.{extension}', ''))
             if url:
                 datos['evidencias'].append(url)
                 try: os.remove(filepath)
                 except: pass
             else:
-                datos['evidencias'].append(f"evidencias/{carpeta}/cuadrilla/{filename}")
+                datos['evidencias'].append(f"{carpeta_cloudinary}/{nombre_archivo}")
             
             user_data[user_id] = datos
             await update.message.reply_text(f"✅ Evidencia {len(datos['evidencias'])} recibida. Envía más o escribe 'listo'.", parse_mode=ParseMode.MARKDOWN)
@@ -181,14 +193,24 @@ async def reparacion_materiales(update: Update, context: ContextTypes.DEFAULT_TY
             filepath = base_path / filename
             await file.download_to_drive(filepath)
             
-            public_id = f"material_{datos['reporte_id']}_{uuid.uuid4().hex[:4]}"
-            url = subir_archivo(str(filepath), folder=f"{carpeta}/materiales_utilizados", public_id=public_id)
+            # Nueva estructura por municipio
+            from app.models.municipio_config import MunicipioConfig
+            reporte = Report.query.get(datos.get('reporte_id'))
+            municipio = MunicipioConfig.query.get(reporte.municipio_id if reporte else 1)
+            municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+            
+            carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, reporte.tipo if reporte else 'General', 'reparacion/materiales_utilizados')
+            
+            folio = reporte.folio_display if reporte else f'REP-{datos["reporte_id"]}'
+            nombre_archivo = generar_nombre_archivo(folio, 'jpg')
+            
+            url = subir_archivo(str(filepath), folder=carpeta_cloudinary, public_id=nombre_archivo.replace('.jpg', ''))
             if url:
                 datos['materiales'] = url
                 try: os.remove(filepath)
                 except: pass
             else:
-                datos['materiales'] = f"evidencias/{carpeta}/materiales_utilizados/{filename}"
+                datos['materiales'] = f"{carpeta_cloudinary}/{nombre_archivo}"
             
             user_data[user_id] = datos
         except Exception as e:

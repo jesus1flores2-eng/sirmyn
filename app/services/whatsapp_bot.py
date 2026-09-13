@@ -17,6 +17,7 @@ from app.models.report import Report, Assignment, Localidad, Calle
 from app.models.team import Team
 from app.models.status import Status
 from app.models.user import User
+from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
 
 load_dotenv()
 
@@ -524,18 +525,30 @@ def manejar_mensaje_whatsapp(telefono, mensaje, media_url, media_type=""):
             db.session.add(nuevo_reporte)
             db.session.commit()
 
-            # Renombrar evidencia con id de reporte
+            # Subir evidencia a Cloudinary con nueva estructura
             if "evidencia_filename" in estado:
                 extension = estado["evidencia_filename"].split(".")[-1]
-                nuevo_nombre = f"reporte_{nuevo_reporte.id}.{extension}"
+                
+                from app.models.municipio_config import MunicipioConfig
+                municipio = MunicipioConfig.query.get(municipio_id)
+                municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+                
+                carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, estado["tipo"], 'reportes')
+                nombre_archivo = generar_nombre_archivo(nuevo_reporte.folio_display, extension)
+                
                 origen = os.path.join(UPLOAD_FOLDER, estado["evidencia_filename"])
-                destino = os.path.join(UPLOAD_FOLDER, nuevo_nombre)
-                try:
-                    os.rename(origen, destino)
-                    nuevo_reporte.evidencia = nuevo_nombre
-                    db.session.commit()
-                except Exception as e:
-                    print(f"⚠️ Error al renombrar evidencia: {e}")
+                
+                url = subir_archivo(origen, folder=carpeta_cloudinary, public_id=nombre_archivo.replace(f'.{extension}', ''))
+                if url:
+                    nuevo_reporte.evidencia = url
+                    try:
+                        os.remove(origen)
+                    except:
+                        pass
+                else:
+                    nuevo_reporte.evidencia = f"{carpeta_cloudinary}/{nombre_archivo}"
+                
+                db.session.commit()
 
             # Asignación inicial
             asignacion_inicial = Assignment(

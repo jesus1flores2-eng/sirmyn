@@ -12,7 +12,7 @@ from app.models.user import User
 from app.models.team import Team
 from app.models.status import Status
 from app.extensions import db
-from app.services.cloudinary_service import subir_archivo
+from app.services.cloudinary_service import subir_archivo, obtener_carpeta_evidencia, generar_nombre_archivo
 from datetime import datetime
 from pathlib import Path
 import logging
@@ -134,7 +134,18 @@ async def resultado_documento(update: Update, context: ContextTypes.DEFAULT_TYPE
             filepath = f"uploads/seguridad/{filename}"
             await file.download_to_drive(filepath)
             
-            url = subir_archivo(filepath, folder="seguridad", public_id=f"doc_{datos['reporte_id']}_{uuid.uuid4().hex[:4]}")
+            # Nueva estructura por municipio
+            from app.models.municipio_config import MunicipioConfig
+            reporte_obj = Report.query.get(datos.get('reporte_id'))
+            municipio = MunicipioConfig.query.get(reporte_obj.municipio_id if reporte_obj else 1)
+            municipio_nombre = municipio.nombre if municipio else 'Ixtlahuacán'
+            
+            carpeta_cloudinary = obtener_carpeta_evidencia(municipio_nombre, 'Seguridad pública', 'resultado_seguridad')
+            
+            folio = reporte_obj.folio_display if reporte_obj else f'REP-{datos["reporte_id"]}'
+            nombre_archivo = generar_nombre_archivo(folio, 'jpg', 'documento')
+            
+            url = subir_archivo(filepath, folder=carpeta_cloudinary, public_id=nombre_archivo.replace('.jpg', ''))
             if url:
                 datos['documento'] = url
                 try: os.remove(filepath)
