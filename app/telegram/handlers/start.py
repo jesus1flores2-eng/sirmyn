@@ -30,20 +30,31 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     municipio = MunicipioConfig.query.get(municipio_id)
     nombre_municipio = municipio.nombre if municipio else "Ixtlahuacán"
 
+    # ⭐ OBTENER AVISO DE PRIVACIDAD DEL MUNICIPIO
+    aviso_privacidad_url = None
+    if municipio and municipio.aviso_privacidad:
+        aviso_privacidad_url = municipio.aviso_privacidad
+    
+    # Si el municipio tiene aviso específico, mostrarlo; si no, mostrar mensaje genérico
+    if aviso_privacidad_url:
+        aviso_texto = f"👉 <a href='{aviso_privacidad_url}'>Ver aviso de privacidad</a>"
+    else:
+        aviso_texto = "📌 Consulta el aviso de privacidad en las oficinas del Ayuntamiento."
+
     mensaje = (
-        "🏛️ *Sistema Integral de Reportes Municipales y Notificaciones*\n"
-        "*SIRMYN*\n\n"
-        f"🏘️ *Municipio:* {nombre_municipio}\n\n"
-        f"👋 *¡Bienvenido, {nombre_telegram}!*\n\n"
+        "🏛️ <b>Sistema Integral de Reportes Municipales y Notificaciones</b>\n"
+        "<b>SIRMYN</b>\n\n"
+        f"🏘️ <b>Municipio:</b> {nombre_municipio}\n\n"
+        f"👋 <b>¡Bienvenido, {nombre_telegram}!</b>\n\n"
         "Este sistema te permite generar reportes ciudadanos y recibir "
         "información oficial del Ayuntamiento.\n\n"
-        "📌 *Aviso importante:*\n"
+        "📌 <b>Aviso importante:</b>\n"
         "• Al generar un reporte recibirás notificaciones institucionales.\n"
         "• Tus datos se usan únicamente para atender tu reporte.\n"
         "• La ubicación y evidencia ayudan a canalizarlo correctamente.\n\n"
-        "🔐 Aviso de privacidad:\n"
-        "👉 https://municipio.gob.mx/aviso-de-privacidad/\n\n"
-        "*¿Aceptas continuar?*"
+        "🔐 <b>Aviso de privacidad:</b>\n"
+        f"{aviso_texto}\n\n"
+        "<b>¿Aceptas continuar?</b>"
     )
 
     keyboard = InlineKeyboardMarkup([
@@ -54,7 +65,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=mensaje,
-        parse_mode="Markdown",
+        parse_mode="HTML",
         reply_markup=keyboard
     )
     return ESPERAR_ACEPTACION
